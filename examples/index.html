@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Coolhand Feedback Widget Demo</title>
+    <style>
+        :root {
+            --bg-primary: #1a1a2e;
+            --bg-secondary: #16213e;
+            --bg-card: #0f3460;
+            --text-primary: #eaeaea;
+            --text-secondary: #b8b8b8;
+            --accent: #e94560;
+            --accent-hover: #ff6b6b;
+            --info-bg: #1a3a5c;
+            --info-border: #2196F3;
+            --success-bg: #1b4332;
+            --success-text: #95d5b2;
+            --error-bg: #5c1a1a;
+            --error-text: #f8d7da;
+            --input-bg: #16213e;
+            --input-border: #0f3460;
+            --code-bg: #0d1117;
+        }
+
+        [data-theme="light"] {
+            --bg-primary: #f5f5f5;
+            --bg-secondary: #ffffff;
+            --bg-card: #ffffff;
+            --text-primary: #333333;
+            --text-secondary: #666666;
+            --accent: #2196F3;
+            --accent-hover: #1976D2;
+            --info-bg: #e3f2fd;
+            --info-border: #2196F3;
+            --success-bg: #c8e6c9;
+            --success-text: #2e7d32;
+            --error-bg: #ffcdd2;
+            --error-text: #c62828;
+            --input-bg: #ffffff;
+            --input-border: #ddd;
+            --code-bg: #f4f4f4;
+        }
+
+        * {
+            transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            line-height: 1.6;
+            color: var(--text-primary);
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background: var(--bg-primary);
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        h1 {
+            color: var(--text-primary);
+            margin: 0;
+        }
+
+        h2 {
+            color: var(--text-primary);
+        }
+
+        .theme-toggle {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .theme-toggle label {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 60px;
+            height: 30px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: var(--bg-card);
+            border-radius: 30px;
+            border: 2px solid var(--input-border);
+        }
+
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 22px;
+            width: 22px;
+            left: 2px;
+            bottom: 2px;
+            background-color: var(--accent);
+            border-radius: 50%;
+            transition: transform 0.3s ease;
+        }
+
+        .toggle-switch input:checked + .toggle-slider:before {
+            transform: translateX(30px);
+        }
+
+        .toggle-icons {
+            display: flex;
+            justify-content: space-between;
+            padding: 0 6px;
+            position: absolute;
+            width: 100%;
+            top: 50%;
+            transform: translateY(-50%);
+            pointer-events: none;
+            font-size: 14px;
+        }
+
+        .info {
+            background: var(--info-bg);
+            border-left: 4px solid var(--info-border);
+            padding: 15px;
+            margin-bottom: 30px;
+            border-radius: 4px;
+            color: var(--text-primary);
+        }
+
+        .demo-container {
+            background: var(--bg-card);
+            border-radius: 8px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+            position: relative;
+            min-height: 120px;
+        }
+
+        .demo-container h3 {
+            margin-top: 0;
+            color: var(--text-primary);
+        }
+
+        .demo-container p {
+            color: var(--text-secondary);
+        }
+
+        .error-demo {
+            background: var(--error-bg);
+            border: 1px solid var(--error-text);
+        }
+
+        .code-block {
+            background: var(--code-bg);
+            border: 1px solid var(--input-border);
+            border-radius: 4px;
+            padding: 15px;
+            margin: 20px 0;
+            overflow-x: auto;
+        }
+
+        .code-block code {
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            color: var(--text-primary);
+        }
+
+        .api-key-input {
+            margin: 20px 0;
+            padding: 15px;
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+
+        .api-key-input label {
+            color: var(--text-primary);
+        }
+
+        .api-key-input input {
+            width: 300px;
+            padding: 8px 12px;
+            border: 1px solid var(--input-border);
+            border-radius: 4px;
+            font-size: 14px;
+            margin-right: 10px;
+            background: var(--input-bg);
+            color: var(--text-primary);
+        }
+
+        .api-key-input input::placeholder {
+            color: var(--text-secondary);
+        }
+
+        .api-key-input button {
+            padding: 8px 20px;
+            background: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .api-key-input button:hover {
+            background: var(--accent-hover);
+        }
+
+        .status {
+            padding: 5px 10px;
+            border-radius: 4px;
+            display: inline-block;
+            font-size: 12px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .status.success {
+            background: var(--success-bg);
+            color: var(--success-text);
+        }
+
+        .status.error {
+            background: var(--error-bg);
+            color: var(--error-text);
+        }
+
+        .empty-demo {
+            min-height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Coolhand Feedback Widget Demo</h1>
+        <div class="theme-toggle">
+            <label>Theme</label>
+            <label class="toggle-switch">
+                <input type="checkbox" id="themeToggle" onchange="toggleTheme()">
+                <span class="toggle-slider"></span>
+                <span class="toggle-icons">
+                    <span>🌙</span>
+                    <span>☀️</span>
+                </span>
+            </label>
+        </div>
+    </div>
+
+    <div class="info">
+        <strong>How to use:</strong><br>
+        1. Enter your Coolhand API key below<br>
+        2. Look for the hand icon in the upper-right corner of each content box<br>
+        3. Click the icon and select your feedback: 👎 (negative), 🤷 (neutral), or 👍 (positive)<br>
+        4. Check the console for API responses
+    </div>
+
+    <div class="api-key-input">
+        <label for="apiKey">Coolhand API Key:</label>
+        <input type="text" id="apiKey" placeholder="Enter your API key">
+        <button onclick="initializeCoolhand()">Initialize</button>
+        <span id="status"></span>
+    </div>
+
+    <h2>Demo Content Boxes</h2>
+
+    <div class="demo-container" id="demo1">
+        <h3>Example 1: Product Description</h3>
+        <p>The XR-2000 is our flagship product, featuring advanced quantum processing capabilities and neural network integration. With its revolutionary design and cutting-edge technology, it delivers unprecedented performance for enterprise applications. The system includes real-time analytics, predictive modeling, and seamless cloud integration.</p>
+    </div>
+
+    <div class="demo-container" id="demo2">
+        <h3>Example 2: Technical Documentation</h3>
+        <p>To initialize the system, first ensure all dependencies are installed using npm install. Then, configure your environment variables by creating a .env file with your API credentials. Run the application using npm start and navigate to http://localhost:3000. The API endpoint accepts POST requests with JSON payloads containing user data and configuration options.</p>
+    </div>
+
+    <div class="demo-container" id="demo3">
+        <h3>Example 3: Customer Support Response</h3>
+        <p>Thank you for reaching out to our support team. We understand your concern regarding the recent service interruption. Our engineering team has identified the issue and implemented a fix. The service should now be fully operational. We apologize for any inconvenience and have credited your account with a complimentary month of service. Please don't hesitate to contact us if you experience any further issues.</p>
+    </div>
+
+    <div class="demo-container error-demo" id="demo4">
+        <h3>Example 4: Empty Content (Error Demo)</h3>
+        <div class="empty-demo">
+            <!-- This demo intentionally has no text content to demonstrate error handling -->
+        </div>
+    </div>
+
+    <h2>Usage Example</h2>
+    <div class="code-block">
+        <code>
+// Initialize the library with your API key<br>
+CoolhandJS.init('your-api-key-here');<br>
+<br>
+// Attach feedback widget to any element<br>
+const element = document.getElementById('myContent');<br>
+CoolhandJS.attach(element, {<br>
+&nbsp;&nbsp;onSuccess: (feedback, response) => {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;console.log('Feedback submitted:', feedback);<br>
+&nbsp;&nbsp;},<br>
+&nbsp;&nbsp;onError: (error) => {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;console.error('Error submitting feedback:', error);<br>
+&nbsp;&nbsp;}<br>
+});
+        </code>
+    </div>
+
+    <!-- Load the Coolhand library -->
+    <script src="/dist/coolhand.js"></script>
+    <script>
+        let widgetsAttached = false;
+
+        function toggleTheme() {
+            const html = document.documentElement;
+            const isLight = html.getAttribute('data-theme') === 'light';
+            html.setAttribute('data-theme', isLight ? 'dark' : 'light');
+            localStorage.setItem('theme', isLight ? 'dark' : 'light');
+        }
+
+        function initializeCoolhand() {
+            const apiKeyInput = document.getElementById('apiKey');
+            const statusElement = document.getElementById('status');
+            const apiKey = apiKeyInput.value.trim();
+
+            if (!apiKey) {
+                statusElement.className = 'status error';
+                statusElement.textContent = 'API key required';
+                return;
+            }
+
+            // Initialize CoolhandJS with the API key
+            if (CoolhandJS.init(apiKey)) {
+                statusElement.className = 'status success';
+                statusElement.textContent = 'Initialized';
+
+                // Attach widgets if not already attached
+                if (!widgetsAttached) {
+                    attachWidgets();
+                    widgetsAttached = true;
+                }
+            } else {
+                statusElement.className = 'status error';
+                statusElement.textContent = 'Initialization failed';
+            }
+        }
+
+        function attachWidgets() {
+            // Attach to demo containers (skip the empty one to show error handling)
+            ['demo1', 'demo2', 'demo3', 'demo4'].forEach(id => {
+                const element = document.getElementById(id);
+                const widget = CoolhandJS.attach(element, {
+                    sessionId: 'demo-session-' + Date.now(),
+                    onSuccess: (feedback, response) => {
+                        console.log(`[${id}] Feedback submitted:`, {
+                            feedback: feedback,
+                            response: response
+                        });
+                    },
+                    onError: (error) => {
+                        console.error(`[${id}] Error:`, error);
+                    }
+                });
+
+                if (widget) {
+                    console.log(`[${id}] Widget attached successfully`);
+                } else {
+                    console.log(`[${id}] Failed to attach widget (expected for demo4)`);
+                }
+            });
+        }
+
+        // Initialize theme from localStorage or default to dark
+        window.addEventListener('DOMContentLoaded', () => {
+            const savedTheme = localStorage.getItem('theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+            document.getElementById('themeToggle').checked = savedTheme === 'light';
+
+            console.log('Coolhand Feedback Widget Demo Loaded');
+            console.log('Enter your API key above to start testing');
+
+            // Check if CoolhandJS is loaded
+            if (typeof CoolhandJS !== 'undefined') {
+                console.log('✓ CoolhandJS library loaded successfully');
+            } else {
+                console.error('✗ CoolhandJS library failed to load');
+            }
+        });
+    </script>
+</body>
+</html>

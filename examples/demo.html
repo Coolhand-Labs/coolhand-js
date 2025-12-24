@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Coolhand Feedback Widget - LLM Output Demo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Load Coolhand Feedback Widget -->
+    <script src="/dist/coolhand.js"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+
+        * {
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* Custom scrollbar for chat */
+        .chat-container::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .chat-container::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 3px;
+        }
+
+        .dark .chat-container::-webkit-scrollbar-track {
+            background: #374151;
+        }
+
+        .chat-container::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 3px;
+        }
+
+        .dark .chat-container::-webkit-scrollbar-thumb {
+            background: #6b7280;
+        }
+
+        .chat-container::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+
+        .dark .chat-container::-webkit-scrollbar-thumb:hover {
+            background: #9ca3af;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 dark:bg-gray-900 min-h-screen p-8 transition-colors duration-200">
+    <div class="max-w-4xl mx-auto space-y-8">
+        <!-- Header with Dark Mode Toggle -->
+        <div class="flex justify-between items-center">
+            <h1 class="text-3xl font-semibold text-gray-900 dark:text-gray-100">Coolhand Feedback Demo</h1>
+            <button
+                id="theme-toggle"
+                class="p-2 rounded-lg bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors duration-200"
+                aria-label="Toggle dark mode"
+            >
+                <!-- Sun icon (light mode) -->
+                <svg id="sun-icon" class="w-5 h-5 text-gray-800 dark:text-gray-200 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                </svg>
+                <!-- Moon icon (dark mode) -->
+                <svg id="moon-icon" class="w-5 h-5 text-gray-800 dark:text-gray-200 block dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+                </svg>
+            </button>
+        </div>
+
+        <!-- API Key Initialization -->
+        <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+            <h2 class="text-lg font-semibold text-blue-900 dark:text-blue-100 mb-3">Initialize Coolhand Widget</h2>
+            <div class="flex flex-col sm:flex-row gap-3">
+                <input
+                    id="apiKeyInput"
+                    type="text"
+                    placeholder="Enter your Coolhand API key"
+                    class="flex-1 px-4 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder-gray-400 dark:placeholder-gray-500 transition-colors duration-200"
+                />
+                <button
+                    id="initButton"
+                    class="px-6 py-2 bg-blue-500 dark:bg-blue-600 text-white rounded-lg hover:bg-blue-600 dark:hover:bg-blue-700 transition-colors duration-200 font-medium whitespace-nowrap"
+                >
+                    Initialize Widgets
+                </button>
+            </div>
+            <div id="initStatus" class="mt-2 text-sm"></div>
+            <p class="mt-2 text-xs text-gray-600 dark:text-gray-400">
+                Look for the hand icon (✋) in the upper-right corner of each content section after initialization.
+            </p>
+        </div>
+
+        <!-- 1. Static paragraph with Lorem Ipsum -->
+        <div id="article-content" coolhand-feedback data-coolhand-session-id="demo-article" class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 transition-colors duration-200">
+            <h2 class="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-4">Generated Article</h2>
+            <div class="prose prose-gray dark:prose-invert max-w-none">
+                <p class="text-gray-600 dark:text-gray-300 leading-relaxed">
+                    Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo.
+                </p>
+            </div>
+        </div>
+
+        <!-- 2. Textarea with pre-filled sample text -->
+        <div id="edit-content" coolhand-feedback data-coolhand-session-id="demo-edit" class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 transition-colors duration-200">
+            <h2 class="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-4">Edit Generated Text</h2>
+            <textarea
+                class="w-full min-h-[200px] px-3 py-2 text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-vertical transition-colors duration-200"
+                placeholder="Enter your text here...">This is a sample AI-generated response that demonstrates how an LLM might structure its output. The text includes multiple paragraphs to show formatting.
+
+Key points from the analysis:
+• The data shows a positive trend over the last quarter
+• User engagement has increased by 45%
+• Revenue projections exceed initial estimates
+
+In conclusion, the results indicate strong performance across all metrics, with particularly notable improvements in customer satisfaction scores and retention rates.</textarea>
+        </div>
+
+        <!-- 3. Chatbot UI with hardcoded messages -->
+        <div id="chat-content" class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 transition-colors duration-200">
+            <h2 class="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-4">Chat Interface</h2>
+            <div class="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+                <!-- Chat messages container -->
+                <div class="chat-container h-96 overflow-y-auto bg-gray-50 dark:bg-gray-900 p-4 space-y-4 transition-colors duration-200">
+                    <!-- User message -->
+                    <div class="flex justify-end">
+                        <div class="max-w-xs lg:max-w-md">
+                            <div class="bg-blue-500 text-white rounded-lg px-4 py-2">
+                                <p class="text-sm">Can you explain what machine learning is in simple terms?</p>
+                            </div>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1 text-right">User • 2:30 PM</p>
+                        </div>
+                    </div>
+
+                    <!-- Bot message -->
+                    <div class="flex justify-start">
+                        <div class="max-w-xs lg:max-w-md">
+                            <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 transition-colors duration-200">
+                                <p class="text-sm text-gray-800 dark:text-gray-200">Machine learning is like teaching a computer to recognize patterns and make decisions by showing it many examples, rather than explicitly programming every rule. Think of it like teaching a child to identify animals - instead of describing every detail, you show them many pictures until they can recognize cats, dogs, etc. on their own.</p>
+                            </div>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">AI Assistant • 2:31 PM</p>
+                        </div>
+                    </div>
+
+                    <!-- User message -->
+                    <div class="flex justify-end">
+                        <div class="max-w-xs lg:max-w-md">
+                            <div class="bg-blue-500 text-white rounded-lg px-4 py-2">
+                                <p class="text-sm">That makes sense! Can you give me a real-world example?</p>
+                            </div>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1 text-right">User • 2:32 PM</p>
+                        </div>
+                    </div>
+
+                    <!-- Bot message -->
+                    <div class="flex justify-start">
+                        <div class="max-w-xs lg:max-w-md">
+                            <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 transition-colors duration-200">
+                                <p class="text-sm text-gray-800 dark:text-gray-200">Sure! A great example is email spam filtering. The system learns from millions of emails that users have marked as spam or not spam. It identifies patterns like certain words, sender addresses, or formatting that commonly appear in spam. Over time, it gets better at automatically filtering out unwanted emails without you having to create rules for every possible spam scenario.</p>
+                            </div>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">AI Assistant • 2:33 PM</p>
+                        </div>
+                    </div>
+
+                    <!-- User message -->
+                    <div class="flex justify-end">
+                        <div class="max-w-xs lg:max-w-md">
+                            <div class="bg-blue-500 text-white rounded-lg px-4 py-2">
+                                <p class="text-sm">How accurate are these systems typically?</p>
+                            </div>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1 text-right">User • 2:34 PM</p>
+                        </div>
+                    </div>
+
+                    <!-- Bot message with typing indicator -->
+                    <div id="last-bot-message" coolhand-feedback data-coolhand-session-id="demo-chat" class="flex justify-start">
+                        <div class="max-w-xs lg:max-w-md">
+                            <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 transition-colors duration-200">
+                                <p class="text-sm text-gray-800 dark:text-gray-200">Accuracy varies widely depending on the task and data quality. For example, spam filters can achieve 99%+ accuracy, facial recognition systems often reach 95-99% accuracy in controlled conditions, while more complex tasks like natural language understanding might range from 70-90% depending on the specific application. The key is having enough quality training data and choosing the right algorithm for the task.</p>
+                            </div>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">AI Assistant • 2:35 PM</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Input area -->
+                <div class="border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-4 transition-colors duration-200">
+                    <div class="flex space-x-2">
+                        <input
+                            type="text"
+                            placeholder="Type your message..."
+                            class="flex-1 px-4 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder-gray-400 dark:placeholder-gray-500 transition-colors duration-200"
+                        />
+                        <button class="px-4 py-2 bg-blue-500 dark:bg-blue-600 text-white rounded-lg hover:bg-blue-600 dark:hover:bg-blue-700 transition-colors duration-200 font-medium">
+                            Send
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Dark mode toggle functionality
+        const themeToggle = document.getElementById('theme-toggle');
+        const htmlElement = document.documentElement;
+
+        // Check for saved theme preference or default to dark mode
+        const currentTheme = localStorage.getItem('theme') || 'dark';
+        htmlElement.className = currentTheme;
+
+        themeToggle.addEventListener('click', () => {
+            const currentTheme = htmlElement.className;
+            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+
+            htmlElement.className = newTheme;
+            localStorage.setItem('theme', newTheme);
+        });
+
+        // Coolhand Widget Initialization
+        document.addEventListener('DOMContentLoaded', () => {
+            const initButton = document.getElementById('initButton');
+            const apiKeyInput = document.getElementById('apiKeyInput');
+            const initStatus = document.getElementById('initStatus');
+            let widgetsInitialized = false;
+
+            // Check if CoolhandJS library is loaded
+            if (typeof CoolhandJS === 'undefined') {
+                initStatus.innerHTML = '<span class="text-red-600 dark:text-red-400">⚠️ CoolhandJS library not loaded. Make sure to run "npm run dev" first.</span>';
+                initButton.disabled = true;
+                initButton.className += ' opacity-50 cursor-not-allowed';
+                return;
+            }
+
+            console.log('✓ CoolhandJS library loaded successfully');
+
+            initButton.addEventListener('click', () => {
+                const apiKey = apiKeyInput.value.trim();
+
+                if (!apiKey) {
+                    initStatus.innerHTML = '<span class="text-red-600 dark:text-red-400">❌ Please enter an API key</span>';
+                    return;
+                }
+
+                // Initialize CoolhandJS with auto-attachment
+                if (CoolhandJS.init(apiKey)) {
+                    initStatus.innerHTML = '<span class="text-green-600 dark:text-green-400">✓ Initialized successfully - widgets auto-attached!</span>';
+                    console.log('✓ CoolhandJS initialized with auto-attachment enabled');
+                } else {
+                    initStatus.innerHTML = '<span class="text-red-600 dark:text-red-400">❌ Initialization failed</span>';
+                }
+            });
+
+            // Auto-attachment handles everything now via HTML attributes!
+            // No need for manual attachment code
+
+            function showNotification(message, isError = false) {
+                const notification = document.createElement('div');
+                notification.className = `fixed bottom-4 right-4 px-4 py-2 rounded-lg text-white ${
+                    isError ? 'bg-red-500' : 'bg-green-500'
+                } shadow-lg transition-opacity duration-500 z-50`;
+                notification.textContent = message;
+                document.body.appendChild(notification);
+
+                setTimeout(() => {
+                    notification.style.opacity = '0';
+                    setTimeout(() => notification.remove(), 500);
+                }, 3000);
+            }
+
+            // Auto-fill API key for demo purposes (remove in production)
+            // apiKeyInput.value = 'demo-api-key';
+        });
+    </script>
+</body>
+</html>

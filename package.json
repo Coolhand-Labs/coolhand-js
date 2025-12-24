@@ -1,0 +1,35 @@
+{
+  "name": "@coolhand/feedback-widget",
+  "version": "0.1.0",
+  "description": "Lightweight feedback widget for Coolhand API integration",
+  "main": "dist/coolhand.js",
+  "scripts": {
+    "build": "webpack --mode production",
+    "build:dev": "webpack --mode development",
+    "dev": "webpack serve --mode development",
+    "clean": "rm -rf dist",
+    "prepublishOnly": "npm run clean && npm run build"
+  },
+  "keywords": [
+    "coolhand",
+    "feedback",
+    "widget",
+    "llm",
+    "monitoring"
+  ],
+  "author": "Coolhand Labs",
+  "license": "Apache-2.0",
+  "devDependencies": {
+    "webpack": "^5.89.0",
+    "webpack-cli": "^5.1.4",
+    "webpack-dev-server": "^4.15.1",
+    "terser-webpack-plugin": "^5.3.9"
+  },
+  "files": [
+    "dist/"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/coolhandlabs/coolhand-js"
+  }
+}

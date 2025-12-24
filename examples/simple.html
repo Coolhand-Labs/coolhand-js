@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CoolhandJS - Simple Example</title>
+    <script src="/dist/coolhand.js"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+
+        .content-box {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            position: relative;
+        }
+
+        .api-setup {
+            background: #e3f2fd;
+            border-left: 4px solid #2196F3;
+        }
+
+        input {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-right: 10px;
+            width: 300px;
+        }
+
+        button {
+            padding: 8px 20px;
+            background: #2196F3;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #1976D2;
+        }
+
+        .status {
+            margin-top: 10px;
+            font-weight: bold;
+        }
+
+        .success { color: green; }
+        .error { color: red; }
+    </style>
+</head>
+<body>
+    <h1>CoolhandJS Simple Example</h1>
+
+    <div class="content-box api-setup">
+        <h3>1. Initialize CoolhandJS</h3>
+        <input type="text" id="apiKey" placeholder="Enter your API key">
+        <button onclick="initCoolhand()">Initialize</button>
+        <div id="status" class="status"></div>
+    </div>
+
+    <div class="content-box">
+        <h3>2. Content with Auto-Feedback</h3>
+        <p coolhand-feedback data-coolhand-session-id="simple-demo-1">
+            This paragraph has automatic feedback enabled! Just add the <code>coolhand-feedback</code>
+            attribute and CoolhandJS will automatically attach a feedback widget. Look for the hand icon
+            in the upper-right corner of this box.
+        </p>
+    </div>
+
+    <div class="content-box">
+        <h3>3. Another Feedback-Enabled Section</h3>
+        <div coolhand-feedback data-coolhand-session-id="simple-demo-2">
+            <p>This entire div has feedback enabled. You can add the attribute to any element with text content.</p>
+            <ul>
+                <li>No need to write JavaScript</li>
+                <li>No need to call attach() manually</li>
+                <li>Just add the HTML attribute</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="content-box">
+        <h3>4. Regular Content (No Feedback)</h3>
+        <p>This paragraph doesn't have the coolhand-feedback attribute, so no widget will appear.</p>
+    </div>
+
+    <h2>How It Works</h2>
+    <div class="content-box">
+        <h4>Super Simple Setup:</h4>
+        <pre><code>&lt;!-- 1. Include the script --&gt;
+&lt;script src="coolhand.js"&gt;&lt;/script&gt;
+
+&lt;!-- 2. Initialize with your API key --&gt;
+&lt;script&gt;
+  CoolhandJS.init('your-api-key');
+&lt;/script&gt;
+
+&lt;!-- 3. Add attribute to any element --&gt;
+&lt;p coolhand-feedback&gt;Your content here&lt;/p&gt;</code></pre>
+
+        <h4>Optional Session Tracking:</h4>
+        <pre><code>&lt;div coolhand-feedback data-coolhand-session-id="unique-session"&gt;
+  Content with session tracking
+&lt;/div&gt;</code></pre>
+    </div>
+
+    <script>
+        function initCoolhand() {
+            const apiKey = document.getElementById('apiKey').value.trim();
+            const status = document.getElementById('status');
+
+            if (!apiKey) {
+                status.className = 'status error';
+                status.textContent = '❌ Please enter an API key';
+                return;
+            }
+
+            if (typeof CoolhandJS === 'undefined') {
+                status.className = 'status error';
+                status.textContent = '❌ CoolhandJS not loaded. Run "npm run dev" first.';
+                return;
+            }
+
+            if (CoolhandJS.init(apiKey)) {
+                status.className = 'status success';
+                status.textContent = '✅ Initialized! Look for hand icons on content with coolhand-feedback attribute.';
+            } else {
+                status.className = 'status error';
+                status.textContent = '❌ Initialization failed';
+            }
+        }
+
+        // Check if library is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            const status = document.getElementById('status');
+            if (typeof CoolhandJS === 'undefined') {
+                status.className = 'status error';
+                status.textContent = '⚠️ CoolhandJS library not loaded. Make sure to run "npm run dev" first.';
+            } else {
+                status.className = 'status';
+                status.textContent = 'ℹ️ Ready to initialize with your API key';
+            }
+        });
+    </script>
+</body>
+</html>
