@@ -1,16 +1,16 @@
 # CoolhandJS Feedback Widget
 
-A lightweight, standalone JavaScript library for adding user feedback collection to any web content. The widget integrates seamlessly with the Coolhand API to capture user sentiment (thumbs up/down/neutral) on any HTML element.
+A lightweight, standalone JavaScript library for adding user feedback collection to any AI output. The widget integrates seamlessly with a single API endpoint which you can implement yourself or set up a quick, free account on Coolhand to capture & analyze in realtime.
 
 ## Features
 
-- 🎯 **Ultra Simple**: Add `coolhand-feedback` attribute to any element - no JavaScript required!
+- 🎯 **Ultra Simple**: Add `coolhand-feedback` attribute to any element - no custom JavaScript required!
 - 🛡️ **Isolated Styling**: Uses Shadow DOM (when available) to prevent CSS conflicts
 - 🎨 **Clean UI**: Minimal, non-intrusive design with smooth animations
 - 📦 **Zero Dependencies**: Pure JavaScript, no external libraries required
-- 🔒 **Secure**: API key authentication with proper CORS handling
-- 📱 **Responsive**: Works on desktop and mobile devices
-- ⚡ **Lightweight**: ~8KB minified and gzipped
+- 📱 **Customizable**: Easy to customize with your own styling or icons.
+- ⚡ **Lightweight**: ~16KB minified
+- 📘 **TypeScript Support**: Full type definitions included
 
 ## Installation
 
@@ -19,20 +19,20 @@ A lightweight, standalone JavaScript library for adding user feedback collection
 Include the script directly from a CDN:
 
 ```html
-<script src="https://cdn.coolhandlabs.com/feedback/1.0.0/coolhand.min.js"></script>
+<script src="https://cdn.coolhandlabs.com/feedback/0.1.0/coolhand.min.js"></script>
 ```
 
 ### NPM
 
 ```bash
-npm install @coolhand/feedback-widget
+npm install coolhand
 ```
 
 ### Local Build
 
 ```bash
 # Clone the repository
-git clone https://github.com/coolhandlabs/coolhand-js.git
+git clone https://github.com/Coolhand-Labs/coolhand-js.git
 cd coolhand-js
 
 # Install dependencies
@@ -56,7 +56,7 @@ npm run build
     <!-- Just add coolhand-feedback attribute -->
     <div coolhand-feedback>
         This content will automatically get a feedback widget!
-        The hand icon will appear in the upper-right corner.
+        The feedback icon will appear in the upper-right corner.
     </div>
 
     <script>
@@ -134,7 +134,7 @@ CoolhandJS.detach(document.getElementById('content'));
 
 ## HTML Attribute API (Recommended)
 
-The easiest way to use CoolhandJS is with HTML attributes:
+CoolhandJS makes it incredibly easy to capture human feedback on AI outputs. Just add the coolhand-feedback attribute on HTML div containing the feedback:
 
 ### Basic Usage
 ```html
@@ -155,10 +155,10 @@ The easiest way to use CoolhandJS is with HTML attributes:
 
 ## Feedback Values
 
-The widget sends three types of feedback to the Coolhand API:
+The widget sends three types of feedback to the API endpoint:
 
 - 👍 **Thumbs Up**: `like: true`
-- 🤷 **Neutral/Shrug**: `like: null`
+- 😐 **Neutral**: `like: null`
 - 👎 **Thumbs Down**: `like: false`
 
 ## Requirements
@@ -187,7 +187,60 @@ The Coolhand API supports CORS for browser-based requests. If you encounter CORS
 2. Check that you're using HTTPS in production
 3. Verify your API key has the correct permissions
 
-## Styling & Conflicts
+## Styling & Customization
+
+The widget uses CSS custom properties (variables) for easy customization while maintaining style isolation.
+
+### CSS Variables
+
+Override these variables to match your design:
+
+```css
+/* Apply to elements with the widget */
+[coolhand-feedback] {
+  --coolhand-bg: #ffffff;           /* Background color */
+  --coolhand-bg-hover: #f8f9fa;     /* Hover state background */
+  --coolhand-border: #e5e7eb;       /* Border color */
+  --coolhand-border-radius: 6px;    /* Corner radius */
+  --coolhand-text: #374151;         /* Primary text/icon color */
+  --coolhand-text-muted: #6b7280;   /* Secondary text/icon color */
+  --coolhand-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);       /* Default shadow */
+  --coolhand-shadow-hover: 0 6px 16px rgba(0, 0, 0, 0.12); /* Hover shadow */
+  --coolhand-accent: #2563eb;       /* Accent color */
+  --coolhand-success: #10b981;      /* Success/positive color */
+  --coolhand-icon-size: 18px;       /* Icon dimensions */
+  --coolhand-font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --coolhand-font-size: 12px;       /* Prompt text size */
+}
+```
+
+### Dark Mode Example
+
+```css
+/* Dark mode customization */
+[coolhand-feedback] {
+  --coolhand-bg: #1f2937;
+  --coolhand-bg-hover: #374151;
+  --coolhand-border: #4b5563;
+  --coolhand-text: #f9fafb;
+  --coolhand-text-muted: #9ca3af;
+  --coolhand-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  --coolhand-shadow-hover: 0 6px 16px rgba(0, 0, 0, 0.4);
+}
+```
+
+### Brand Color Example
+
+```css
+/* Match your brand colors */
+[coolhand-feedback] {
+  --coolhand-accent: #7c3aed;       /* Purple accent */
+  --coolhand-success: #22c55e;      /* Green for positive */
+  --coolhand-border-radius: 12px;   /* More rounded corners */
+}
+```
+
+### Style Isolation
 
 The widget is designed to avoid conflicts with your existing styles:
 
@@ -195,49 +248,6 @@ The widget is designed to avoid conflicts with your existing styles:
 - **Scoped Classes**: All classes use `coolhand-` prefix
 - **High Specificity**: Z-index of 99999 ensures visibility
 - **No Global Styles**: Widget styles don't affect your page
-
-## Development
-
-### Setup
-
-```bash
-npm install
-```
-
-### Commands
-
-```bash
-# Development server (http://localhost:3333)
-npm run dev
-
-# Build production version
-npm run build
-
-# Build development version
-npm run build:dev
-
-# Clean dist folder
-npm run clean
-```
-
-### Testing
-
-Open `examples/index.html` after running `npm run dev` to test the widget with various content types. The dev server runs on `http://localhost:3333`.
-
-## API Payload
-
-The widget sends the following payload to the Coolhand API:
-
-```json
-{
-  "llm_request_log_feedback": {
-    "like": true,  // true, false, or null
-    "original_output": "The text content from the element",
-    "collector": "coolhand-js-1.0.0",
-    "client_unique_id": "optional-session-id"
-  }
-}
-```
 
 ## Troubleshooting
 
@@ -264,6 +274,7 @@ Apache-2.0 License - see [LICENSE](LICENSE) file for details.
 
 ## Support
 
-- Documentation: [docs.coolhandlabs.com](https://docs.coolhandlabs.com)
-- Issues: [GitHub Issues](https://github.com/coolhandlabs/coolhand-js/issues)
-- Email: support@coolhandlabs.com
+- Create a Free Coolhand Account: [coolhandlabs.com](https://coolhandlabs.com)
+- Coolhand API Documentation: [coolhandlabs.com/docs](https://coolhandlabs.com/docs)
+- Issues: [GitHub Issues](https://github.com/Coolhand-Labs/coolhand-js/issues)
+- Email: team@coolhandlabs.com

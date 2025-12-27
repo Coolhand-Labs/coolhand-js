@@ -6,7 +6,7 @@
     <title>Coolhand Feedback Widget - LLM Output Demo</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Load Coolhand Feedback Widget -->
-    <script src="/dist/coolhand.js"></script>
+    <script src="/dist/coolhand.min.js"></script>
     <script>
         tailwind.config = {
             darkMode: 'class',
@@ -125,7 +125,7 @@ In conclusion, the results indicate strong performance across all metrics, with 
             <h2 class="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-4">Chat Interface</h2>
             <div class="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
                 <!-- Chat messages container -->
-                <div class="chat-container h-96 overflow-y-auto bg-gray-50 dark:bg-gray-900 p-4 space-y-4 transition-colors duration-200">
+                <div id="chatMessages" class="chat-container h-96 overflow-y-auto bg-gray-50 dark:bg-gray-900 p-4 space-y-4 transition-colors duration-200">
                     <!-- User message -->
                     <div class="flex justify-end">
                         <div class="max-w-xs lg:max-w-md">
@@ -139,7 +139,7 @@ In conclusion, the results indicate strong performance across all metrics, with 
                     <!-- Bot message -->
                     <div class="flex justify-start">
                         <div class="max-w-xs lg:max-w-md">
-                            <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 transition-colors duration-200">
+                            <div coolhand-feedback data-coolhand-session-id="demo-chat-1" class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg pl-4 pr-14 py-2 transition-colors duration-200">
                                 <p class="text-sm text-gray-800 dark:text-gray-200">Machine learning is like teaching a computer to recognize patterns and make decisions by showing it many examples, rather than explicitly programming every rule. Think of it like teaching a child to identify animals - instead of describing every detail, you show them many pictures until they can recognize cats, dogs, etc. on their own.</p>
                             </div>
                             <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">AI Assistant • 2:31 PM</p>
@@ -159,7 +159,7 @@ In conclusion, the results indicate strong performance across all metrics, with 
                     <!-- Bot message -->
                     <div class="flex justify-start">
                         <div class="max-w-xs lg:max-w-md">
-                            <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 transition-colors duration-200">
+                            <div coolhand-feedback data-coolhand-session-id="demo-chat-2" class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg pl-4 pr-14 py-2 transition-colors duration-200">
                                 <p class="text-sm text-gray-800 dark:text-gray-200">Sure! A great example is email spam filtering. The system learns from millions of emails that users have marked as spam or not spam. It identifies patterns like certain words, sender addresses, or formatting that commonly appear in spam. Over time, it gets better at automatically filtering out unwanted emails without you having to create rules for every possible spam scenario.</p>
                             </div>
                             <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">AI Assistant • 2:33 PM</p>
@@ -176,10 +176,10 @@ In conclusion, the results indicate strong performance across all metrics, with 
                         </div>
                     </div>
 
-                    <!-- Bot message with typing indicator -->
-                    <div id="last-bot-message" coolhand-feedback data-coolhand-session-id="demo-chat" class="flex justify-start">
+                    <!-- Bot message -->
+                    <div class="flex justify-start">
                         <div class="max-w-xs lg:max-w-md">
-                            <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 transition-colors duration-200">
+                            <div coolhand-feedback data-coolhand-session-id="demo-chat-3" class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg pl-4 pr-14 py-2 transition-colors duration-200">
                                 <p class="text-sm text-gray-800 dark:text-gray-200">Accuracy varies widely depending on the task and data quality. For example, spam filters can achieve 99%+ accuracy, facial recognition systems often reach 95-99% accuracy in controlled conditions, while more complex tasks like natural language understanding might range from 70-90% depending on the specific application. The key is having enough quality training data and choosing the right algorithm for the task.</p>
                             </div>
                             <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">AI Assistant • 2:35 PM</p>
@@ -191,11 +191,12 @@ In conclusion, the results indicate strong performance across all metrics, with 
                 <div class="border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-4 transition-colors duration-200">
                     <div class="flex space-x-2">
                         <input
+                            id="chatInput"
                             type="text"
                             placeholder="Type your message..."
                             class="flex-1 px-4 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder-gray-400 dark:placeholder-gray-500 transition-colors duration-200"
                         />
-                        <button class="px-4 py-2 bg-blue-500 dark:bg-blue-600 text-white rounded-lg hover:bg-blue-600 dark:hover:bg-blue-700 transition-colors duration-200 font-medium">
+                        <button id="chatSendBtn" class="px-4 py-2 bg-blue-500 dark:bg-blue-600 text-white rounded-lg hover:bg-blue-600 dark:hover:bg-blue-700 transition-colors duration-200 font-medium">
                             Send
                         </button>
                     </div>
@@ -274,6 +275,69 @@ In conclusion, the results indicate strong performance across all metrics, with 
 
             // Auto-fill API key for demo purposes (remove in production)
             // apiKeyInput.value = 'demo-api-key';
+
+            // Chat functionality
+            const chatInput = document.getElementById('chatInput');
+            const chatSendBtn = document.getElementById('chatSendBtn');
+            const chatMessages = document.getElementById('chatMessages');
+            let messageCount = 4; // Starting after the existing messages
+
+            function getCurrentTime() {
+                return new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+            }
+
+            function sendMessage() {
+                const message = chatInput.value.trim();
+                if (!message) return;
+
+                // Add user message
+                const userHtml = `
+                    <div class="flex justify-end">
+                        <div class="max-w-xs lg:max-w-md">
+                            <div class="bg-blue-500 text-white rounded-lg px-4 py-2">
+                                <p class="text-sm">${message}</p>
+                            </div>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1 text-right">User • ${getCurrentTime()}</p>
+                        </div>
+                    </div>
+                `;
+                chatMessages.insertAdjacentHTML('beforeend', userHtml);
+
+                // Clear input
+                chatInput.value = '';
+
+                // Add assistant response after a short delay
+                setTimeout(() => {
+                    messageCount++;
+                    const assistantHtml = `
+                        <div class="flex justify-start">
+                            <div class="max-w-xs lg:max-w-md">
+                                <div coolhand-feedback data-coolhand-session-id="demo-chat-${messageCount}" class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg pl-4 pr-14 py-2 transition-colors duration-200">
+                                    <p class="text-sm text-gray-800 dark:text-gray-200">This is a sample assistant response.</p>
+                                </div>
+                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">AI Assistant • ${getCurrentTime()}</p>
+                            </div>
+                        </div>
+                    `;
+                    chatMessages.insertAdjacentHTML('beforeend', assistantHtml);
+
+                    // Scroll to bottom
+                    chatMessages.scrollTop = chatMessages.scrollHeight;
+
+                    // Attach widget to new response if CoolhandJS is initialized
+                    if (typeof CoolhandJS !== 'undefined' && CoolhandJS.isInitialized && CoolhandJS.isInitialized()) {
+                        CoolhandJS.init(CoolhandJS.getApiKey());
+                    }
+                }, 500);
+
+                // Scroll to bottom
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }
+
+            chatSendBtn.addEventListener('click', sendMessage);
+            chatInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') sendMessage();
+            });
         });
     </script>
 </body>
