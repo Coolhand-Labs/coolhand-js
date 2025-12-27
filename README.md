@@ -16,13 +16,23 @@ A lightweight, standalone JavaScript library for adding user feedback collection
 
 ### CDN
 
-Include the script directly from a CDN:
+Include via jsDelivr - these automatically mirror the npm package:
 
 ```html
-<script src="https://cdn.coolhandlabs.com/feedback/0.1.0/coolhand.min.js"></script>
+<!-- jsDelivr (recommended) -->
+<script src="https://cdn.jsdelivr.net/npm/coolhand@0.1.0/dist/coolhand.min.js"></script>
+
+<!-- Latest version (auto-updates) -->
+<script src="https://cdn.jsdelivr.net/npm/coolhand/dist/coolhand.min.js"></script>
 ```
 
-### NPM
+Or via GitHub releases:
+
+```html
+<script src="https://github.com/Coolhand-Labs/coolhand-js/releases/download/v0.1.0/coolhand.min.js"></script>
+```
+
+### npm
 
 ```bash
 npm install coolhand
