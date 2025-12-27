@@ -1,10 +1,9 @@
 {
   "name": "coolhand",
   "version": "0.1.0",
-  "description": "Lightweight feedback widget for Coolhand API integration",
+  "description": "Lightweight, UX-optimized widget for collecting human feedback on AI outputs",
   "main": "dist/coolhand.js",
   "types": "dist/index.d.ts",
-  "type": "module",
   "scripts": {
     "build": "webpack",
     "dev": "webpack serve --mode development",
@@ -25,11 +24,19 @@
     "feedback",
     "widget",
     "llm",
-    "monitoring",
-    "typescript"
+    "ai",
+    "chatbot",
+    "user feedback",
+    "humam feedback",
+    "design",
+    "ux"
   ],
   "author": "Coolhand Labs",
   "license": "Apache-2.0",
+  "homepage": "https://github.com/Coolhand-Labs/coolhand-js",
+  "bugs": {
+    "url": "https://github.com/Coolhand-Labs/coolhand-js/issues"
+  },
   "devDependencies": {
     "@types/jest": "^30.0.0",
     "@types/node": "^25.0.3",
@@ -53,6 +60,6 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/Coolhand-Labs/coolhand-js"
+    "url": "git+https://github.com/Coolhand-Labs/coolhand-js.git"
   }
 }
