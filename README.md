@@ -12,6 +12,15 @@ A lightweight, standalone JavaScript library for adding user feedback collection
 - ⚡ **Lightweight**: ~16KB minified
 - 📘 **TypeScript Support**: Full type definitions included
 
+## Related Packages
+
+| Package | Environment | Purpose |
+|---------|-------------|---------|
+| `coolhand` | Browser | Feedback widget for collecting user sentiment on AI outputs |
+| `coolhand-node` | Node.js | Server-side monitoring and logging of LLM API calls |
+
+This package (`coolhand`) is the **browser SDK** for frontend feedback collection. For server-side LLM monitoring, see [coolhand-node](https://github.com/Coolhand-Labs/coolhand-node).
+
 ## Installation
 
 ### CDN
