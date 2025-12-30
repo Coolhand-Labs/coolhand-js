@@ -208,7 +208,9 @@ export class FeedbackWidget {
     if (!this.feedbackButtons) return;
 
     const buttons = Array.from(this.feedbackButtons) as HTMLElement[];
-    const currentIndex = buttons.findIndex((btn) => btn === document.activeElement);
+    // In Shadow DOM, document.activeElement returns the host, so use shadowRoot.activeElement
+    const activeElement = this.shadowRoot?.activeElement ?? document.activeElement;
+    const currentIndex = buttons.findIndex((btn) => btn === activeElement);
 
     switch (e.key) {
       case 'ArrowRight':
