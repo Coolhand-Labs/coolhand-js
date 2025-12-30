@@ -11,6 +11,17 @@ A lightweight, standalone JavaScript library for adding user feedback collection
 - 📱 **Customizable**: Easy to customize with your own styling or icons.
 - ⚡ **Lightweight**: ~16KB minified
 - 📘 **TypeScript Support**: Full type definitions included
+- ♿ **Accessible**: WCAG 2.1 AA compliant with full keyboard navigation and screen reader support
+
+## Accessibility
+
+The widget is designed with accessibility in mind:
+
+- **Keyboard Navigation**: Full keyboard support including Tab, Enter/Space, Escape, and Arrow keys
+- **Screen Reader Support**: ARIA labels, roles, and live regions for real-time announcements
+- **Focus Management**: Visible focus indicators on all interactive elements
+- **Reduced Motion**: Respects `prefers-reduced-motion` user preference
+- **Semantic HTML**: Proper button elements with `role="radiogroup"` and `role="radio"` for feedback options
 
 ## Related Packages
 
@@ -29,7 +40,7 @@ Include via jsDelivr - these automatically mirror the npm package:
 
 ```html
 <!-- jsDelivr (recommended) -->
-<script src="https://cdn.jsdelivr.net/npm/coolhand@0.1.0/dist/coolhand.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/coolhand@0.2.0/dist/coolhand.min.js"></script>
 
 <!-- Latest version (auto-updates) -->
 <script src="https://cdn.jsdelivr.net/npm/coolhand/dist/coolhand.min.js"></script>
@@ -38,7 +49,7 @@ Include via jsDelivr - these automatically mirror the npm package:
 Or via GitHub releases:
 
 ```html
-<script src="https://github.com/Coolhand-Labs/coolhand-js/releases/download/v0.1.0/coolhand.min.js"></script>
+<script src="https://github.com/Coolhand-Labs/coolhand-js/releases/download/v0.2.0/coolhand.min.js"></script>
 ```
 
 ### npm

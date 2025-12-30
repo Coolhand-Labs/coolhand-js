@@ -411,6 +411,178 @@ describe('FeedbackWidget', () => {
     });
   });
 
+  describe('keyboard navigation', () => {
+    it('should close options when Escape is pressed on trigger while expanded', () => {
+      widget = new FeedbackWidget(element, 'Test content', 'test-api-key');
+
+      const container = element.querySelector('[data-coolhand-widget]');
+      const shadowRoot = container?.shadowRoot;
+      const trigger = shadowRoot?.querySelector('.coolhand-trigger') as HTMLElement;
+      const options = shadowRoot?.querySelector('.coolhand-options');
+
+      // Expand options
+      trigger?.click();
+      expect(options?.classList.contains('expanded')).toBe(true);
+
+      // Press Escape on trigger
+      const escapeEvent = new KeyboardEvent('keydown', { key: 'Escape', bubbles: true });
+      trigger?.dispatchEvent(escapeEvent);
+
+      expect(options?.classList.contains('expanded')).toBe(false);
+    });
+
+    it('should close options when global Escape is pressed while expanded', () => {
+      widget = new FeedbackWidget(element, 'Test content', 'test-api-key');
+
+      const container = element.querySelector('[data-coolhand-widget]');
+      const shadowRoot = container?.shadowRoot;
+      const trigger = shadowRoot?.querySelector('.coolhand-trigger') as HTMLElement;
+      const options = shadowRoot?.querySelector('.coolhand-options');
+
+      // Expand options
+      trigger?.click();
+      expect(options?.classList.contains('expanded')).toBe(true);
+
+      // Press Escape on document
+      const escapeEvent = new KeyboardEvent('keydown', { key: 'Escape', bubbles: true });
+      document.dispatchEvent(escapeEvent);
+
+      expect(options?.classList.contains('expanded')).toBe(false);
+    });
+
+    it('should navigate to next option with ArrowRight', () => {
+      widget = new FeedbackWidget(element, 'Test content', 'test-api-key');
+
+      const container = element.querySelector('[data-coolhand-widget]');
+      const shadowRoot = container?.shadowRoot;
+      const trigger = shadowRoot?.querySelector('.coolhand-trigger') as HTMLElement;
+      const optionsPanel = shadowRoot?.querySelector('.coolhand-options') as HTMLElement;
+      const buttons = shadowRoot?.querySelectorAll('.coolhand-option');
+
+      // Expand options
+      trigger?.click();
+
+      // Focus first button
+      (buttons?.[0] as HTMLElement)?.focus();
+
+      // Press ArrowRight on options panel
+      const arrowEvent = new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true });
+      optionsPanel?.dispatchEvent(arrowEvent);
+
+      // In Shadow DOM, use shadowRoot.activeElement
+      expect(shadowRoot?.activeElement).toBe(buttons?.[1]);
+    });
+
+    it('should navigate to next option with ArrowDown', () => {
+      widget = new FeedbackWidget(element, 'Test content', 'test-api-key');
+
+      const container = element.querySelector('[data-coolhand-widget]');
+      const shadowRoot = container?.shadowRoot;
+      const trigger = shadowRoot?.querySelector('.coolhand-trigger') as HTMLElement;
+      const optionsPanel = shadowRoot?.querySelector('.coolhand-options') as HTMLElement;
+      const buttons = shadowRoot?.querySelectorAll('.coolhand-option');
+
+      trigger?.click();
+      (buttons?.[0] as HTMLElement)?.focus();
+
+      const arrowEvent = new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true });
+      optionsPanel?.dispatchEvent(arrowEvent);
+
+      expect(shadowRoot?.activeElement).toBe(buttons?.[1]);
+    });
+
+    it('should navigate to previous option with ArrowLeft', () => {
+      widget = new FeedbackWidget(element, 'Test content', 'test-api-key');
+
+      const container = element.querySelector('[data-coolhand-widget]');
+      const shadowRoot = container?.shadowRoot;
+      const trigger = shadowRoot?.querySelector('.coolhand-trigger') as HTMLElement;
+      const optionsPanel = shadowRoot?.querySelector('.coolhand-options') as HTMLElement;
+      const buttons = shadowRoot?.querySelectorAll('.coolhand-option');
+
+      trigger?.click();
+      (buttons?.[1] as HTMLElement)?.focus();
+
+      const arrowEvent = new KeyboardEvent('keydown', { key: 'ArrowLeft', bubbles: true });
+      optionsPanel?.dispatchEvent(arrowEvent);
+
+      expect(shadowRoot?.activeElement).toBe(buttons?.[0]);
+    });
+
+    it('should navigate to previous option with ArrowUp', () => {
+      widget = new FeedbackWidget(element, 'Test content', 'test-api-key');
+
+      const container = element.querySelector('[data-coolhand-widget]');
+      const shadowRoot = container?.shadowRoot;
+      const trigger = shadowRoot?.querySelector('.coolhand-trigger') as HTMLElement;
+      const optionsPanel = shadowRoot?.querySelector('.coolhand-options') as HTMLElement;
+      const buttons = shadowRoot?.querySelectorAll('.coolhand-option');
+
+      trigger?.click();
+      (buttons?.[1] as HTMLElement)?.focus();
+
+      const arrowEvent = new KeyboardEvent('keydown', { key: 'ArrowUp', bubbles: true });
+      optionsPanel?.dispatchEvent(arrowEvent);
+
+      expect(shadowRoot?.activeElement).toBe(buttons?.[0]);
+    });
+
+    it('should wrap from last to first option with ArrowRight', () => {
+      widget = new FeedbackWidget(element, 'Test content', 'test-api-key');
+
+      const container = element.querySelector('[data-coolhand-widget]');
+      const shadowRoot = container?.shadowRoot;
+      const trigger = shadowRoot?.querySelector('.coolhand-trigger') as HTMLElement;
+      const optionsPanel = shadowRoot?.querySelector('.coolhand-options') as HTMLElement;
+      const buttons = shadowRoot?.querySelectorAll('.coolhand-option');
+
+      trigger?.click();
+      (buttons?.[2] as HTMLElement)?.focus(); // Focus last button
+
+      const arrowEvent = new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true });
+      optionsPanel?.dispatchEvent(arrowEvent);
+
+      expect(shadowRoot?.activeElement).toBe(buttons?.[0]); // Should wrap to first
+    });
+
+    it('should wrap from first to last option with ArrowLeft', () => {
+      widget = new FeedbackWidget(element, 'Test content', 'test-api-key');
+
+      const container = element.querySelector('[data-coolhand-widget]');
+      const shadowRoot = container?.shadowRoot;
+      const trigger = shadowRoot?.querySelector('.coolhand-trigger') as HTMLElement;
+      const optionsPanel = shadowRoot?.querySelector('.coolhand-options') as HTMLElement;
+      const buttons = shadowRoot?.querySelectorAll('.coolhand-option');
+
+      trigger?.click();
+      (buttons?.[0] as HTMLElement)?.focus(); // Focus first button
+
+      const arrowEvent = new KeyboardEvent('keydown', { key: 'ArrowLeft', bubbles: true });
+      optionsPanel?.dispatchEvent(arrowEvent);
+
+      expect(shadowRoot?.activeElement).toBe(buttons?.[2]); // Should wrap to last
+    });
+
+    it('should close options and return focus to trigger on Escape in options panel', () => {
+      widget = new FeedbackWidget(element, 'Test content', 'test-api-key');
+
+      const container = element.querySelector('[data-coolhand-widget]');
+      const shadowRoot = container?.shadowRoot;
+      const trigger = shadowRoot?.querySelector('.coolhand-trigger') as HTMLElement;
+      const optionsPanel = shadowRoot?.querySelector('.coolhand-options') as HTMLElement;
+      const options = shadowRoot?.querySelector('.coolhand-options');
+
+      trigger?.click();
+      expect(options?.classList.contains('expanded')).toBe(true);
+
+      const escapeEvent = new KeyboardEvent('keydown', { key: 'Escape', bubbles: true });
+      optionsPanel?.dispatchEvent(escapeEvent);
+
+      expect(options?.classList.contains('expanded')).toBe(false);
+      expect(shadowRoot?.activeElement).toBe(trigger);
+    });
+  });
+
   describe('checkmark animation', () => {
     beforeEach(() => {
       jest.useFakeTimers();
