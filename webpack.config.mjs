@@ -1,9 +1,20 @@
 import path from 'path';
+import webpack from 'webpack';
 import TerserPlugin from 'terser-webpack-plugin';
 import { fileURLToPath } from 'url';
+import { createRequire } from 'module';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+// Import package.json to get version
+const require = createRequire(import.meta.url);
+const packageJson = require('./package.json');
+
+// Define plugin to inject version at build time
+const definePlugin = new webpack.DefinePlugin({
+  __COOLHANDJS_VERSION__: JSON.stringify(packageJson.version),
+});
 
 const baseConfig = {
   entry: './src/index.ts',
@@ -19,6 +30,7 @@ const baseConfig = {
       }
     ]
   },
+  plugins: [definePlugin],
 };
 
 const outputConfig = {
