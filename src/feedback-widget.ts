@@ -345,6 +345,10 @@ export class FeedbackWidget {
       payload.llm_request_log_feedback.client_unique_id = this.options.sessionId;
     }
 
+    if (this.options.workloadId) {
+      payload.llm_request_log_feedback.workload_hashid = this.options.workloadId;
+    }
+
     try {
       const response = await fetch(COOLHAND_API_URL, {
         method: 'POST',

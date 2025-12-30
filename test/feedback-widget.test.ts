@@ -196,6 +196,55 @@ describe('FeedbackWidget', () => {
       );
     });
 
+    it('should include workload_hashid when workloadId is provided', async () => {
+      widget = new FeedbackWidget(element, 'Test content', 'test-api-key', {
+        workloadId: 'abc123def456',
+      });
+
+      const container = element.querySelector('[data-coolhand-widget]');
+      const shadowRoot = container?.shadowRoot;
+      const trigger = shadowRoot?.querySelector('.coolhand-trigger') as HTMLElement;
+      const thumbsUp = shadowRoot?.querySelector(
+        '[data-feedback="up"]'
+      ) as HTMLElement;
+
+      trigger?.click();
+      thumbsUp?.click();
+
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        COOLHAND_API_URL,
+        expect.objectContaining({
+          body: expect.stringContaining('"workload_hashid":"abc123def456"'),
+        })
+      );
+    });
+
+    it('should NOT include workload_hashid when workloadId is not provided', async () => {
+      widget = new FeedbackWidget(element, 'Test content', 'test-api-key');
+
+      const container = element.querySelector('[data-coolhand-widget]');
+      const shadowRoot = container?.shadowRoot;
+      const trigger = shadowRoot?.querySelector('.coolhand-trigger') as HTMLElement;
+      const thumbsUp = shadowRoot?.querySelector(
+        '[data-feedback="up"]'
+      ) as HTMLElement;
+
+      trigger?.click();
+      thumbsUp?.click();
+
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      // Verify workload_hashid is not in the payload
+      expect(mockFetch).toHaveBeenCalledWith(
+        COOLHAND_API_URL,
+        expect.objectContaining({
+          body: expect.not.stringContaining('workload_hashid'),
+        })
+      );
+    });
+
     it('should include collector version in payload', async () => {
       widget = new FeedbackWidget(element, 'Test content', 'test-api-key');
 
