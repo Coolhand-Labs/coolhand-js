@@ -1,6 +1,6 @@
 {
   "name": "coolhand",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Lightweight, UX-optimized widget for collecting human feedback on AI outputs",
   "main": "dist/coolhand.js",
   "types": "dist/index.d.ts",
@@ -15,6 +15,7 @@
     "test": "NODE_OPTIONS='--experimental-vm-modules' jest",
     "test:watch": "NODE_OPTIONS='--experimental-vm-modules' jest --watch",
     "test:coverage": "NODE_OPTIONS='--experimental-vm-modules' jest --coverage",
+    "test:a11y": "NODE_OPTIONS='--experimental-vm-modules' jest --testPathPatterns=accessibility",
     "test:bundle": "NODE_OPTIONS='--experimental-vm-modules' jest --testPathIgnorePatterns='/node_modules/' --testPathPatterns=bundle.test.ts",
     "clean": "rm -rf dist coverage",
     "prepublishOnly": "npm run clean && npm run lint && npm run test && npm run build"
@@ -38,13 +39,16 @@
     "url": "https://github.com/Coolhand-Labs/coolhand-js/issues"
   },
   "devDependencies": {
+    "@testing-library/jest-dom": "^6.9.1",
     "@types/jest": "^30.0.0",
+    "@types/jest-axe": "^3.5.9",
     "@types/node": "^25.0.3",
     "@typescript-eslint/eslint-plugin": "^8.50.1",
     "@typescript-eslint/parser": "^8.50.1",
     "eslint": "^9.39.2",
     "eslint-config-prettier": "^10.1.8",
     "jest": "^30.2.0",
+    "jest-axe": "^10.0.0",
     "jest-environment-jsdom": "^30.2.0",
     "prettier": "^3.7.4",
     "terser-webpack-plugin": "^5.3.9",

@@ -58,6 +58,15 @@ export const widgetStyles = `
     border-color: var(--coolhand-text-muted);
   }
 
+  .coolhand-trigger:focus {
+    outline: none;
+  }
+
+  .coolhand-trigger:focus-visible {
+    outline: 2px solid var(--coolhand-accent);
+    outline-offset: 2px;
+  }
+
   /* All SVGs in trigger */
   .coolhand-trigger svg {
     width: var(--coolhand-icon-size);
@@ -192,6 +201,15 @@ export const widgetStyles = `
     stroke: var(--coolhand-text);
   }
 
+  .coolhand-option:focus {
+    outline: none;
+  }
+
+  .coolhand-option:focus-visible {
+    outline: 2px solid var(--coolhand-accent);
+    outline-offset: 2px;
+  }
+
   .coolhand-option.selected {
     background: var(--coolhand-bg-hover);
     border-color: var(--coolhand-accent);
@@ -263,6 +281,15 @@ export const widgetStyles = `
     background: var(--coolhand-bg-hover);
   }
 
+  .coolhand-close:focus {
+    outline: none;
+  }
+
+  .coolhand-close:focus-visible {
+    outline: 2px solid var(--coolhand-accent);
+    outline-offset: 2px;
+  }
+
   .coolhand-close svg {
     width: 14px;
     height: 14px;
@@ -305,6 +332,37 @@ export const widgetStyles = `
   .coolhand-trigger.showing-checkmark {
     background: #ecfdf5;
     border-color: var(--coolhand-success);
+  }
+
+  /* Visually hidden class for screen reader announcements */
+  .coolhand-sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  /* Reduced motion support */
+  @media (prefers-reduced-motion: reduce) {
+    .coolhand-trigger,
+    .coolhand-option,
+    .coolhand-close,
+    .coolhand-option svg {
+      transition: none;
+    }
+
+    .coolhand-success {
+      animation: none;
+    }
+
+    @keyframes coolhand-pulse {
+      0%, 100% { transform: scale(1); }
+    }
   }
 </style>
 `;
