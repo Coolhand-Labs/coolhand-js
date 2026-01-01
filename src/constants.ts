@@ -26,6 +26,11 @@ export const SESSION_ID_ATTRIBUTE = 'data-coolhand-session-id';
 export const WORKLOAD_ID_ATTRIBUTE = 'data-coolhand-workload-id';
 
 /**
+ * Data attribute for storing the feedback ID after submission
+ */
+export const FEEDBACK_ID_ATTRIBUTE = 'data-coolhand-feedback-id';
+
+/**
  * CSS class prefix for all widget styles
  */
 export const CSS_PREFIX = 'coolhand';

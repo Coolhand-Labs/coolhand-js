@@ -268,6 +268,124 @@ describe('FeedbackWidget', () => {
       );
     });
 
+    it('should set data-coolhand-feedback-id on element after successful submission', async () => {
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            id: 12345,
+            like: true,
+            created_at: '2024-01-01T00:00:00Z',
+            updated_at: '2024-01-01T00:00:00Z',
+          }),
+      });
+
+      widget = new FeedbackWidget(element, 'Test content', 'test-api-key');
+
+      const container = element.querySelector('[data-coolhand-widget]');
+      const shadowRoot = container?.shadowRoot;
+      const trigger = shadowRoot?.querySelector('.coolhand-trigger') as HTMLElement;
+      const thumbsUp = shadowRoot?.querySelector(
+        '[data-feedback="up"]'
+      ) as HTMLElement;
+
+      // Verify no feedback ID initially
+      expect(element.getAttribute('data-coolhand-feedback-id')).toBeNull();
+
+      trigger?.click();
+      thumbsUp?.click();
+
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      // Verify feedback ID is set after submission
+      expect(element.getAttribute('data-coolhand-feedback-id')).toBe('12345');
+    });
+
+    it('should use PATCH to update when data-coolhand-feedback-id exists', async () => {
+      // Set existing feedback ID on the element
+      element.setAttribute('data-coolhand-feedback-id', '99999');
+
+      widget = new FeedbackWidget(element, 'Test content', 'test-api-key');
+
+      const container = element.querySelector('[data-coolhand-widget]');
+      const shadowRoot = container?.shadowRoot;
+      const trigger = shadowRoot?.querySelector('.coolhand-trigger') as HTMLElement;
+      const thumbsDown = shadowRoot?.querySelector(
+        '[data-feedback="down"]'
+      ) as HTMLElement;
+
+      trigger?.click();
+      thumbsDown?.click();
+
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      // Verify PATCH was called with the feedback ID in the URL
+      expect(mockFetch).toHaveBeenCalledWith(
+        `${COOLHAND_API_URL}/99999`,
+        expect.objectContaining({
+          method: 'PATCH',
+          body: expect.stringContaining('"like":false'),
+        })
+      );
+    });
+
+    it('should use POST to create when no data-coolhand-feedback-id exists', async () => {
+      widget = new FeedbackWidget(element, 'Test content', 'test-api-key');
+
+      const container = element.querySelector('[data-coolhand-widget]');
+      const shadowRoot = container?.shadowRoot;
+      const trigger = shadowRoot?.querySelector('.coolhand-trigger') as HTMLElement;
+      const thumbsUp = shadowRoot?.querySelector(
+        '[data-feedback="up"]'
+      ) as HTMLElement;
+
+      trigger?.click();
+      thumbsUp?.click();
+
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      // Verify POST was called to the base URL
+      expect(mockFetch).toHaveBeenCalledWith(
+        COOLHAND_API_URL,
+        expect.objectContaining({
+          method: 'POST',
+        })
+      );
+    });
+
+    it('should not overwrite feedback ID on update', async () => {
+      // Set existing feedback ID
+      element.setAttribute('data-coolhand-feedback-id', '99999');
+
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            id: 99999,
+            like: false,
+            created_at: '2024-01-01T00:00:00Z',
+            updated_at: '2024-01-02T00:00:00Z',
+          }),
+      });
+
+      widget = new FeedbackWidget(element, 'Test content', 'test-api-key');
+
+      const container = element.querySelector('[data-coolhand-widget]');
+      const shadowRoot = container?.shadowRoot;
+      const trigger = shadowRoot?.querySelector('.coolhand-trigger') as HTMLElement;
+      const thumbsDown = shadowRoot?.querySelector(
+        '[data-feedback="down"]'
+      ) as HTMLElement;
+
+      trigger?.click();
+      thumbsDown?.click();
+
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      // Verify feedback ID remains unchanged (not overwritten)
+      expect(element.getAttribute('data-coolhand-feedback-id')).toBe('99999');
+    });
+
     it('should call onSuccess callback on successful submission', async () => {
       const onSuccess = jest.fn();
 

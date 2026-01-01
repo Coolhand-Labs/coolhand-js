@@ -330,9 +330,12 @@ export class FeedbackWidget {
   }
 
   /**
-   * Send feedback to the API
+   * Send feedback to the API (creates new or updates existing)
    */
   private async sendFeedback(feedbackValue: FeedbackValue): Promise<void> {
+    const existingFeedbackId = this.targetElement.getAttribute('data-coolhand-feedback-id');
+    const isUpdate = !!existingFeedbackId;
+
     const payload: FeedbackApiPayload = {
       llm_request_log_feedback: {
         like: feedbackValue,
@@ -349,9 +352,15 @@ export class FeedbackWidget {
       payload.llm_request_log_feedback.workload_hashid = this.options.workloadId;
     }
 
+    // Determine URL and method based on whether we're updating or creating
+    const url = isUpdate
+      ? `${COOLHAND_API_URL}/${existingFeedbackId}`
+      : COOLHAND_API_URL;
+    const method = isUpdate ? 'PATCH' : 'POST';
+
     try {
-      const response = await fetch(COOLHAND_API_URL, {
-        method: 'POST',
+      const response = await fetch(url, {
+        method,
         headers: {
           'Content-Type': 'application/json',
           'X-API-Key': this.apiKey,
@@ -365,7 +374,13 @@ export class FeedbackWidget {
       }
 
       const data: FeedbackApiResponse = await response.json();
-      console.log('[CoolhandJS] Feedback submitted successfully:', data);
+      const action = isUpdate ? 'updated' : 'submitted';
+      console.log(`[CoolhandJS] Feedback ${action} successfully:`, data);
+
+      // Store feedback ID on the target element for reference (for new feedback)
+      if (data.id && !isUpdate) {
+        this.targetElement.setAttribute('data-coolhand-feedback-id', String(data.id));
+      }
 
       // Announce success to screen readers
       this.announce('Feedback submitted successfully');

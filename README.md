@@ -12,6 +12,7 @@ A lightweight, standalone JavaScript library for adding user feedback collection
 - ⚡ **Lightweight**: ~16KB minified
 - 📘 **TypeScript Support**: Full type definitions included
 - ♿ **Accessible**: WCAG 2.1 AA compliant with full keyboard navigation and screen reader support
+- 🔄 **Smart Updates**: Automatically tracks and updates feedback when users change their response
 
 ## Accessibility
 
@@ -197,6 +198,7 @@ CoolhandJS makes it incredibly easy to capture human feedback on AI outputs. Jus
 - `coolhand-feedback`: Enables automatic widget attachment
 - `data-coolhand-session-id`: Optional session identifier for internal matching
 - `data-coolhand-workload-id`: Optional workload hash ID to associate feedback with a specific workload. When provided, improves fuzzy matching accuracy for connecting feedback to the original LLM request.
+- `data-coolhand-feedback-id`: **Set automatically** after successful feedback submission. Contains the feedback ID returned from the API. When present, subsequent feedback changes automatically update the existing feedback instead of creating duplicates.
 
 ## Feedback Values
 

@@ -120,10 +120,34 @@ The widget sends the following payload to the Coolhand API:
 ```json
 {
   "llm_request_log_feedback": {
-    "like": true,  // true, false, or null
+    "like": true,
     "original_output": "The text content from the element",
-    "collector": "coolhand-js-1.0.0",
-    "client_unique_id": "optional-session-id"
+    "collector": "coolhand-js-0.2.0",
+    "client_unique_id": "optional-session-id",
+    "workload_hashid": "optional-workload-id"
   }
 }
 ```
+
+## Feedback Updates
+
+When a user changes their feedback on an element that already has a `data-coolhand-feedback-id`, the widget automatically uses PATCH to update the existing feedback rather than creating a new one:
+
+```html
+<!-- First feedback submission: POST creates new feedback, sets ID -->
+<div coolhand-feedback>AI content</div>
+<!-- After first submission: -->
+<div coolhand-feedback data-coolhand-feedback-id="12345">AI content</div>
+
+<!-- Second feedback submission: PATCH updates existing feedback -->
+<!-- User changes from thumbs up to thumbs down - updates ID 12345 -->
+```
+
+This allows users to change their mind without creating duplicate feedback entries.
+
+### API Endpoints
+
+| Action | Method | URL |
+|--------|--------|-----|
+| Create | POST | `/api/v2/llm_request_log_feedbacks` |
+| Update | PATCH | `/api/v2/llm_request_log_feedbacks/{id}` |
