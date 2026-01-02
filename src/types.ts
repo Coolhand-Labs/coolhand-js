@@ -17,18 +17,24 @@ export type FeedbackType = 'down' | 'neutral' | 'up';
 export interface InitOptions {
   /** Whether to automatically attach to elements with coolhand-feedback attribute. Default: true */
   autoAttach?: boolean;
+  /** Global client unique ID applied to all feedback on the page */
+  clientUniqueId?: string;
 }
 
 /**
  * Options for CoolhandFeedback.attach() and FeedbackWidget
  */
 export interface AttachOptions {
-  /** Unique session identifier for tracking */
-  sessionId?: string;
+  /** Client unique ID for tracking (set globally via init) */
+  clientUniqueId?: string;
+  /** Workload hash ID for improved fuzzy matching */
+  workloadId?: string;
   /** Callback fired on successful feedback submission */
   onSuccess?: (feedback: FeedbackValue, response: FeedbackApiResponse) => void;
   /** Callback fired on feedback submission error */
   onError?: (error: Error) => void;
+  /** Callback fired when revised output is sent */
+  onRevisedOutput?: (revisedOutput: string, response: FeedbackApiResponse) => void;
 }
 
 /**
@@ -40,6 +46,8 @@ export interface FeedbackApiPayload {
     original_output: string;
     collector: string;
     client_unique_id?: string;
+    workload_hashid?: string;
+    revised_output?: string;
   };
 }
 

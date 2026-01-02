@@ -7,6 +7,7 @@ import type { InitOptions, AttachOptions } from './types';
  */
 export class CoolhandFeedback {
   private apiKey: string | null = null;
+  private clientUniqueId: string | null = null;
   private instances: WeakMap<HTMLElement, FeedbackWidget> = new WeakMap();
   private observer: MutationObserver | null = null;
   private isAutoAttaching: boolean = false;
@@ -25,6 +26,11 @@ export class CoolhandFeedback {
       return false;
     }
     this.apiKey = apiKey;
+
+    // Store global client unique ID if provided
+    if (options.clientUniqueId) {
+      this.clientUniqueId = options.clientUniqueId;
+    }
 
     // Auto-attach to existing elements if enabled
     if (options.autoAttach !== false) {
@@ -101,9 +107,13 @@ export class CoolhandFeedback {
 
     const options: AttachOptions = {};
 
-    // Parse options from data attributes
-    if (element.dataset.coolhandSessionId) {
-      options.sessionId = element.dataset.coolhandSessionId;
+    // Apply global clientUniqueId
+    if (this.clientUniqueId) {
+      options.clientUniqueId = this.clientUniqueId;
+    }
+
+    if (element.dataset.coolhandWorkloadId) {
+      options.workloadId = element.dataset.coolhandWorkloadId;
     }
 
     this.attach(element, options);
@@ -149,11 +159,17 @@ export class CoolhandFeedback {
       return this.instances.get(element) || null;
     }
 
+    // Apply global clientUniqueId as default if not provided in options
+    const mergedOptions = { ...options };
+    if (!mergedOptions.clientUniqueId && this.clientUniqueId) {
+      mergedOptions.clientUniqueId = this.clientUniqueId;
+    }
+
     const instance = new FeedbackWidget(
       element,
       textContent,
       this.apiKey,
-      options
+      mergedOptions
     );
     this.instances.set(element, instance);
     return instance;
@@ -161,8 +177,19 @@ export class CoolhandFeedback {
 
   /**
    * Extract text content from an element
+   * For input/textarea elements, extracts the value
+   * For other elements, extracts textContent
    */
   private extractText(element: HTMLElement): string {
+    // Handle input/textarea elements - extract value
+    if (
+      element instanceof HTMLInputElement ||
+      element instanceof HTMLTextAreaElement
+    ) {
+      return element.value.trim();
+    }
+
+    // For other elements, extract text content
     const text = element.textContent || element.innerText || '';
     return text.trim();
   }
