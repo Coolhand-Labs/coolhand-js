@@ -72,7 +72,7 @@
 
     <div class="content-box">
         <h3>2. Content with Auto-Feedback</h3>
-        <p coolhand-feedback data-coolhand-session-id="simple-demo-1">
+        <p coolhand-feedback>
             This paragraph has automatic feedback enabled! Just add the <code>coolhand-feedback</code>
             attribute and CoolhandJS will automatically attach a feedback widget. Look for the hand icon
             in the upper-right corner of this box.
@@ -81,7 +81,7 @@
 
     <div class="content-box">
         <h3>3. Another Feedback-Enabled Section</h3>
-        <div coolhand-feedback data-coolhand-session-id="simple-demo-2">
+        <div coolhand-feedback>
             <p>This entire div has feedback enabled. You can add the attribute to any element with text content.</p>
             <ul>
                 <li>No need to write JavaScript</li>
@@ -92,7 +92,33 @@
     </div>
 
     <div class="content-box">
-        <h3>4. Regular Content (No Feedback)</h3>
+        <h3>4. Editable Textarea (Revised Output Tracking)</h3>
+        <p style="font-size: 14px; color: #666; margin-bottom: 10px;">
+            Submit feedback first, then edit the text. Changes are sent after 1 second of no typing.
+        </p>
+        <textarea
+            coolhand-feedback
+            data-coolhand-workload-id="workload-123"
+            style="width: 100%; min-height: 100px; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-family: inherit;"
+        >This is an AI-generated response. You can edit this text after providing feedback. Changes will be tracked and sent to the API.</textarea>
+    </div>
+
+    <div class="content-box">
+        <h3>5. Editable Input (Revised Output Tracking)</h3>
+        <p style="font-size: 14px; color: #666; margin-bottom: 10px;">
+            Input fields also support revision tracking.
+        </p>
+        <input
+            type="text"
+            coolhand-feedback
+            data-coolhand-workload-id="workload-456"
+            value="AI-generated summary that can be edited by the user."
+            style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;"
+        />
+    </div>
+
+    <div class="content-box">
+        <h3>6. Regular Content (No Feedback)</h3>
         <p>This paragraph doesn't have the coolhand-feedback attribute, so no widget will appear.</p>
     </div>
 
@@ -110,10 +136,25 @@
 &lt;!-- 3. Add attribute to any element --&gt;
 &lt;p coolhand-feedback&gt;Your content here&lt;/p&gt;</code></pre>
 
-        <h4>Optional Session Tracking:</h4>
-        <pre><code>&lt;div coolhand-feedback data-coolhand-session-id="unique-session"&gt;
-  Content with session tracking
+        <h4>Global Client ID (applies to all widgets):</h4>
+        <pre><code>&lt;script&gt;
+  // Client ID is sent with all feedback on the page
+  CoolhandJS.init('your-api-key', { clientUniqueId: 'user-session-123' });
+&lt;/script&gt;</code></pre>
+
+        <h4>Workload ID (for fuzzy matching):</h4>
+        <pre><code>&lt;div coolhand-feedback data-coolhand-workload-id="workload-abc123"&gt;
+  Content linked to a specific workload
 &lt;/div&gt;</code></pre>
+
+        <h4>Textarea/Input with Revised Output Tracking:</h4>
+        <pre><code>&lt;!-- Widget captures initial value, then tracks edits --&gt;
+&lt;textarea coolhand-feedback data-coolhand-workload-id="workload-123"&gt;
+  AI-generated text that users can edit
+&lt;/textarea&gt;
+
+&lt;!-- Works with input fields too --&gt;
+&lt;input type="text" coolhand-feedback value="AI summary" /&gt;</code></pre>
     </div>
 
     <script>
