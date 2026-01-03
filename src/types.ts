@@ -25,6 +25,8 @@ export interface InitOptions {
 export interface AttachOptions {
   /** Unique session identifier for tracking */
   sessionId?: string;
+  /** Workload hash ID for associating feedback with a specific workload */
+  workloadId?: string;
   /** Callback fired on successful feedback submission */
   onSuccess?: (feedback: FeedbackValue, response: FeedbackApiResponse) => void;
   /** Callback fired on feedback submission error */
@@ -40,6 +42,7 @@ export interface FeedbackApiPayload {
     original_output: string;
     collector: string;
     client_unique_id?: string;
+    workload_hashid?: string;
   };
 }
 

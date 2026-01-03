@@ -12,6 +12,7 @@ A lightweight, standalone JavaScript library for adding user feedback collection
 - ⚡ **Lightweight**: ~16KB minified
 - 📘 **TypeScript Support**: Full type definitions included
 - ♿ **Accessible**: WCAG 2.1 AA compliant with full keyboard navigation and screen reader support
+- 🔄 **Smart Updates**: Automatically tracks and updates feedback when users change their response
 
 ## Accessibility
 
@@ -129,7 +130,8 @@ Manually attach a feedback widget to an HTML element. Usually not needed since a
 - `options` (object, optional): Configuration options
 
 **Options:**
-- `sessionId` (string): Optional session identifier for tracking feedback
+- `sessionId` (string): Optional session identifier for internal matching
+- `workloadId` (string): Optional workload hash ID to associate feedback with a specific workload. Improves fuzzy matching accuracy.
 - `onSuccess` (function): Callback when feedback is successfully submitted
 - `onError` (function): Callback when an error occurs
 
@@ -141,6 +143,7 @@ Manually attach a feedback widget to an HTML element. Usually not needed since a
 // Manual attachment (usually not needed)
 const widget = CoolhandJS.attach(document.getElementById('content'), {
     sessionId: 'user-session-123',
+    workloadId: 'abc123def456',
     onSuccess: (feedback, response) => {
         console.log('Feedback submitted:', feedback); // true, false, or null
     },
@@ -177,11 +180,25 @@ CoolhandJS makes it incredibly easy to capture human feedback on AI outputs. Jus
 <p coolhand-feedback data-coolhand-session-id="article-123">
   Article content with tracked feedback
 </p>
+
+<!-- With workload association -->
+<div coolhand-feedback data-coolhand-workload-id="abc123def456">
+  AI response associated with a specific workload
+</div>
+
+<!-- With both session and workload -->
+<div coolhand-feedback
+     data-coolhand-session-id="user-session-789"
+     data-coolhand-workload-id="abc123def456">
+  Fully tracked AI response
+</div>
 ```
 
 ### Supported Attributes
 - `coolhand-feedback`: Enables automatic widget attachment
-- `data-coolhand-session-id`: Optional session identifier for tracking
+- `data-coolhand-session-id`: Optional session identifier for internal matching
+- `data-coolhand-workload-id`: Optional workload hash ID to associate feedback with a specific workload. When provided, improves fuzzy matching accuracy for connecting feedback to the original LLM request.
+- `data-coolhand-feedback-id`: **Set automatically** after successful feedback submission. Contains the feedback ID returned from the API. When present, subsequent feedback changes automatically update the existing feedback instead of creating duplicates.
 
 ## Feedback Values
 

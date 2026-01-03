@@ -106,6 +106,10 @@ export class CoolhandFeedback {
       options.sessionId = element.dataset.coolhandSessionId;
     }
 
+    if (element.dataset.coolhandWorkloadId) {
+      options.workloadId = element.dataset.coolhandWorkloadId;
+    }
+
     this.attach(element, options);
   }
 
