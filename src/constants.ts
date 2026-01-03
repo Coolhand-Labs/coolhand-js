@@ -36,6 +36,16 @@ export const ORIGINAL_OUTPUT_ATTRIBUTE = 'data-coolhand-original-output';
 export const WIDGET_VISIBILITY_ATTRIBUTE = 'data-coolhand-widget-visibility';
 
 /**
+ * Data attribute for workload hash ID
+ */
+export const WORKLOAD_ID_ATTRIBUTE = 'data-coolhand-workload-id';
+
+/**
+ * Data attribute for storing the feedback ID after submission
+ */
+export const FEEDBACK_ID_ATTRIBUTE = 'data-coolhand-feedback-id';
+
+/**
  * CSS class prefix for all widget styles
  */
 export const CSS_PREFIX = 'coolhand';

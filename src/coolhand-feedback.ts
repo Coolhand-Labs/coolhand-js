@@ -116,6 +116,10 @@ export class CoolhandFeedback {
       options.workloadId = element.dataset.coolhandWorkloadId;
     }
 
+    if (element.dataset.coolhandWorkloadId) {
+      options.workloadId = element.dataset.coolhandWorkloadId;
+    }
+
     this.attach(element, options);
   }
 
