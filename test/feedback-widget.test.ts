@@ -1,6 +1,6 @@
 import { jest, describe, it, expect, beforeEach, afterEach } from '@jest/globals';
 import { FeedbackWidget } from '../src/feedback-widget';
-import { COOLHAND_API_URL, VERSION } from '../src/constants';
+import { COOLHAND_API_URL, VERSION, FEEDBACK_ID_ATTRIBUTE, ORIGINAL_OUTPUT_ATTRIBUTE, WIDGET_VISIBILITY_ATTRIBUTE, DEBOUNCE_MS } from '../src/constants';
 
 // Mock fetch globally
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -171,9 +171,9 @@ describe('FeedbackWidget', () => {
       });
     });
 
-    it('should include session ID when provided', async () => {
+    it('should include clientUniqueId when provided', async () => {
       widget = new FeedbackWidget(element, 'Test content', 'test-api-key', {
-        sessionId: 'session-123',
+        clientUniqueId: 'client-123',
       });
 
       const container = element.querySelector('[data-coolhand-widget]');
@@ -191,7 +191,7 @@ describe('FeedbackWidget', () => {
       expect(mockFetch).toHaveBeenCalledWith(
         COOLHAND_API_URL,
         expect.objectContaining({
-          body: expect.stringContaining('"client_unique_id":"session-123"'),
+          body: expect.stringContaining('"client_unique_id":"client-123"'),
         })
       );
     });
@@ -792,6 +792,630 @@ describe('FeedbackWidget', () => {
 
       // Checkmark should be hidden
       expect(trigger?.classList.contains('showing-checkmark')).toBe(false);
+    });
+  });
+
+  describe('workloadId support', () => {
+    beforeEach(() => {
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            id: 1,
+            like: true,
+            created_at: '2024-01-01T00:00:00Z',
+            updated_at: '2024-01-01T00:00:00Z',
+          }),
+      });
+    });
+
+    it('should include workload_hashid when workloadId is provided', async () => {
+      widget = new FeedbackWidget(element, 'Test content', 'test-api-key', {
+        workloadId: 'abc123def456',
+      });
+
+      const container = element.querySelector('[data-coolhand-widget]');
+      const shadowRoot = container?.shadowRoot;
+      const trigger = shadowRoot?.querySelector('.coolhand-trigger') as HTMLElement;
+      const thumbsUp = shadowRoot?.querySelector('[data-feedback="up"]') as HTMLElement;
+
+      trigger?.click();
+      thumbsUp?.click();
+
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        COOLHAND_API_URL,
+        expect.objectContaining({
+          body: expect.stringContaining('"workload_hashid":"abc123def456"'),
+        })
+      );
+    });
+
+    it('should not include workload_hashid when workloadId is not provided', async () => {
+      widget = new FeedbackWidget(element, 'Test content', 'test-api-key');
+
+      const container = element.querySelector('[data-coolhand-widget]');
+      const shadowRoot = container?.shadowRoot;
+      const trigger = shadowRoot?.querySelector('.coolhand-trigger') as HTMLElement;
+      const thumbsUp = shadowRoot?.querySelector('[data-feedback="up"]') as HTMLElement;
+
+      trigger?.click();
+      thumbsUp?.click();
+
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        COOLHAND_API_URL,
+        expect.objectContaining({
+          body: expect.not.stringContaining('workload_hashid'),
+        })
+      );
+    });
+  });
+
+  describe('feedback ID tracking and PATCH updates', () => {
+    beforeEach(() => {
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            id: 12345,
+            like: true,
+            created_at: '2024-01-01T00:00:00Z',
+            updated_at: '2024-01-01T00:00:00Z',
+          }),
+      });
+    });
+
+    it('should store feedback ID on element after successful submission', async () => {
+      widget = new FeedbackWidget(element, 'Test content', 'test-api-key');
+
+      const container = element.querySelector('[data-coolhand-widget]');
+      const shadowRoot = container?.shadowRoot;
+      const trigger = shadowRoot?.querySelector('.coolhand-trigger') as HTMLElement;
+      const thumbsUp = shadowRoot?.querySelector('[data-feedback="up"]') as HTMLElement;
+
+      trigger?.click();
+      thumbsUp?.click();
+
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      expect(element.getAttribute(FEEDBACK_ID_ATTRIBUTE)).toBe('12345');
+    });
+
+    it('should use PATCH method when feedback ID already exists', async () => {
+      // Set existing feedback ID
+      element.setAttribute(FEEDBACK_ID_ATTRIBUTE, '99999');
+
+      widget = new FeedbackWidget(element, 'Test content', 'test-api-key');
+
+      const container = element.querySelector('[data-coolhand-widget]');
+      const shadowRoot = container?.shadowRoot;
+      const trigger = shadowRoot?.querySelector('.coolhand-trigger') as HTMLElement;
+      const thumbsDown = shadowRoot?.querySelector('[data-feedback="down"]') as HTMLElement;
+
+      trigger?.click();
+      thumbsDown?.click();
+
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        `${COOLHAND_API_URL}/99999`,
+        expect.objectContaining({
+          method: 'PATCH',
+        })
+      );
+    });
+
+    it('should use POST method when no feedback ID exists', async () => {
+      widget = new FeedbackWidget(element, 'Test content', 'test-api-key');
+
+      const container = element.querySelector('[data-coolhand-widget]');
+      const shadowRoot = container?.shadowRoot;
+      const trigger = shadowRoot?.querySelector('.coolhand-trigger') as HTMLElement;
+      const thumbsUp = shadowRoot?.querySelector('[data-feedback="up"]') as HTMLElement;
+
+      trigger?.click();
+      thumbsUp?.click();
+
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        COOLHAND_API_URL,
+        expect.objectContaining({
+          method: 'POST',
+        })
+      );
+    });
+
+    it('should not overwrite feedback ID on PATCH update', async () => {
+      // Set existing feedback ID
+      element.setAttribute(FEEDBACK_ID_ATTRIBUTE, '99999');
+
+      widget = new FeedbackWidget(element, 'Test content', 'test-api-key');
+
+      const container = element.querySelector('[data-coolhand-widget]');
+      const shadowRoot = container?.shadowRoot;
+      const trigger = shadowRoot?.querySelector('.coolhand-trigger') as HTMLElement;
+      const thumbsDown = shadowRoot?.querySelector('[data-feedback="down"]') as HTMLElement;
+
+      trigger?.click();
+      thumbsDown?.click();
+
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      // Should still have the original ID, not the one from response
+      expect(element.getAttribute(FEEDBACK_ID_ATTRIBUTE)).toBe('99999');
+    });
+  });
+
+  describe('textarea/input support', () => {
+    let textareaElement: HTMLTextAreaElement;
+    let inputElement: HTMLInputElement;
+
+    beforeEach(() => {
+      jest.useFakeTimers();
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            id: 1,
+            like: true,
+            created_at: '2024-01-01T00:00:00Z',
+            updated_at: '2024-01-01T00:00:00Z',
+          }),
+      });
+    });
+
+    afterEach(() => {
+      jest.useRealTimers();
+    });
+
+    it('should detect textarea elements and wrap them', () => {
+      textareaElement = document.createElement('textarea');
+      textareaElement.value = 'Initial textarea content';
+      document.body.appendChild(textareaElement);
+
+      widget = new FeedbackWidget(textareaElement, 'Initial textarea content', 'test-api-key');
+
+      // Textarea should be wrapped
+      const wrapper = textareaElement.parentElement;
+      expect(wrapper?.classList.contains('coolhand-input-wrapper')).toBe(true);
+
+      // Widget container should be in the wrapper
+      const container = wrapper?.querySelector('[data-coolhand-widget]');
+      expect(container).not.toBeNull();
+    });
+
+    it('should detect input elements and wrap them', () => {
+      inputElement = document.createElement('input');
+      inputElement.type = 'text';
+      inputElement.value = 'Initial input content';
+      document.body.appendChild(inputElement);
+
+      widget = new FeedbackWidget(inputElement, 'Initial input content', 'test-api-key');
+
+      // Input should be wrapped
+      const wrapper = inputElement.parentElement;
+      expect(wrapper?.classList.contains('coolhand-input-wrapper')).toBe(true);
+
+      // Widget container should be in the wrapper
+      const container = wrapper?.querySelector('[data-coolhand-widget]');
+      expect(container).not.toBeNull();
+    });
+
+    it('should store original output in data attribute for textarea', () => {
+      textareaElement = document.createElement('textarea');
+      textareaElement.value = 'Original textarea content';
+      document.body.appendChild(textareaElement);
+
+      widget = new FeedbackWidget(textareaElement, 'Original textarea content', 'test-api-key');
+
+      expect(textareaElement.getAttribute(ORIGINAL_OUTPUT_ATTRIBUTE)).toBe('Original textarea content');
+    });
+
+    it('should auto-POST feedback on first edit to textarea', async () => {
+      textareaElement = document.createElement('textarea');
+      textareaElement.value = 'Original content';
+      document.body.appendChild(textareaElement);
+
+      widget = new FeedbackWidget(textareaElement, 'Original content', 'test-api-key');
+
+      // Change the textarea value (first edit)
+      textareaElement.value = 'Modified content';
+      textareaElement.dispatchEvent(new Event('input', { bubbles: true }));
+
+      // Should not call fetch immediately (debounce)
+      expect(mockFetch).not.toHaveBeenCalled();
+
+      // Advance timers past debounce
+      jest.advanceTimersByTime(DEBOUNCE_MS);
+
+      // Wait for async operations
+      await Promise.resolve();
+      await Promise.resolve();
+
+      // Should POST (create) since no feedback ID exists yet
+      expect(mockFetch).toHaveBeenCalledWith(
+        COOLHAND_API_URL,
+        expect.objectContaining({
+          method: 'POST',
+          body: expect.stringContaining('"original_output":"Original content"'),
+        })
+      );
+      expect(mockFetch).toHaveBeenCalledWith(
+        COOLHAND_API_URL,
+        expect.objectContaining({
+          body: expect.stringContaining('"revised_output":"Modified content"'),
+        })
+      );
+
+      // Should have set the feedback ID on the element
+      expect(textareaElement.getAttribute(FEEDBACK_ID_ATTRIBUTE)).toBe('1');
+    });
+
+    it('should PATCH on subsequent edits after first POST', async () => {
+      textareaElement = document.createElement('textarea');
+      textareaElement.value = 'Original content';
+      document.body.appendChild(textareaElement);
+
+      widget = new FeedbackWidget(textareaElement, 'Original content', 'test-api-key');
+
+      // First edit - triggers POST
+      textareaElement.value = 'First edit';
+      textareaElement.dispatchEvent(new Event('input', { bubbles: true }));
+      jest.advanceTimersByTime(DEBOUNCE_MS);
+      await Promise.resolve();
+      await Promise.resolve();
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        COOLHAND_API_URL,
+        expect.objectContaining({ method: 'POST' })
+      );
+      mockFetch.mockClear();
+
+      // Second edit - should trigger PATCH
+      textareaElement.value = 'Second edit';
+      textareaElement.dispatchEvent(new Event('input', { bubbles: true }));
+      jest.advanceTimersByTime(DEBOUNCE_MS);
+      await Promise.resolve();
+      await Promise.resolve();
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        `${COOLHAND_API_URL}/1`,
+        expect.objectContaining({
+          method: 'PATCH',
+          body: expect.stringContaining('"revised_output":"Second edit"'),
+        })
+      );
+    });
+
+    it('should debounce multiple rapid changes', async () => {
+      textareaElement = document.createElement('textarea');
+      textareaElement.value = 'Original content';
+      document.body.appendChild(textareaElement);
+
+      widget = new FeedbackWidget(textareaElement, 'Original content', 'test-api-key');
+
+      // Rapid changes
+      textareaElement.value = 'Change 1';
+      textareaElement.dispatchEvent(new Event('input', { bubbles: true }));
+
+      jest.advanceTimersByTime(500); // Half the debounce time
+
+      textareaElement.value = 'Change 2';
+      textareaElement.dispatchEvent(new Event('input', { bubbles: true }));
+
+      jest.advanceTimersByTime(500); // Another half
+
+      textareaElement.value = 'Final change';
+      textareaElement.dispatchEvent(new Event('input', { bubbles: true }));
+
+      // Still shouldn't have called fetch
+      expect(mockFetch).not.toHaveBeenCalled();
+
+      // Advance past full debounce time
+      jest.advanceTimersByTime(DEBOUNCE_MS);
+
+      await Promise.resolve();
+      await Promise.resolve();
+
+      // Should only call once with final value
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+      expect(mockFetch).toHaveBeenCalledWith(
+        COOLHAND_API_URL,
+        expect.objectContaining({
+          body: expect.stringContaining('"revised_output":"Final change"'),
+        })
+      );
+    });
+
+    it('should not send if value has not changed from original', async () => {
+      textareaElement = document.createElement('textarea');
+      textareaElement.value = 'Original content';
+      document.body.appendChild(textareaElement);
+
+      widget = new FeedbackWidget(textareaElement, 'Original content', 'test-api-key');
+
+      // Change and then change back to original
+      textareaElement.value = 'Modified content';
+      textareaElement.dispatchEvent(new Event('input', { bubbles: true }));
+
+      textareaElement.value = 'Original content';
+      textareaElement.dispatchEvent(new Event('input', { bubbles: true }));
+
+      // Advance timers past debounce
+      jest.advanceTimersByTime(DEBOUNCE_MS);
+
+      await Promise.resolve();
+      await Promise.resolve();
+
+      // Should not have called fetch since value is same as original
+      expect(mockFetch).not.toHaveBeenCalled();
+    });
+
+    it('should call onRevisedOutput callback when revised output is sent', async () => {
+      const onRevisedOutput = jest.fn();
+
+      textareaElement = document.createElement('textarea');
+      textareaElement.value = 'Original content';
+      document.body.appendChild(textareaElement);
+
+      widget = new FeedbackWidget(textareaElement, 'Original content', 'test-api-key', {
+        onRevisedOutput,
+      });
+
+      // Change the textarea value
+      textareaElement.value = 'New content';
+      textareaElement.dispatchEvent(new Event('input', { bubbles: true }));
+
+      jest.advanceTimersByTime(DEBOUNCE_MS);
+
+      await Promise.resolve();
+      await Promise.resolve();
+
+      expect(onRevisedOutput).toHaveBeenCalledWith('New content', expect.any(Object));
+    });
+
+    it('should clean up input and blur listeners on destroy', () => {
+      textareaElement = document.createElement('textarea');
+      textareaElement.value = 'Original content';
+      document.body.appendChild(textareaElement);
+
+      const removeEventListenerSpy = jest.spyOn(textareaElement, 'removeEventListener');
+
+      widget = new FeedbackWidget(textareaElement, 'Original content', 'test-api-key');
+      widget.destroy();
+
+      expect(removeEventListenerSpy).toHaveBeenCalledWith('input', expect.any(Function));
+      expect(removeEventListenerSpy).toHaveBeenCalledWith('blur', expect.any(Function));
+    });
+
+    it('should send immediately on blur without waiting for debounce', async () => {
+      textareaElement = document.createElement('textarea');
+      textareaElement.value = 'Original content';
+      document.body.appendChild(textareaElement);
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({
+          id: 1,
+          like: true,
+          created_at: '2024-01-01T00:00:00Z',
+          updated_at: '2024-01-01T00:00:00Z',
+        }),
+      });
+
+      widget = new FeedbackWidget(textareaElement, 'Original content', 'test-api-key');
+
+      // Change the textarea value
+      textareaElement.value = 'New content';
+      textareaElement.dispatchEvent(new Event('input', { bubbles: true }));
+
+      // Don't advance timers - just blur immediately
+      textareaElement.dispatchEvent(new Event('blur', { bubbles: true }));
+
+      await Promise.resolve();
+      await Promise.resolve();
+
+      // Should have sent immediately without waiting for debounce
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+      expect(mockFetch).toHaveBeenCalledWith(
+        COOLHAND_API_URL,
+        expect.objectContaining({
+          method: 'POST',
+        })
+      );
+    });
+
+    it('should cancel debounce timer when blur occurs', async () => {
+      textareaElement = document.createElement('textarea');
+      textareaElement.value = 'Original content';
+      document.body.appendChild(textareaElement);
+
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({
+          id: 1,
+          like: true,
+          created_at: '2024-01-01T00:00:00Z',
+          updated_at: '2024-01-01T00:00:00Z',
+        }),
+      });
+
+      widget = new FeedbackWidget(textareaElement, 'Original content', 'test-api-key');
+
+      // Change the textarea value
+      textareaElement.value = 'New content';
+      textareaElement.dispatchEvent(new Event('input', { bubbles: true }));
+
+      // Blur before debounce timer fires
+      textareaElement.dispatchEvent(new Event('blur', { bubbles: true }));
+
+      await Promise.resolve();
+      await Promise.resolve();
+
+      // Now advance past the debounce time
+      jest.advanceTimersByTime(DEBOUNCE_MS);
+
+      await Promise.resolve();
+      await Promise.resolve();
+
+      // Should only have sent once (on blur), not twice
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+    });
+
+    it('should resume debouncing and PATCH when user clicks back in after blur', async () => {
+      textareaElement = document.createElement('textarea');
+      textareaElement.value = 'Original content';
+      document.body.appendChild(textareaElement);
+
+      // First call returns feedback ID
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({
+          id: 999,
+          like: null,
+          created_at: '2024-01-01T00:00:00Z',
+          updated_at: '2024-01-01T00:00:00Z',
+        }),
+      });
+
+      // Second call for PATCH
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({
+          id: 999,
+          like: null,
+          created_at: '2024-01-01T00:00:00Z',
+          updated_at: '2024-01-01T00:01:00Z',
+        }),
+      });
+
+      widget = new FeedbackWidget(textareaElement, 'Original content', 'test-api-key');
+
+      // Step 1: Edit and blur (triggers POST)
+      textareaElement.value = 'First edit';
+      textareaElement.dispatchEvent(new Event('input', { bubbles: true }));
+      textareaElement.dispatchEvent(new Event('blur', { bubbles: true }));
+
+      await Promise.resolve();
+      await Promise.resolve();
+
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+      expect(mockFetch).toHaveBeenLastCalledWith(
+        COOLHAND_API_URL,
+        expect.objectContaining({ method: 'POST' })
+      );
+
+      // Verify feedback ID was stored
+      expect(textareaElement.getAttribute(FEEDBACK_ID_ATTRIBUTE)).toBe('999');
+
+      // Step 2: Click back in and edit again (should PATCH after debounce)
+      textareaElement.value = 'Second edit';
+      textareaElement.dispatchEvent(new Event('input', { bubbles: true }));
+
+      jest.advanceTimersByTime(DEBOUNCE_MS);
+
+      await Promise.resolve();
+      await Promise.resolve();
+
+      expect(mockFetch).toHaveBeenCalledTimes(2);
+      expect(mockFetch).toHaveBeenLastCalledWith(
+        `${COOLHAND_API_URL}/999`,
+        expect.objectContaining({ method: 'PATCH' })
+      );
+    });
+  });
+
+  describe('Widget Visibility', () => {
+    beforeEach(() => {
+      jest.useFakeTimers();
+    });
+
+    afterEach(() => {
+      jest.useRealTimers();
+    });
+
+    it('should not render widget UI when data-coolhand-widget-visibility="hide"', () => {
+      const element = document.createElement('div');
+      element.textContent = 'Test content';
+      element.setAttribute(WIDGET_VISIBILITY_ATTRIBUTE, 'hide');
+      document.body.appendChild(element);
+
+      widget = new FeedbackWidget(element, 'Test content', 'test-api-key');
+
+      // No widget container should be created
+      expect(element.querySelector('.coolhand-feedback-container')).toBeNull();
+      // No shadow root either
+      expect(element.shadowRoot).toBeNull();
+    });
+
+    it('should still track input changes when widget is hidden on textarea', async () => {
+      const textarea = document.createElement('textarea');
+      textarea.value = 'Original content';
+      textarea.setAttribute(WIDGET_VISIBILITY_ATTRIBUTE, 'hide');
+      document.body.appendChild(textarea);
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({
+          id: 1,
+          like: null,
+          created_at: '2024-01-01T00:00:00Z',
+          updated_at: '2024-01-01T00:00:00Z',
+        }),
+      });
+
+      widget = new FeedbackWidget(textarea, 'Original content', 'test-api-key');
+
+      // No widget UI should be rendered
+      expect(document.querySelector('.coolhand-feedback-container')).toBeNull();
+
+      // But input monitoring should still work
+      textarea.value = 'Edited content';
+      textarea.dispatchEvent(new Event('input', { bubbles: true }));
+
+      jest.advanceTimersByTime(DEBOUNCE_MS);
+
+      await Promise.resolve();
+      await Promise.resolve();
+
+      // Should still send the API request
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+      expect(mockFetch).toHaveBeenCalledWith(
+        COOLHAND_API_URL,
+        expect.objectContaining({
+          method: 'POST',
+          body: expect.stringContaining('Edited content'),
+        })
+      );
+
+      textarea.remove();
+    });
+
+    it('should render widget UI normally when attribute is not set', () => {
+      const element = document.createElement('div');
+      element.textContent = 'Test content';
+      document.body.appendChild(element);
+
+      widget = new FeedbackWidget(element, 'Test content', 'test-api-key');
+
+      // Widget should be rendered (check inside the element)
+      expect(element.querySelector('.coolhand-feedback-container')).not.toBeNull();
+    });
+
+    it('should render widget UI when attribute has value other than "hide"', () => {
+      const element = document.createElement('div');
+      element.textContent = 'Test content';
+      element.setAttribute(WIDGET_VISIBILITY_ATTRIBUTE, 'show');
+      document.body.appendChild(element);
+
+      widget = new FeedbackWidget(element, 'Test content', 'test-api-key');
+
+      // Widget should still be rendered
+      expect(element.querySelector('.coolhand-feedback-container')).not.toBeNull();
     });
   });
 

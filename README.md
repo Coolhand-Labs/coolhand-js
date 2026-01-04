@@ -13,6 +13,7 @@ A lightweight, standalone JavaScript library for adding user feedback collection
 - 📘 **TypeScript Support**: Full type definitions included
 - ♿ **Accessible**: WCAG 2.1 AA compliant with full keyboard navigation and screen reader support
 - 🔄 **Smart Updates**: Automatically tracks and updates feedback when users change their response
+- ✏️ **Revised Output Tracking**: Automatically captures edits to textarea/input content
 
 ## Accessibility
 
@@ -108,6 +109,7 @@ Initialize the library with your Coolhand API key. Automatically attaches to all
 - `apiKey` (string, required): Your Coolhand API key
 - `options` (object, optional): Configuration options
   - `autoAttach` (boolean): Enable auto-attachment (default: true)
+  - `clientUniqueId` (string): Optional client identifier sent with all feedback (e.g., user ID, session ID)
 
 **Returns:**
 - `boolean`: True if initialization succeeded, false otherwise
@@ -116,6 +118,9 @@ Initialize the library with your Coolhand API key. Automatically attaches to all
 ```javascript
 // Auto-attach enabled (default)
 CoolhandJS.init('ch_api_abc123...');
+
+// With client tracking
+CoolhandJS.init('ch_api_abc123...', { clientUniqueId: 'user-123' });
 
 // Disable auto-attachment
 CoolhandJS.init('ch_api_abc123...', { autoAttach: false });
@@ -130,10 +135,11 @@ Manually attach a feedback widget to an HTML element. Usually not needed since a
 - `options` (object, optional): Configuration options
 
 **Options:**
-- `sessionId` (string): Optional session identifier for internal matching
+- `clientUniqueId` (string): Optional client identifier (overrides global setting from init)
 - `workloadId` (string): Optional workload hash ID to associate feedback with a specific workload. Improves fuzzy matching accuracy.
 - `onSuccess` (function): Callback when feedback is successfully submitted
 - `onError` (function): Callback when an error occurs
+- `onRevisedOutput` (function): Callback when revised output is sent (for textarea/input elements)
 
 **Returns:**
 - `FeedbackWidget`: The widget instance, or null if attachment failed
@@ -142,7 +148,6 @@ Manually attach a feedback widget to an HTML element. Usually not needed since a
 ```javascript
 // Manual attachment (usually not needed)
 const widget = CoolhandJS.attach(document.getElementById('content'), {
-    sessionId: 'user-session-123',
     workloadId: 'abc123def456',
     onSuccess: (feedback, response) => {
         console.log('Feedback submitted:', feedback); // true, false, or null
@@ -176,28 +181,35 @@ CoolhandJS makes it incredibly easy to capture human feedback on AI outputs. Jus
   Your content here
 </div>
 
-<!-- With session tracking -->
-<p coolhand-feedback data-coolhand-session-id="article-123">
-  Article content with tracked feedback
-</p>
-
 <!-- With workload association -->
 <div coolhand-feedback data-coolhand-workload-id="abc123def456">
   AI response associated with a specific workload
 </div>
 
-<!-- With both session and workload -->
-<div coolhand-feedback
-     data-coolhand-session-id="user-session-789"
-     data-coolhand-workload-id="abc123def456">
-  Fully tracked AI response
-</div>
+<!-- Hidden widget (still tracks input changes, but no visible UI) -->
+<textarea coolhand-feedback data-coolhand-widget-visibility="hide">
+  Content that tracks edits without showing the feedback widget
+</textarea>
+```
+
+### Textarea/Input Support
+
+When attached to a `<textarea>` or `<input>` element, the widget automatically:
+1. Captures the initial value as `original_output`
+2. Monitors for changes after feedback is submitted
+3. Sends `revised_output` via PATCH when the user edits the content (debounced 1 second)
+
+```html
+<!-- Editable AI response with revision tracking -->
+<textarea coolhand-feedback data-coolhand-workload-id="abc123">
+The AI generated this response which the user can edit.
+</textarea>
 ```
 
 ### Supported Attributes
 - `coolhand-feedback`: Enables automatic widget attachment
-- `data-coolhand-session-id`: Optional session identifier for internal matching
 - `data-coolhand-workload-id`: Optional workload hash ID to associate feedback with a specific workload. When provided, improves fuzzy matching accuracy for connecting feedback to the original LLM request.
+- `data-coolhand-widget-visibility`: Set to `"hide"` to hide the feedback widget UI while still tracking input changes on textarea/input elements. Useful for programmatic feedback collection.
 - `data-coolhand-feedback-id`: **Set automatically** after successful feedback submission. Contains the feedback ID returned from the API. When present, subsequent feedback changes automatically update the existing feedback instead of creating duplicates.
 
 ## Feedback Values
@@ -211,7 +223,7 @@ The widget sends three types of feedback to the API endpoint:
 ## Requirements
 
 ### Text Content
-The element must contain text content. The widget will not attach to elements without readable text and will log an error to the console.
+The element must contain text content or a value (for input/textarea). The widget will not attach to elements without readable text and will log an error to the console. For `<textarea>` and `<input>` elements, the widget uses the `value` property instead of `textContent`.
 
 ### API Key
 A valid Coolhand API key is required. Get one from your [Coolhand Dashboard](https://coolhandlabs.com/dashboard).

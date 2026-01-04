@@ -132,14 +132,14 @@ describe('CoolhandFeedback', () => {
       consoleSpy.mockRestore();
     });
 
-    it('should respect sessionId option from data attribute', () => {
+    it('should apply global clientUniqueId to widgets', () => {
       document.body.innerHTML = `
-        <div coolhand-feedback data-coolhand-session-id="session-123">
+        <div coolhand-feedback>
           Test content
         </div>
       `;
 
-      coolhand.init('test-api-key');
+      coolhand.init('test-api-key', { clientUniqueId: 'client-123' });
 
       const widget = document.querySelector('[data-coolhand-widget]');
       expect(widget).not.toBeNull();
