@@ -125,7 +125,7 @@ export const widgetStyles = `
   }
 
   .coolhand-trigger.has-feedback[data-selected="neutral"] .coolhand-selected-icon svg {
-    stroke: #f59e0b;
+    stroke: #3B82F6;
   }
 
   /* Options panel */
@@ -228,10 +228,10 @@ export const widgetStyles = `
   }
 
   .coolhand-option[data-feedback="neutral"]:hover {
-    border-color: #f59e0b;
+    border-color: #3B82F6;
   }
   .coolhand-option[data-feedback="neutral"]:hover svg {
-    stroke: #f59e0b;
+    stroke: #3B82F6;
   }
 
   .coolhand-option[data-feedback="up"]:hover {
@@ -250,10 +250,10 @@ export const widgetStyles = `
   }
 
   .coolhand-option[data-feedback="neutral"].selected {
-    border-color: #f59e0b;
+    border-color: #3B82F6;
   }
   .coolhand-option[data-feedback="neutral"].selected svg {
-    stroke: #f59e0b;
+    stroke: #3B82F6;
   }
 
   .coolhand-option[data-feedback="up"].selected {
@@ -363,6 +363,70 @@ export const widgetStyles = `
     @keyframes coolhand-pulse {
       0%, 100% { transform: scale(1); }
     }
+  }
+
+  /* Pixel mode styles */
+  .coolhand-pixel-mode .coolhand-trigger {
+    width: 8px;
+    height: 8px;
+    min-width: 8px;
+    min-height: 8px;
+    padding: 0;
+    background: #3B82F6;
+    border: none;
+    border-radius: 2px;
+    box-shadow: none;
+  }
+
+  .coolhand-pixel-mode .coolhand-trigger:hover {
+    transform: none;
+    box-shadow: none;
+  }
+
+  /* Hide all icons in pixel mode trigger */
+  .coolhand-pixel-mode .coolhand-trigger .coolhand-trigger-icon,
+  .coolhand-pixel-mode .coolhand-trigger .coolhand-selected-icon,
+  .coolhand-pixel-mode .coolhand-trigger svg {
+    display: none;
+  }
+
+  /* Color the pixel based on feedback state */
+  .coolhand-pixel-mode .coolhand-trigger.has-feedback[data-selected="up"] {
+    background: var(--coolhand-success);
+  }
+
+  .coolhand-pixel-mode .coolhand-trigger.has-feedback[data-selected="down"] {
+    background: #ef4444;
+  }
+
+  .coolhand-pixel-mode .coolhand-trigger.has-feedback[data-selected="neutral"] {
+    background: #3B82F6; /* Keep blue for neutral */
+  }
+
+  /* No visual change for success state in pixel mode - just show the feedback color */
+  .coolhand-pixel-mode .coolhand-trigger.showing-checkmark {
+    background: inherit;
+    border-color: transparent;
+  }
+
+  /* Hide checkmark in pixel mode even when showing-checkmark is active */
+  .coolhand-pixel-mode .coolhand-trigger.showing-checkmark .coolhand-checkmark {
+    display: none;
+  }
+
+  /* Pixel mode: show options on hover */
+  .coolhand-pixel-mode:hover .coolhand-trigger {
+    display: none;
+  }
+
+  .coolhand-pixel-mode:hover .coolhand-options {
+    display: flex;
+  }
+
+  /* Focus visible for pixel mode */
+  .coolhand-pixel-mode .coolhand-trigger:focus-visible {
+    outline: 2px solid var(--coolhand-accent);
+    outline-offset: 2px;
   }
 </style>
 `;

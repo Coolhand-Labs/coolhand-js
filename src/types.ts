@@ -12,6 +12,14 @@ export type FeedbackValue = true | false | null;
 export type FeedbackType = 'down' | 'neutral' | 'up';
 
 /**
+ * Widget display style
+ * - overlay: Default style with icon trigger button
+ * - pixel: Minimal 8px dot that expands on hover
+ * - hidden: Widget hidden but still tracks input changes
+ */
+export type WidgetStyle = 'overlay' | 'pixel' | 'hidden';
+
+/**
  * Options for CoolhandFeedback.init()
  */
 export interface InitOptions {
@@ -19,21 +27,25 @@ export interface InitOptions {
   autoAttach?: boolean;
   /** Global client unique ID applied to all feedback on the page */
   clientUniqueId?: string;
+  /** Default widget style for all widgets. Default: 'overlay' */
+  widgetStyle?: WidgetStyle;
 }
 
 /**
  * Options for CoolhandFeedback.attach() and FeedbackWidget
  */
 export interface AttachOptions {
-  /** Client unique ID for tracking (set globally via init) */
+  /** Unique client identifier for tracking (e.g., user ID, session ID) */
   clientUniqueId?: string;
-  /** Workload hash ID for improved fuzzy matching */
+  /** Workload hash ID for associating feedback with a specific workload */
   workloadId?: string;
+  /** Widget display style (overrides global setting) */
+  widgetStyle?: WidgetStyle;
   /** Callback fired on successful feedback submission */
   onSuccess?: (feedback: FeedbackValue, response: FeedbackApiResponse) => void;
   /** Callback fired on feedback submission error */
   onError?: (error: Error) => void;
-  /** Callback fired when revised output is sent */
+  /** Callback fired when revised output is sent (for textarea/input elements) */
   onRevisedOutput?: (revisedOutput: string, response: FeedbackApiResponse) => void;
 }
 

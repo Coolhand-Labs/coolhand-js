@@ -1,5 +1,5 @@
 import { FeedbackWidget } from './feedback-widget';
-import type { InitOptions, AttachOptions } from './types';
+import type { InitOptions, AttachOptions, WidgetStyle } from './types';
 
 /**
  * CoolhandFeedback manages the overall feedback system
@@ -8,6 +8,7 @@ import type { InitOptions, AttachOptions } from './types';
 export class CoolhandFeedback {
   private apiKey: string | null = null;
   private clientUniqueId: string | null = null;
+  private widgetStyle: WidgetStyle | null = null;
   private instances: WeakMap<HTMLElement, FeedbackWidget> = new WeakMap();
   private observer: MutationObserver | null = null;
   private isAutoAttaching: boolean = false;
@@ -25,6 +26,15 @@ export class CoolhandFeedback {
       );
       return false;
     }
+
+    // If re-initializing, destroy existing widgets first
+    const isReinitializing = this.apiKey !== null;
+    if (isReinitializing) {
+      this.destroyAllWidgets();
+      // Reset auto-attach state so enableAutoAttachment will run again
+      this.isAutoAttaching = false;
+    }
+
     this.apiKey = apiKey;
 
     // Store global client unique ID if provided
@@ -32,12 +42,27 @@ export class CoolhandFeedback {
       this.clientUniqueId = options.clientUniqueId;
     }
 
+    // Store global widget style if provided
+    this.widgetStyle = options.widgetStyle || null;
+
     // Auto-attach to existing elements if enabled
     if (options.autoAttach !== false) {
       this.enableAutoAttachment();
     }
 
     return true;
+  }
+
+  /**
+   * Destroy all existing widgets (used when re-initializing)
+   */
+  private destroyAllWidgets(): void {
+    const elements = document.querySelectorAll<HTMLElement>(
+      '[coolhand-feedback="true"], [coolhand-feedback=""], [coolhand-feedback]'
+    );
+    elements.forEach((element) => {
+      this.detach(element);
+    });
   }
 
   /**
@@ -112,8 +137,9 @@ export class CoolhandFeedback {
       options.clientUniqueId = this.clientUniqueId;
     }
 
-    if (element.dataset.coolhandWorkloadId) {
-      options.workloadId = element.dataset.coolhandWorkloadId;
+    // Apply global widgetStyle
+    if (this.widgetStyle) {
+      options.widgetStyle = this.widgetStyle;
     }
 
     if (element.dataset.coolhandWorkloadId) {
@@ -163,10 +189,13 @@ export class CoolhandFeedback {
       return this.instances.get(element) || null;
     }
 
-    // Apply global clientUniqueId as default if not provided in options
+    // Apply global defaults if not provided in options
     const mergedOptions = { ...options };
     if (!mergedOptions.clientUniqueId && this.clientUniqueId) {
       mergedOptions.clientUniqueId = this.clientUniqueId;
+    }
+    if (!mergedOptions.widgetStyle && this.widgetStyle) {
+      mergedOptions.widgetStyle = this.widgetStyle;
     }
 
     const instance = new FeedbackWidget(

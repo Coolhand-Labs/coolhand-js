@@ -94,6 +94,7 @@ const devServerConfig = {
   output: {
     ...outputConfig,
     filename: 'coolhand.js',
+    publicPath: '/dist/',
   },
   devtool: 'eval-source-map',
   devServer: {

@@ -1,6 +1,6 @@
 import { jest, describe, it, expect, beforeEach, afterEach } from '@jest/globals';
 import { FeedbackWidget } from '../src/feedback-widget';
-import { COOLHAND_API_URL, VERSION, FEEDBACK_ID_ATTRIBUTE, ORIGINAL_OUTPUT_ATTRIBUTE, WIDGET_VISIBILITY_ATTRIBUTE, DEBOUNCE_MS } from '../src/constants';
+import { COOLHAND_API_URL, VERSION, FEEDBACK_ID_ATTRIBUTE, ORIGINAL_OUTPUT_ATTRIBUTE, WIDGET_STYLE_ATTRIBUTE, DEBOUNCE_MS } from '../src/constants';
 
 // Mock fetch globally
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -1329,7 +1329,7 @@ describe('FeedbackWidget', () => {
     });
   });
 
-  describe('Widget Visibility', () => {
+  describe('Widget Style', () => {
     beforeEach(() => {
       jest.useFakeTimers();
     });
@@ -1338,10 +1338,10 @@ describe('FeedbackWidget', () => {
       jest.useRealTimers();
     });
 
-    it('should not render widget UI when data-coolhand-widget-visibility="hide"', () => {
+    it('should not render widget UI when data-coolhand-widget-style="hidden"', () => {
       const element = document.createElement('div');
       element.textContent = 'Test content';
-      element.setAttribute(WIDGET_VISIBILITY_ATTRIBUTE, 'hide');
+      element.setAttribute(WIDGET_STYLE_ATTRIBUTE, 'hidden');
       document.body.appendChild(element);
 
       widget = new FeedbackWidget(element, 'Test content', 'test-api-key');
@@ -1352,10 +1352,10 @@ describe('FeedbackWidget', () => {
       expect(element.shadowRoot).toBeNull();
     });
 
-    it('should still track input changes when widget is hidden on textarea', async () => {
+    it('should still track input changes when widget style is hidden on textarea', async () => {
       const textarea = document.createElement('textarea');
       textarea.value = 'Original content';
-      textarea.setAttribute(WIDGET_VISIBILITY_ATTRIBUTE, 'hide');
+      textarea.setAttribute(WIDGET_STYLE_ATTRIBUTE, 'hidden');
       document.body.appendChild(textarea);
 
       mockFetch.mockResolvedValueOnce({
@@ -1406,10 +1406,10 @@ describe('FeedbackWidget', () => {
       expect(element.querySelector('.coolhand-feedback-container')).not.toBeNull();
     });
 
-    it('should render widget UI when attribute has value other than "hide"', () => {
+    it('should render widget UI when style is overlay', () => {
       const element = document.createElement('div');
       element.textContent = 'Test content';
-      element.setAttribute(WIDGET_VISIBILITY_ATTRIBUTE, 'show');
+      element.setAttribute(WIDGET_STYLE_ATTRIBUTE, 'overlay');
       document.body.appendChild(element);
 
       widget = new FeedbackWidget(element, 'Test content', 'test-api-key');
@@ -1417,6 +1417,21 @@ describe('FeedbackWidget', () => {
       // Widget should still be rendered
       expect(element.querySelector('.coolhand-feedback-container')).not.toBeNull();
     });
-  });
 
+    it('should render widget UI when style is pixel', () => {
+      const element = document.createElement('div');
+      element.textContent = 'Test content';
+      element.setAttribute(WIDGET_STYLE_ATTRIBUTE, 'pixel');
+      document.body.appendChild(element);
+
+      widget = new FeedbackWidget(element, 'Test content', 'test-api-key');
+
+      // Widget should be rendered with pixel mode class
+      const container = element.querySelector('.coolhand-feedback-container');
+      expect(container).not.toBeNull();
+      const shadowRoot = container?.shadowRoot;
+      const wrapper = shadowRoot?.querySelector('.coolhand-feedback-wrapper');
+      expect(wrapper?.classList.contains('coolhand-pixel-mode')).toBe(true);
+    });
+  });
 });

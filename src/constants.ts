@@ -31,16 +31,16 @@ export const FEEDBACK_ID_ATTRIBUTE = 'data-coolhand-feedback-id';
 export const ORIGINAL_OUTPUT_ATTRIBUTE = 'data-coolhand-original-output';
 
 /**
- * Data attribute for widget visibility (set to "hide" to hide the widget)
+ * Data attribute for widget style ("overlay", "pixel", or "hidden")
  */
-export const WIDGET_VISIBILITY_ATTRIBUTE = 'data-coolhand-widget-visibility';
+export const WIDGET_STYLE_ATTRIBUTE = 'data-coolhand-widget-style';
+
+/**
+ * Debounce delay in milliseconds for input change events
+ */
+export const DEBOUNCE_MS = 1000;
 
 /**
  * CSS class prefix for all widget styles
  */
 export const CSS_PREFIX = 'coolhand';
-
-/**
- * Debounce delay in ms for revised output updates
- */
-export const DEBOUNCE_MS = 1000;

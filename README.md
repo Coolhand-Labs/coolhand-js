@@ -27,12 +27,9 @@ The widget is designed with accessibility in mind:
 
 ## Related Packages
 
-| Package | Environment | Purpose |
-|---------|-------------|---------|
-| `coolhand` | Browser | Feedback widget for collecting user sentiment on AI outputs |
-| `coolhand-node` | Node.js | Server-side monitoring and logging of LLM API calls |
-
-This package (`coolhand`) is the **browser SDK** for frontend feedback collection. For server-side LLM monitoring, see [coolhand-node](https://github.com/Coolhand-Labs/coolhand-node).
+- **Node.js**: [coolhand-node package](https://github.com/Coolhand-Labs/coolhand-node) - Coolhand monitoring for Node.js applications
+- **Ruby**: [coolhand gem](https://github.com/Coolhand-Labs/coolhand-ruby) - Coolhand monitoring for Ruby applications
+- **Python**: [coolhand package](https://github.com/Coolhand-Labs/coolhand-python) - Coolhand monitoring for Python applications
 
 ## Installation
 
@@ -110,6 +107,7 @@ Initialize the library with your Coolhand API key. Automatically attaches to all
 - `options` (object, optional): Configuration options
   - `autoAttach` (boolean): Enable auto-attachment (default: true)
   - `clientUniqueId` (string): Optional client identifier sent with all feedback (e.g., user ID, session ID)
+  - `widgetStyle` (string): Default widget style for all widgets - `"overlay"` (default), `"pixel"`, or `"hidden"`
 
 **Returns:**
 - `boolean`: True if initialization succeeded, false otherwise
@@ -121,6 +119,9 @@ CoolhandJS.init('ch_api_abc123...');
 
 // With client tracking
 CoolhandJS.init('ch_api_abc123...', { clientUniqueId: 'user-123' });
+
+// Use minimal pixel style for all widgets
+CoolhandJS.init('ch_api_abc123...', { widgetStyle: 'pixel' });
 
 // Disable auto-attachment
 CoolhandJS.init('ch_api_abc123...', { autoAttach: false });
@@ -137,6 +138,7 @@ Manually attach a feedback widget to an HTML element. Usually not needed since a
 **Options:**
 - `clientUniqueId` (string): Optional client identifier (overrides global setting from init)
 - `workloadId` (string): Optional workload hash ID to associate feedback with a specific workload. Improves fuzzy matching accuracy.
+- `widgetStyle` (string): Widget display style (overrides global setting) - `"overlay"`, `"pixel"`, or `"hidden"`
 - `onSuccess` (function): Callback when feedback is successfully submitted
 - `onError` (function): Callback when an error occurs
 - `onRevisedOutput` (function): Callback when revised output is sent (for textarea/input elements)
@@ -176,20 +178,25 @@ CoolhandJS makes it incredibly easy to capture human feedback on AI outputs. Jus
 
 ### Basic Usage
 ```html
-<!-- Simple feedback widget -->
+<!-- Simple feedback widget (overlay style - default) -->
 <div coolhand-feedback>
   Your content here
 </div>
+
+<!-- Pixel style - minimal 8px dot that expands on hover -->
+<div coolhand-feedback data-coolhand-widget-style="pixel">
+  AI response with minimal feedback indicator
+</div>
+
+<!-- Hidden style - no UI, but still tracks input changes -->
+<textarea coolhand-feedback data-coolhand-widget-style="hidden">
+  Content that tracks edits without showing the feedback widget
+</textarea>
 
 <!-- With workload association -->
 <div coolhand-feedback data-coolhand-workload-id="abc123def456">
   AI response associated with a specific workload
 </div>
-
-<!-- Hidden widget (still tracks input changes, but no visible UI) -->
-<textarea coolhand-feedback data-coolhand-widget-visibility="hide">
-  Content that tracks edits without showing the feedback widget
-</textarea>
 ```
 
 ### Textarea/Input Support
@@ -208,8 +215,8 @@ The AI generated this response which the user can edit.
 
 ### Supported Attributes
 - `coolhand-feedback`: Enables automatic widget attachment
+- `data-coolhand-widget-style`: Widget display style - `"overlay"` (default), `"pixel"` (minimal 8px dot that expands on hover), or `"hidden"` (no UI, still tracks input changes)
 - `data-coolhand-workload-id`: Optional workload hash ID to associate feedback with a specific workload. When provided, improves fuzzy matching accuracy for connecting feedback to the original LLM request.
-- `data-coolhand-widget-visibility`: Set to `"hide"` to hide the feedback widget UI while still tracking input changes on textarea/input elements. Useful for programmatic feedback collection.
 - `data-coolhand-feedback-id`: **Set automatically** after successful feedback submission. Contains the feedback ID returned from the API. When present, subsequent feedback changes automatically update the existing feedback instead of creating duplicates.
 
 ## Feedback Values
