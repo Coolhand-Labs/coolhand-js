@@ -13,6 +13,7 @@ import {
   FEEDBACK_ID_ATTRIBUTE,
   ORIGINAL_OUTPUT_ATTRIBUTE,
   WIDGET_STYLE_ATTRIBUTE,
+  EXPLANATION_ATTRIBUTE,
   DEBOUNCE_MS,
 } from './constants';
 import type {
@@ -63,6 +64,7 @@ export class FeedbackWidget {
 
   // Explanation tracking
   private isShowingExplanation: boolean = false;
+  private isShowingSummary: boolean = false;
   private explanationText: string = '';
   private explanationDebounceTimer: ReturnType<typeof setTimeout> | null = null;
   private explanationContainer: HTMLElement | null = null;
@@ -261,9 +263,15 @@ export class FeedbackWidget {
     });
 
     document.addEventListener('click', (e: Event) => {
-      if (!root.contains(e.target as Node)) {
+      // Use composedPath() to correctly detect clicks inside Shadow DOM
+      const path = e.composedPath();
+      const clickedInsideWidget = path.includes(root);
+
+      if (!clickedInsideWidget) {
         if (this.isShowingExplanation) {
           this.closeExplanationUI();
+        } else if (this.isShowingSummary) {
+          this.closeSummaryUI();
         } else {
           this.hideOptions();
         }
@@ -275,6 +283,8 @@ export class FeedbackWidget {
       if (e.key === 'Escape') {
         if (this.isShowingExplanation) {
           this.closeExplanationUI();
+        } else if (this.isShowingSummary) {
+          this.closeSummaryUI();
         } else if (this.isExpanded) {
           this.hideOptions();
         }
@@ -326,6 +336,14 @@ export class FeedbackWidget {
         this.trigger.style.display = 'none';
         this.trigger.setAttribute('aria-expanded', 'true');
       }
+
+      // Check if feedback already exists - show summary view instead
+      const existingFeedbackId = this.targetElement.getAttribute(FEEDBACK_ID_ATTRIBUTE);
+      if (existingFeedbackId && this.selectedType) {
+        this.showFeedbackSummary();
+        return;
+      }
+
       if (this.optionsPanel) {
         this.optionsPanel.classList.add('expanded');
         this.optionsPanel.setAttribute('aria-hidden', 'false');
@@ -336,6 +354,151 @@ export class FeedbackWidget {
     } else {
       this.hideOptions();
     }
+  }
+
+  /**
+   * Show summary view of existing feedback
+   */
+  private showFeedbackSummary(): void {
+    if (!this.optionsPanel) return;
+
+    this.isShowingSummary = true;
+    const existingExplanation = this.targetElement.getAttribute(EXPLANATION_ATTRIBUTE) || '';
+
+    // Build the summary HTML with all three icons (selected one highlighted)
+    const summaryHtml = `
+      <div class="coolhand-summary-container">
+        <div class="coolhand-summary-header">
+          <div class="coolhand-summary-icons" role="radiogroup" aria-label="Change your feedback">
+            <button class="coolhand-option${this.selectedType === 'down' ? ' selected' : ''}" data-feedback="down" aria-label="Not useful" role="radio" aria-checked="${this.selectedType === 'down'}">
+              <span aria-hidden="true">${thumbsDownIcon}</span>
+            </button>
+            <button class="coolhand-option${this.selectedType === 'neutral' ? ' selected' : ''}" data-feedback="neutral" aria-label="Somewhat useful" role="radio" aria-checked="${this.selectedType === 'neutral'}">
+              <span aria-hidden="true">${neutralIcon}</span>
+            </button>
+            <button class="coolhand-option${this.selectedType === 'up' ? ' selected' : ''}" data-feedback="up" aria-label="Very useful" role="radio" aria-checked="${this.selectedType === 'up'}">
+              <span aria-hidden="true">${thumbsUpIcon}</span>
+            </button>
+          </div>
+          <button class="coolhand-explanation-close" aria-label="Close feedback summary">
+            <span aria-hidden="true">${closeIcon}</span>
+          </button>
+        </div>
+        <div class="coolhand-summary-label">Your feedback:</div>
+        <textarea
+          class="coolhand-explanation-textarea"
+          placeholder="How could this result be better?"
+          aria-label="Your feedback explanation"
+          rows="3"
+        >${existingExplanation}</textarea>
+        <button class="coolhand-submit-btn" type="button">Submit</button>
+      </div>
+    `;
+
+    this.optionsPanel.innerHTML = summaryHtml;
+    this.optionsPanel.classList.add('expanded', 'summary-mode');
+    this.optionsPanel.setAttribute('aria-hidden', 'false');
+
+    // Set up event listeners
+    const closeBtn = this.optionsPanel.querySelector('.coolhand-explanation-close');
+    const textarea = this.optionsPanel.querySelector('.coolhand-explanation-textarea') as HTMLTextAreaElement;
+    const feedbackButtons = this.optionsPanel.querySelectorAll('.coolhand-option');
+    const submitBtn = this.optionsPanel.querySelector('.coolhand-submit-btn');
+
+    if (closeBtn) {
+      closeBtn.addEventListener('click', (e: Event) => {
+        e.stopPropagation();
+        this.closeSummaryUI();
+      });
+    }
+
+    if (textarea) {
+      this.explanationText = existingExplanation;
+      textarea.addEventListener('input', this.handleExplanationInput.bind(this));
+      textarea.addEventListener('blur', this.handleExplanationBlur.bind(this));
+    }
+
+    if (submitBtn) {
+      submitBtn.addEventListener('click', (e: Event) => {
+        e.stopPropagation();
+        this.handleExplanationSubmit();
+      });
+    }
+
+    // Allow changing feedback selection
+    feedbackButtons.forEach((btn) => {
+      btn.addEventListener('click', (e: Event) => {
+        e.stopPropagation();
+        this.handleSummaryFeedbackChange(btn as HTMLElement, feedbackButtons);
+      });
+    });
+  }
+
+  /**
+   * Handle feedback change in summary view
+   */
+  private handleSummaryFeedbackChange(
+    selectedBtn: HTMLElement,
+    allBtns: NodeListOf<Element>
+  ): void {
+    // Update visual and ARIA states
+    allBtns.forEach((btn) => {
+      btn.classList.remove('selected');
+      btn.setAttribute('aria-checked', 'false');
+    });
+    selectedBtn.classList.add('selected');
+    selectedBtn.setAttribute('aria-checked', 'true');
+
+    const feedbackType = selectedBtn.dataset.feedback as FeedbackType | undefined;
+    if (!feedbackType) return;
+
+    const feedbackValue = FEEDBACK_TYPE_TO_VALUE[feedbackType];
+    this.selectedFeedback = feedbackValue;
+    this.selectedType = feedbackType;
+
+    // Update trigger icon
+    if (this.trigger && this.selectedIconContainer) {
+      this.selectedIconContainer.innerHTML = FEEDBACK_TYPE_TO_ICON[feedbackType];
+      this.trigger.setAttribute('data-selected', feedbackType);
+    }
+
+    // Send updated feedback
+    this.sendFeedback(feedbackValue);
+  }
+
+  /**
+   * Close the summary UI
+   */
+  private closeSummaryUI(): void {
+    if (!this.isShowingSummary) return;
+
+    // Send any pending explanation
+    if (this.explanationDebounceTimer) {
+      clearTimeout(this.explanationDebounceTimer);
+      this.explanationDebounceTimer = null;
+    }
+    if (this.explanationText.trim()) {
+      this.sendExplanation();
+    }
+
+    this.isShowingSummary = false;
+
+    if (this.optionsPanel) {
+      this.optionsPanel.classList.remove('expanded', 'summary-mode');
+      this.optionsPanel.setAttribute('aria-hidden', 'true');
+    }
+
+    if (this.trigger) {
+      this.trigger.style.display = 'flex';
+      this.trigger.classList.add('showing-checkmark');
+      setTimeout(() => {
+        if (this.trigger) {
+          this.trigger.classList.remove('showing-checkmark');
+        }
+      }, 800);
+    }
+
+    this.isExpanded = false;
   }
 
   /**
@@ -440,6 +603,7 @@ export class FeedbackWidget {
           aria-label="Explain your feedback"
           rows="3"
         ></textarea>
+        <button class="coolhand-submit-btn" type="button">Submit</button>
       </div>
     `;
 
@@ -452,6 +616,7 @@ export class FeedbackWidget {
     this.explanationContainer = this.optionsPanel.querySelector('.coolhand-explanation-container');
     const textarea = this.optionsPanel.querySelector('.coolhand-explanation-textarea') as HTMLTextAreaElement;
     const closeBtn = this.optionsPanel.querySelector('.coolhand-explanation-close');
+    const submitBtn = this.optionsPanel.querySelector('.coolhand-submit-btn');
 
     if (textarea) {
       textarea.addEventListener('input', this.handleExplanationInput.bind(this));
@@ -464,6 +629,13 @@ export class FeedbackWidget {
       closeBtn.addEventListener('click', (e: Event) => {
         e.stopPropagation();
         this.closeExplanationUI();
+      });
+    }
+
+    if (submitBtn) {
+      submitBtn.addEventListener('click', (e: Event) => {
+        e.stopPropagation();
+        this.handleExplanationSubmit();
       });
     }
 
@@ -505,6 +677,29 @@ export class FeedbackWidget {
     // Send explanation if there's any text
     if (this.explanationText.trim()) {
       this.sendExplanation();
+    }
+  }
+
+  /**
+   * Handle explicit submit button click - send explanation and close UI
+   */
+  private handleExplanationSubmit(): void {
+    // Clear any pending debounce timer
+    if (this.explanationDebounceTimer) {
+      clearTimeout(this.explanationDebounceTimer);
+      this.explanationDebounceTimer = null;
+    }
+
+    // Send explanation if there's any text
+    if (this.explanationText.trim()) {
+      this.sendExplanation();
+    }
+
+    // Close the UI (either explanation or summary mode)
+    if (this.isShowingExplanation) {
+      this.closeExplanationUI();
+    } else if (this.isShowingSummary) {
+      this.closeSummaryUI();
     }
   }
 
@@ -555,6 +750,9 @@ export class FeedbackWidget {
 
       const data: FeedbackApiResponse = await response.json();
       console.log('[CoolhandJS] Explanation submitted successfully:', data);
+
+      // Store the explanation in a data attribute for later retrieval
+      this.targetElement.setAttribute(EXPLANATION_ATTRIBUTE, explanation);
 
       // Announce success to screen readers
       this.announce('Thank you for your feedback');

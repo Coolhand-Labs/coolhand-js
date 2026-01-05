@@ -557,5 +557,79 @@ export const widgetStyles = `
       transition: none;
     }
   }
+
+  /* Summary mode styles */
+  .coolhand-options.summary-mode {
+    width: 300px;
+    min-width: 300px;
+  }
+
+  .coolhand-summary-container {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .coolhand-summary-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .coolhand-summary-icons {
+    display: flex;
+    gap: 6px;
+  }
+
+  .coolhand-summary-label {
+    font-size: var(--coolhand-font-size);
+    font-weight: 500;
+    color: var(--coolhand-text-muted);
+    font-family: var(--coolhand-font-family);
+  }
+
+  /* Submit button */
+  .coolhand-submit-btn {
+    all: initial;
+    box-sizing: border-box;
+    display: block;
+    width: 100%;
+    padding: 8px 16px;
+    font-family: var(--coolhand-font-family);
+    font-size: var(--coolhand-font-size);
+    font-weight: 500;
+    color: #ffffff;
+    background: var(--coolhand-accent);
+    border: none;
+    border-radius: var(--coolhand-border-radius);
+    cursor: pointer;
+    text-align: center;
+    transition: background 0.15s ease, transform 0.1s ease;
+  }
+
+  .coolhand-submit-btn:hover {
+    background: #1d4ed8;
+  }
+
+  .coolhand-submit-btn:active {
+    transform: scale(0.98);
+  }
+
+  .coolhand-submit-btn:focus {
+    outline: none;
+  }
+
+  .coolhand-submit-btn:focus-visible {
+    outline: 2px solid var(--coolhand-accent);
+    outline-offset: 2px;
+  }
+
+  /* Reduced motion for submit button */
+  @media (prefers-reduced-motion: reduce) {
+    .coolhand-submit-btn {
+      transition: none;
+    }
+  }
 </style>
 `;

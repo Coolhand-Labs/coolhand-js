@@ -525,10 +525,14 @@ describe('FeedbackWidget', () => {
       expect(options?.classList.contains('expanded')).toBe(true);
 
       // Dispatch a click event on the document that originates from inside the shadowRoot
-      // The widget's document click handler checks if the shadowRoot contains the target
+      // The widget's document click handler uses composedPath() to detect clicks inside Shadow DOM
       const wrapper = shadowRoot?.querySelector('.coolhand-feedback-wrapper') as HTMLElement;
       const clickEvent = new MouseEvent('click', { bubbles: true });
       Object.defineProperty(clickEvent, 'target', { value: wrapper, writable: false });
+      // Mock composedPath to simulate a real browser's behavior with Shadow DOM
+      Object.defineProperty(clickEvent, 'composedPath', {
+        value: () => [wrapper, shadowRoot, container, element, document.body, document.documentElement, document, window],
+      });
       document.dispatchEvent(clickEvent);
 
       // Options should still be expanded because click was inside the widget
