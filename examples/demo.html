@@ -6,7 +6,7 @@
     <title>Coolhand Feedback Widget - LLM Output Demo</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Load Coolhand Feedback Widget -->
-    <script src="/dist/coolhand.min.js"></script>
+    <script src="/dist/coolhand.js"></script>
     <script>
         tailwind.config = {
             darkMode: 'class',
@@ -82,6 +82,14 @@
                     placeholder="Enter your Coolhand API key"
                     class="flex-1 px-4 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder-gray-400 dark:placeholder-gray-500 transition-colors duration-200"
                 />
+                <select
+                    id="widgetStyleSelect"
+                    class="px-4 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200"
+                >
+                    <option value="overlay">Overlay (Default)</option>
+                    <option value="pixel">Pixel (Minimal)</option>
+                    <option value="hidden">Hidden (Track Only)</option>
+                </select>
                 <button
                     id="initButton"
                     class="px-6 py-2 bg-blue-500 dark:bg-blue-600 text-white rounded-lg hover:bg-blue-600 dark:hover:bg-blue-700 transition-colors duration-200 font-medium whitespace-nowrap"
@@ -91,7 +99,7 @@
             </div>
             <div id="initStatus" class="mt-2 text-sm"></div>
             <p class="mt-2 text-xs text-gray-600 dark:text-gray-400">
-                Look for the hand icon (✋) in the upper-right corner of each content section after initialization.
+                Choose widget style and initialize. <strong>Overlay</strong>: hand icon trigger. <strong>Pixel</strong>: tiny dot that expands on hover. <strong>Hidden</strong>: no UI, tracks edits only.
             </p>
         </div>
 
@@ -239,6 +247,8 @@ In conclusion, the results indicate strong performance across all metrics, with 
 
             console.log('✓ CoolhandJS library loaded successfully');
 
+            const widgetStyleSelect = document.getElementById('widgetStyleSelect');
+
             initButton.addEventListener('click', () => {
                 const apiKey = apiKeyInput.value.trim();
 
@@ -247,10 +257,14 @@ In conclusion, the results indicate strong performance across all metrics, with 
                     return;
                 }
 
-                // Initialize CoolhandJS with auto-attachment
-                if (CoolhandJS.init(apiKey)) {
-                    initStatus.innerHTML = '<span class="text-green-600 dark:text-green-400">✓ Initialized successfully - widgets auto-attached!</span>';
-                    console.log('✓ CoolhandJS initialized with auto-attachment enabled');
+                // Generate a unique client ID for this page view
+                const clientUniqueId = 'demo-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+                const widgetStyle = widgetStyleSelect.value;
+
+                // Initialize CoolhandJS with auto-attachment, global client ID, and widget style
+                if (CoolhandJS.init(apiKey, { clientUniqueId, widgetStyle })) {
+                    initStatus.innerHTML = '<span class="text-green-600 dark:text-green-400">✓ Initialized with style: ' + widgetStyle + ', client ID: ' + clientUniqueId + '</span>';
+                    console.log('✓ CoolhandJS initialized with widgetStyle:', widgetStyle, ', clientUniqueId:', clientUniqueId);
                 } else {
                     initStatus.innerHTML = '<span class="text-red-600 dark:text-red-400">❌ Initialization failed</span>';
                 }
@@ -258,6 +272,46 @@ In conclusion, the results indicate strong performance across all metrics, with 
 
             // Auto-attachment handles everything now via HTML attributes!
             // No need for manual attachment code
+
+            // Widget visibility toggles (only if elements exist)
+            const textareaToggle = document.getElementById('textarea-widget-toggle');
+            const inputToggle = document.getElementById('input-widget-toggle');
+            const textarea = document.getElementById('editable-textarea');
+            const inputField = document.getElementById('editable-input');
+
+            if (textareaToggle && textarea) {
+                textareaToggle.addEventListener('change', (e) => {
+                    if (e.target.checked) {
+                        textarea.setAttribute('data-coolhand-widget-style', 'hidden');
+                        showNotification('Textarea widget hidden (revision tracking still active)');
+                    } else {
+                        textarea.removeAttribute('data-coolhand-widget-style');
+                        showNotification('Textarea widget visible');
+                    }
+                    // Re-initialize to apply change
+                    if (typeof CoolhandJS !== 'undefined') {
+                        CoolhandJS.detach(textarea);
+                        CoolhandJS.attach(textarea);
+                    }
+                });
+            }
+
+            if (inputToggle && inputField) {
+                inputToggle.addEventListener('change', (e) => {
+                    if (e.target.checked) {
+                        inputField.setAttribute('data-coolhand-widget-style', 'hidden');
+                        showNotification('Input widget hidden (revision tracking still active)');
+                    } else {
+                        inputField.removeAttribute('data-coolhand-widget-style');
+                        showNotification('Input widget visible');
+                    }
+                    // Re-initialize to apply change
+                    if (typeof CoolhandJS !== 'undefined') {
+                        CoolhandJS.detach(inputField);
+                        CoolhandJS.attach(inputField);
+                    }
+                });
+            }
 
             function showNotification(message, isError = false) {
                 const notification = document.createElement('div');

@@ -7,13 +7,21 @@ import {
   thumbsDownIcon,
   neutralIcon,
 } from './icons/icons';
-import { COOLHAND_API_URL, VERSION } from './constants';
+import {
+  COOLHAND_API_URL,
+  VERSION,
+  FEEDBACK_ID_ATTRIBUTE,
+  ORIGINAL_OUTPUT_ATTRIBUTE,
+  WIDGET_STYLE_ATTRIBUTE,
+  DEBOUNCE_MS,
+} from './constants';
 import type {
   FeedbackValue,
   FeedbackType,
   AttachOptions,
   FeedbackApiPayload,
   FeedbackApiResponse,
+  WidgetStyle,
 } from './types';
 import { FEEDBACK_TYPE_TO_VALUE } from './types';
 
@@ -44,6 +52,15 @@ export class FeedbackWidget {
   private statusRegion: HTMLElement | null = null;
   private feedbackButtons: NodeListOf<Element> | null = null;
 
+  // Input/textarea monitoring
+  private isInputElement: boolean = false;
+  private debounceTimer: ReturnType<typeof setTimeout> | null = null;
+  private boundInputHandler: ((e: Event) => void) | null = null;
+  private boundBlurHandler: ((e: Event) => void) | null = null;
+
+  // Widget style ("overlay", "pixel", or "hidden")
+  private widgetStyle: WidgetStyle = 'overlay';
+
   constructor(
     targetElement: HTMLElement,
     originalText: string,
@@ -56,7 +73,30 @@ export class FeedbackWidget {
     this.options = options;
     this.useShadowDOM = this.supportsShadowDOM();
 
-    this.init();
+    // Determine widget style (priority: element attribute > options > default)
+    const styleAttr = targetElement.getAttribute(WIDGET_STYLE_ATTRIBUTE) as WidgetStyle | null;
+    if (styleAttr === 'pixel' || styleAttr === 'hidden') {
+      this.widgetStyle = styleAttr;
+    } else if (options.widgetStyle) {
+      this.widgetStyle = options.widgetStyle;
+    }
+
+    // Detect if this is an input or textarea element
+    this.isInputElement =
+      targetElement instanceof HTMLInputElement ||
+      targetElement instanceof HTMLTextAreaElement;
+
+    // Only render widget UI if not hidden
+    if (this.widgetStyle !== 'hidden') {
+      this.init();
+    }
+
+    // Set up input monitoring for textarea/input elements (even if widget is hidden)
+    if (this.isInputElement) {
+      // Store original output in a data attribute
+      this.targetElement.setAttribute(ORIGINAL_OUTPUT_ATTRIBUTE, this.originalText);
+      this.setupInputMonitoring();
+    }
   }
 
   /**
@@ -93,10 +133,11 @@ export class FeedbackWidget {
   private render(root: ShadowRoot | HTMLElement): void {
     const uniqueId = `coolhand-${Math.random().toString(36).substr(2, 9)}`;
     const optionsPanelId = `${uniqueId}-options`;
+    const pixelModeClass = this.widgetStyle === 'pixel' ? ' coolhand-pixel-mode' : '';
 
     const html = `
       ${this.useShadowDOM ? '' : widgetStyles}
-      <div class="coolhand-feedback-wrapper" role="region" aria-label="Feedback">
+      <div class="coolhand-feedback-wrapper${pixelModeClass}" role="region" aria-label="Feedback">
         <div class="coolhand-sr-only" aria-live="polite" aria-atomic="true"></div>
         <button
           class="coolhand-trigger"
@@ -312,17 +353,25 @@ export class FeedbackWidget {
     this.selectedFeedback = feedbackValue;
     this.selectedType = feedbackType;
 
-    // Close the options panel immediately
-    this.hideOptions();
-
-    // Return focus to trigger for keyboard users
-    if (this.trigger) this.trigger.focus();
-
     // Immediately update the trigger to show the selected feedback icon
     if (this.trigger && this.selectedIconContainer) {
       this.selectedIconContainer.innerHTML = FEEDBACK_TYPE_TO_ICON[feedbackType];
       this.trigger.setAttribute('data-selected', feedbackType);
       this.trigger.classList.add('has-feedback');
+    }
+
+    // First blur any focused element in shadow DOM to release focus
+    const activeEl = this.shadowRoot?.activeElement as HTMLElement | null;
+    if (activeEl && activeEl.blur) {
+      activeEl.blur();
+    }
+
+    // Now hide the options panel (safe since nothing inside has focus)
+    this.hideOptions();
+
+    // Move focus to trigger for keyboard users
+    if (this.trigger) {
+      this.trigger.focus();
     }
 
     // Send feedback to the server
@@ -333,7 +382,7 @@ export class FeedbackWidget {
    * Send feedback to the API (creates new or updates existing)
    */
   private async sendFeedback(feedbackValue: FeedbackValue): Promise<void> {
-    const existingFeedbackId = this.targetElement.getAttribute('data-coolhand-feedback-id');
+    const existingFeedbackId = this.targetElement.getAttribute(FEEDBACK_ID_ATTRIBUTE);
     const isUpdate = !!existingFeedbackId;
 
     const payload: FeedbackApiPayload = {
@@ -344,8 +393,8 @@ export class FeedbackWidget {
       },
     };
 
-    if (this.options.sessionId) {
-      payload.llm_request_log_feedback.client_unique_id = this.options.sessionId;
+    if (this.options.clientUniqueId) {
+      payload.llm_request_log_feedback.client_unique_id = this.options.clientUniqueId;
     }
 
     if (this.options.workloadId) {
@@ -379,7 +428,7 @@ export class FeedbackWidget {
 
       // Store feedback ID on the target element for reference (for new feedback)
       if (data.id && !isUpdate) {
-        this.targetElement.setAttribute('data-coolhand-feedback-id', String(data.id));
+        this.targetElement.setAttribute(FEEDBACK_ID_ATTRIBUTE, String(data.id));
       }
 
       // Announce success to screen readers
@@ -418,11 +467,150 @@ export class FeedbackWidget {
   }
 
   /**
-   * Remove the widget from the DOM
+   * Set up monitoring for input/textarea value changes
+   */
+  private setupInputMonitoring(): void {
+    // Bind handlers so we can remove them later
+    this.boundInputHandler = this.handleInputChange.bind(this);
+    this.boundBlurHandler = this.handleInputBlur.bind(this);
+
+    // Listen for input events (fires on every keystroke)
+    this.targetElement.addEventListener('input', this.boundInputHandler);
+
+    // Also listen for blur to catch paste events and final changes
+    this.targetElement.addEventListener('blur', this.boundBlurHandler);
+  }
+
+  /**
+   * Handle input changes with debouncing
+   */
+  private handleInputChange(): void {
+    // Clear any existing timer
+    if (this.debounceTimer) {
+      clearTimeout(this.debounceTimer);
+    }
+
+    // Set new debounce timer
+    this.debounceTimer = setTimeout(() => {
+      this.sendRevisedOutput();
+    }, DEBOUNCE_MS);
+  }
+
+  /**
+   * Handle blur event - send immediately without debounce
+   */
+  private handleInputBlur(): void {
+    // Clear any pending debounce timer
+    if (this.debounceTimer) {
+      clearTimeout(this.debounceTimer);
+      this.debounceTimer = null;
+    }
+
+    // Send immediately
+    this.sendRevisedOutput();
+  }
+
+  /**
+   * Send revised output to the API
+   */
+  private async sendRevisedOutput(): Promise<void> {
+    // Only send if element is input/textarea
+    if (!this.isInputElement) return;
+
+    const element = this.targetElement as HTMLInputElement | HTMLTextAreaElement;
+    const currentValue = element.value.trim();
+    const originalOutput = this.targetElement.getAttribute(ORIGINAL_OUTPUT_ATTRIBUTE) || this.originalText;
+
+    // Don't send if content hasn't changed from original
+    if (currentValue === originalOutput) return;
+
+    // Check if we have an existing feedback ID
+    const existingFeedbackId = this.targetElement.getAttribute(FEEDBACK_ID_ATTRIBUTE);
+
+    const payload: FeedbackApiPayload = {
+      llm_request_log_feedback: {
+        like: this.selectedFeedback,
+        original_output: originalOutput,
+        revised_output: currentValue,
+        collector: `coolhand-js-${VERSION}`,
+      },
+    };
+
+    if (this.options.clientUniqueId) {
+      payload.llm_request_log_feedback.client_unique_id = this.options.clientUniqueId;
+    }
+
+    if (this.options.workloadId) {
+      payload.llm_request_log_feedback.workload_hashid = this.options.workloadId;
+    }
+
+    // Use PATCH if we have an existing ID, POST otherwise
+    const url = existingFeedbackId
+      ? `${COOLHAND_API_URL}/${existingFeedbackId}`
+      : COOLHAND_API_URL;
+    const method = existingFeedbackId ? 'PATCH' : 'POST';
+
+    try {
+      const response = await fetch(url, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+          'X-API-Key': this.apiKey,
+          Accept: 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data: FeedbackApiResponse = await response.json();
+      const action = existingFeedbackId ? 'updated' : 'created';
+      console.log(`[CoolhandJS] Revised output ${action} successfully:`, data);
+
+      // Store feedback ID if this was a new creation
+      if (data.id && !existingFeedbackId) {
+        this.targetElement.setAttribute(FEEDBACK_ID_ATTRIBUTE, String(data.id));
+      }
+
+      if (this.options.onRevisedOutput) {
+        this.options.onRevisedOutput(currentValue, data);
+      }
+    } catch (error) {
+      const err = error as Error;
+      console.error('[CoolhandJS] Error sending revised output:', err);
+
+      if (this.options.onError) {
+        this.options.onError(err);
+      }
+    }
+  }
+
+  /**
+   * Remove the widget from the DOM and clean up event listeners
    */
   public destroy(): void {
+    // Clear any pending debounce timer
+    if (this.debounceTimer) {
+      clearTimeout(this.debounceTimer);
+      this.debounceTimer = null;
+    }
+
+    // Remove input monitoring event listeners
+    if (this.boundInputHandler) {
+      this.targetElement.removeEventListener('input', this.boundInputHandler);
+      this.boundInputHandler = null;
+    }
+    if (this.boundBlurHandler) {
+      this.targetElement.removeEventListener('blur', this.boundBlurHandler);
+      this.boundBlurHandler = null;
+    }
+
+    // Remove the widget container
     if (this.container) {
       this.container.remove();
+      this.container = null;
     }
   }
 }

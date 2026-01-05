@@ -1,5 +1,5 @@
 import { FeedbackWidget } from './feedback-widget';
-import type { InitOptions, AttachOptions } from './types';
+import type { InitOptions, AttachOptions, WidgetStyle } from './types';
 
 /**
  * CoolhandFeedback manages the overall feedback system
@@ -7,6 +7,8 @@ import type { InitOptions, AttachOptions } from './types';
  */
 export class CoolhandFeedback {
   private apiKey: string | null = null;
+  private clientUniqueId: string | null = null;
+  private widgetStyle: WidgetStyle | null = null;
   private instances: WeakMap<HTMLElement, FeedbackWidget> = new WeakMap();
   private observer: MutationObserver | null = null;
   private isAutoAttaching: boolean = false;
@@ -24,7 +26,24 @@ export class CoolhandFeedback {
       );
       return false;
     }
+
+    // If re-initializing, destroy existing widgets first
+    const isReinitializing = this.apiKey !== null;
+    if (isReinitializing) {
+      this.destroyAllWidgets();
+      // Reset auto-attach state so enableAutoAttachment will run again
+      this.isAutoAttaching = false;
+    }
+
     this.apiKey = apiKey;
+
+    // Store global client unique ID if provided
+    if (options.clientUniqueId) {
+      this.clientUniqueId = options.clientUniqueId;
+    }
+
+    // Store global widget style if provided
+    this.widgetStyle = options.widgetStyle || null;
 
     // Auto-attach to existing elements if enabled
     if (options.autoAttach !== false) {
@@ -32,6 +51,18 @@ export class CoolhandFeedback {
     }
 
     return true;
+  }
+
+  /**
+   * Destroy all existing widgets (used when re-initializing)
+   */
+  private destroyAllWidgets(): void {
+    const elements = document.querySelectorAll<HTMLElement>(
+      '[coolhand-feedback="true"], [coolhand-feedback=""], [coolhand-feedback]'
+    );
+    elements.forEach((element) => {
+      this.detach(element);
+    });
   }
 
   /**
@@ -101,9 +132,14 @@ export class CoolhandFeedback {
 
     const options: AttachOptions = {};
 
-    // Parse options from data attributes
-    if (element.dataset.coolhandSessionId) {
-      options.sessionId = element.dataset.coolhandSessionId;
+    // Apply global clientUniqueId
+    if (this.clientUniqueId) {
+      options.clientUniqueId = this.clientUniqueId;
+    }
+
+    // Apply global widgetStyle
+    if (this.widgetStyle) {
+      options.widgetStyle = this.widgetStyle;
     }
 
     if (element.dataset.coolhandWorkloadId) {
@@ -153,11 +189,20 @@ export class CoolhandFeedback {
       return this.instances.get(element) || null;
     }
 
+    // Apply global defaults if not provided in options
+    const mergedOptions = { ...options };
+    if (!mergedOptions.clientUniqueId && this.clientUniqueId) {
+      mergedOptions.clientUniqueId = this.clientUniqueId;
+    }
+    if (!mergedOptions.widgetStyle && this.widgetStyle) {
+      mergedOptions.widgetStyle = this.widgetStyle;
+    }
+
     const instance = new FeedbackWidget(
       element,
       textContent,
       this.apiKey,
-      options
+      mergedOptions
     );
     this.instances.set(element, instance);
     return instance;
@@ -165,8 +210,19 @@ export class CoolhandFeedback {
 
   /**
    * Extract text content from an element
+   * For input/textarea elements, extracts the value
+   * For other elements, extracts textContent
    */
   private extractText(element: HTMLElement): string {
+    // Handle input/textarea elements - extract value
+    if (
+      element instanceof HTMLInputElement ||
+      element instanceof HTMLTextAreaElement
+    ) {
+      return element.value.trim();
+    }
+
+    // For other elements, extract text content
     const text = element.textContent || element.innerText || '';
     return text.trim();
   }

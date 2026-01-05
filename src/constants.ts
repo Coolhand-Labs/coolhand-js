@@ -31,6 +31,21 @@ export const WORKLOAD_ID_ATTRIBUTE = 'data-coolhand-workload-id';
 export const FEEDBACK_ID_ATTRIBUTE = 'data-coolhand-feedback-id';
 
 /**
+ * Data attribute for storing original output (for textarea/input elements)
+ */
+export const ORIGINAL_OUTPUT_ATTRIBUTE = 'data-coolhand-original-output';
+
+/**
+ * Data attribute for widget style ("overlay", "pixel", or "hidden")
+ */
+export const WIDGET_STYLE_ATTRIBUTE = 'data-coolhand-widget-style';
+
+/**
+ * Debounce delay in milliseconds for input change events
+ */
+export const DEBOUNCE_MS = 1000;
+
+/**
  * CSS class prefix for all widget styles
  */
 export const CSS_PREFIX = 'coolhand';
