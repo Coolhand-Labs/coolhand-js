@@ -16,17 +16,12 @@ export const VERSION = typeof __COOLHANDJS_VERSION__ !== 'undefined' ? __COOLHAN
 export const FEEDBACK_ATTRIBUTE = 'coolhand-feedback';
 
 /**
- * Data attribute for session ID
- */
-export const SESSION_ID_ATTRIBUTE = 'data-coolhand-session-id';
-
-/**
- * Data attribute for workload hash ID
+ * Data attribute for workload ID (improves fuzzy matching)
  */
 export const WORKLOAD_ID_ATTRIBUTE = 'data-coolhand-workload-id';
 
 /**
- * Data attribute for storing the feedback ID after submission
+ * Data attribute for feedback ID (set after successful submission)
  */
 export const FEEDBACK_ID_ATTRIBUTE = 'data-coolhand-feedback-id';
 

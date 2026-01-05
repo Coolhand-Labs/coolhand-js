@@ -13,6 +13,7 @@ A lightweight, standalone JavaScript library for adding user feedback collection
 - 📘 **TypeScript Support**: Full type definitions included
 - ♿ **Accessible**: WCAG 2.1 AA compliant with full keyboard navigation and screen reader support
 - 🔄 **Smart Updates**: Automatically tracks and updates feedback when users change their response
+- ✏️ **Revised Output Tracking**: Automatically captures edits to textarea/input content
 
 ## Accessibility
 
@@ -135,11 +136,12 @@ Manually attach a feedback widget to an HTML element. Usually not needed since a
 - `options` (object, optional): Configuration options
 
 **Options:**
-- `sessionId` (string): Optional session identifier for internal matching
+- `clientUniqueId` (string): Optional client identifier (overrides global setting from init)
 - `workloadId` (string): Optional workload hash ID to associate feedback with a specific workload. Improves fuzzy matching accuracy.
 - `widgetStyle` (string): Widget display style (overrides global setting) - `"overlay"`, `"pixel"`, or `"hidden"`
 - `onSuccess` (function): Callback when feedback is successfully submitted
 - `onError` (function): Callback when an error occurs
+- `onRevisedOutput` (function): Callback when revised output is sent (for textarea/input elements)
 
 **Returns:**
 - `FeedbackWidget`: The widget instance, or null if attachment failed
@@ -148,7 +150,6 @@ Manually attach a feedback widget to an HTML element. Usually not needed since a
 ```javascript
 // Manual attachment (usually not needed)
 const widget = CoolhandJS.attach(document.getElementById('content'), {
-    sessionId: 'user-session-123',
     workloadId: 'abc123def456',
     onSuccess: (feedback, response) => {
         console.log('Feedback submitted:', feedback); // true, false, or null
@@ -229,7 +230,7 @@ The widget sends three types of feedback to the API endpoint:
 ## Requirements
 
 ### Text Content
-The element must contain text content. The widget will not attach to elements without readable text and will log an error to the console.
+The element must contain text content or a value (for input/textarea). The widget will not attach to elements without readable text and will log an error to the console. For `<textarea>` and `<input>` elements, the widget uses the `value` property instead of `textContent`.
 
 ### API Key
 A valid Coolhand API key is required. Get one from your [Coolhand Dashboard](https://coolhandlabs.com/dashboard).

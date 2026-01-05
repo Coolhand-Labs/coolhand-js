@@ -110,8 +110,6 @@ export class FeedbackWidget {
    * Initialize the widget
    */
   private init(): void {
-    this.targetElement.style.position = 'relative';
-
     const container = document.createElement('div');
     container.setAttribute('data-coolhand-widget', 'true');
     container.className = 'coolhand-feedback-container';
@@ -123,8 +121,36 @@ export class FeedbackWidget {
       this.render(container);
     }
 
-    this.targetElement.appendChild(container);
+    // For input/textarea elements, we need to wrap them since they can't have children
+    if (this.isInputElement) {
+      this.wrapInputElement(container);
+    } else {
+      this.targetElement.style.position = 'relative';
+      this.targetElement.appendChild(container);
+    }
+
     this.container = container;
+  }
+
+  /**
+   * Wrap an input/textarea element with a container for the widget
+   */
+  private wrapInputElement(widgetContainer: HTMLElement): void {
+    // Create a wrapper div
+    const wrapper = document.createElement('div');
+    wrapper.className = 'coolhand-input-wrapper';
+    wrapper.style.position = 'relative';
+    wrapper.style.display = 'inline-block';
+    wrapper.style.width = '100%';
+
+    // Insert wrapper before the input element
+    this.targetElement.parentNode?.insertBefore(wrapper, this.targetElement);
+
+    // Move the input into the wrapper
+    wrapper.appendChild(this.targetElement);
+
+    // Add the widget container to the wrapper
+    wrapper.appendChild(widgetContainer);
   }
 
   /**
@@ -426,7 +452,7 @@ export class FeedbackWidget {
       const action = isUpdate ? 'updated' : 'submitted';
       console.log(`[CoolhandJS] Feedback ${action} successfully:`, data);
 
-      // Store feedback ID on the target element for reference (for new feedback)
+      // Store feedback ID on the target element for future updates (for new feedback)
       if (data.id && !isUpdate) {
         this.targetElement.setAttribute(FEEDBACK_ID_ATTRIBUTE, String(data.id));
       }
@@ -605,6 +631,18 @@ export class FeedbackWidget {
     if (this.boundBlurHandler) {
       this.targetElement.removeEventListener('blur', this.boundBlurHandler);
       this.boundBlurHandler = null;
+    }
+
+    // For input/textarea elements, unwrap the element
+    if (this.isInputElement && this.container) {
+      const wrapper = this.container.parentElement;
+      if (wrapper?.classList.contains('coolhand-input-wrapper')) {
+        // Move the input back to its original position
+        wrapper.parentNode?.insertBefore(this.targetElement, wrapper);
+        // Remove the wrapper (which also removes the container)
+        wrapper.remove();
+        return;
+      }
     }
 
     // Remove the widget container

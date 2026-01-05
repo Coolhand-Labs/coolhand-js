@@ -30,7 +30,11 @@
     "user feedback",
     "human feedback",
     "design",
-    "ux"
+    "ux",
+    "analytics",
+    "design",
+    "accessibility",
+    "a11y"
   ],
   "author": "Coolhand Labs",
   "license": "Apache-2.0",

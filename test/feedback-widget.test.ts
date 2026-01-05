@@ -171,9 +171,9 @@ describe('FeedbackWidget', () => {
       });
     });
 
-    it('should include client unique ID when provided', async () => {
+    it('should include clientUniqueId when provided', async () => {
       widget = new FeedbackWidget(element, 'Test content', 'test-api-key', {
-        clientUniqueId: 'session-123',
+        clientUniqueId: 'client-123',
       });
 
       const container = element.querySelector('[data-coolhand-widget]');
@@ -191,7 +191,7 @@ describe('FeedbackWidget', () => {
       expect(mockFetch).toHaveBeenCalledWith(
         COOLHAND_API_URL,
         expect.objectContaining({
-          body: expect.stringContaining('"client_unique_id":"session-123"'),
+          body: expect.stringContaining('"client_unique_id":"client-123"'),
         })
       );
     });
@@ -972,19 +972,23 @@ describe('FeedbackWidget', () => {
       jest.useRealTimers();
     });
 
-    it('should detect textarea elements and attach widget', () => {
+    it('should detect textarea elements and wrap them', () => {
       textareaElement = document.createElement('textarea');
       textareaElement.value = 'Initial textarea content';
       document.body.appendChild(textareaElement);
 
       widget = new FeedbackWidget(textareaElement, 'Initial textarea content', 'test-api-key');
 
-      // Widget container should be appended to the textarea
-      const container = textareaElement.querySelector('[data-coolhand-widget]');
+      // Textarea should be wrapped
+      const wrapper = textareaElement.parentElement;
+      expect(wrapper?.classList.contains('coolhand-input-wrapper')).toBe(true);
+
+      // Widget container should be in the wrapper
+      const container = wrapper?.querySelector('[data-coolhand-widget]');
       expect(container).not.toBeNull();
     });
 
-    it('should detect input elements and attach widget', () => {
+    it('should detect input elements and wrap them', () => {
       inputElement = document.createElement('input');
       inputElement.type = 'text';
       inputElement.value = 'Initial input content';
@@ -992,8 +996,12 @@ describe('FeedbackWidget', () => {
 
       widget = new FeedbackWidget(inputElement, 'Initial input content', 'test-api-key');
 
-      // Widget container should be appended to the input
-      const container = inputElement.querySelector('[data-coolhand-widget]');
+      // Input should be wrapped
+      const wrapper = inputElement.parentElement;
+      expect(wrapper?.classList.contains('coolhand-input-wrapper')).toBe(true);
+
+      // Widget container should be in the wrapper
+      const container = wrapper?.querySelector('[data-coolhand-widget]');
       expect(container).not.toBeNull();
     });
 
@@ -1321,7 +1329,7 @@ describe('FeedbackWidget', () => {
     });
   });
 
-  describe('Widget Visibility', () => {
+  describe('Widget Style', () => {
     beforeEach(() => {
       jest.useFakeTimers();
     });

@@ -104,7 +104,7 @@
         </div>
 
         <!-- 1. Static paragraph with Lorem Ipsum -->
-        <div id="article-content" coolhand-feedback data-coolhand-session-id="demo-article" class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 transition-colors duration-200">
+        <div id="article-content" coolhand-feedback class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 transition-colors duration-200">
             <h2 class="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-4">Generated Article</h2>
             <div class="prose prose-gray dark:prose-invert max-w-none">
                 <p class="text-gray-600 dark:text-gray-300 leading-relaxed">
@@ -113,10 +113,26 @@
             </div>
         </div>
 
-        <!-- 2. Textarea with pre-filled sample text -->
-        <div id="edit-content" coolhand-feedback data-coolhand-session-id="demo-edit" class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 transition-colors duration-200">
-            <h2 class="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-4">Edit Generated Text</h2>
+        <!-- 2. Textarea with Revised Output Tracking -->
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 transition-colors duration-200">
+            <div class="flex justify-between items-start mb-4">
+                <h2 class="text-xl font-semibold text-gray-800 dark:text-gray-200">Editable AI Response (Textarea)</h2>
+                <label class="flex items-center gap-2 cursor-pointer">
+                    <span class="text-sm text-gray-500 dark:text-gray-400">Hide Widget</span>
+                    <input
+                        type="checkbox"
+                        id="textarea-widget-toggle"
+                        class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                    />
+                </label>
+            </div>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mb-3">
+                This textarea tracks revisions. Edit the text - changes are sent after 1 second of no typing (or immediately on blur).
+            </p>
             <textarea
+                id="editable-textarea"
+                coolhand-feedback
+                data-coolhand-workload-id="workload-textarea-001"
                 class="w-full min-h-[200px] px-3 py-2 text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-vertical transition-colors duration-200"
                 placeholder="Enter your text here...">This is a sample AI-generated response that demonstrates how an LLM might structure its output. The text includes multiple paragraphs to show formatting.
 
@@ -126,9 +142,50 @@ Key points from the analysis:
 • Revenue projections exceed initial estimates
 
 In conclusion, the results indicate strong performance across all metrics, with particularly notable improvements in customer satisfaction scores and retention rates.</textarea>
+            <div id="textarea-status" class="mt-2 text-xs text-gray-500 dark:text-gray-400"></div>
         </div>
 
-        <!-- 3. Chatbot UI with hardcoded messages -->
+        <!-- 3. Input field with Revised Output Tracking -->
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 transition-colors duration-200">
+            <div class="flex justify-between items-start mb-4">
+                <h2 class="text-xl font-semibold text-gray-800 dark:text-gray-200">Editable AI Response (Input)</h2>
+                <label class="flex items-center gap-2 cursor-pointer">
+                    <span class="text-sm text-gray-500 dark:text-gray-400">Hide Widget</span>
+                    <input
+                        type="checkbox"
+                        id="input-widget-toggle"
+                        class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                    />
+                </label>
+            </div>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mb-3">
+                This input field also tracks revisions. Edit the text - changes are sent after 1 second of no typing (or immediately on blur).
+            </p>
+            <input
+                id="editable-input"
+                type="text"
+                coolhand-feedback
+                data-coolhand-workload-id="workload-input-001"
+                class="w-full px-4 py-3 text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200"
+                value="The quick brown fox jumps over the lazy dog - AI generated summary of the document."
+            />
+            <div id="input-status" class="mt-2 text-xs text-gray-500 dark:text-gray-400"></div>
+        </div>
+
+        <!-- 4. Static div with Workload ID -->
+        <div coolhand-feedback data-coolhand-workload-id="workload-static-001" class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 transition-colors duration-200">
+            <h2 class="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-4">Static Content with Workload ID</h2>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mb-3">
+                This static content has a workload ID for improved fuzzy matching.
+            </p>
+            <div class="prose prose-gray dark:prose-invert max-w-none">
+                <p class="text-gray-600 dark:text-gray-300 leading-relaxed">
+                    This AI-generated content is associated with workload ID "workload-static-001". When you provide feedback, the workload ID helps match this feedback to the original LLM request in your backend, improving accuracy of feedback correlation.
+                </p>
+            </div>
+        </div>
+
+        <!-- 5. Chatbot UI with hardcoded messages -->
         <div id="chat-content" class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 transition-colors duration-200">
             <h2 class="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-4">Chat Interface</h2>
             <div class="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
@@ -147,7 +204,7 @@ In conclusion, the results indicate strong performance across all metrics, with 
                     <!-- Bot message -->
                     <div class="flex justify-start">
                         <div class="max-w-xs lg:max-w-md">
-                            <div coolhand-feedback data-coolhand-session-id="demo-chat-1" class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg pl-4 pr-14 py-2 transition-colors duration-200">
+                            <div coolhand-feedback class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg pl-4 pr-14 py-2 transition-colors duration-200">
                                 <p class="text-sm text-gray-800 dark:text-gray-200">Machine learning is like teaching a computer to recognize patterns and make decisions by showing it many examples, rather than explicitly programming every rule. Think of it like teaching a child to identify animals - instead of describing every detail, you show them many pictures until they can recognize cats, dogs, etc. on their own.</p>
                             </div>
                             <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">AI Assistant • 2:31 PM</p>
@@ -167,7 +224,7 @@ In conclusion, the results indicate strong performance across all metrics, with 
                     <!-- Bot message -->
                     <div class="flex justify-start">
                         <div class="max-w-xs lg:max-w-md">
-                            <div coolhand-feedback data-coolhand-session-id="demo-chat-2" class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg pl-4 pr-14 py-2 transition-colors duration-200">
+                            <div coolhand-feedback class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg pl-4 pr-14 py-2 transition-colors duration-200">
                                 <p class="text-sm text-gray-800 dark:text-gray-200">Sure! A great example is email spam filtering. The system learns from millions of emails that users have marked as spam or not spam. It identifies patterns like certain words, sender addresses, or formatting that commonly appear in spam. Over time, it gets better at automatically filtering out unwanted emails without you having to create rules for every possible spam scenario.</p>
                             </div>
                             <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">AI Assistant • 2:33 PM</p>
@@ -187,7 +244,7 @@ In conclusion, the results indicate strong performance across all metrics, with 
                     <!-- Bot message -->
                     <div class="flex justify-start">
                         <div class="max-w-xs lg:max-w-md">
-                            <div coolhand-feedback data-coolhand-session-id="demo-chat-3" class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg pl-4 pr-14 py-2 transition-colors duration-200">
+                            <div coolhand-feedback class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg pl-4 pr-14 py-2 transition-colors duration-200">
                                 <p class="text-sm text-gray-800 dark:text-gray-200">Accuracy varies widely depending on the task and data quality. For example, spam filters can achieve 99%+ accuracy, facial recognition systems often reach 95-99% accuracy in controlled conditions, while more complex tasks like natural language understanding might range from 70-90% depending on the specific application. The key is having enough quality training data and choosing the right algorithm for the task.</p>
                             </div>
                             <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">AI Assistant • 2:35 PM</p>
@@ -366,7 +423,7 @@ In conclusion, the results indicate strong performance across all metrics, with 
                     const assistantHtml = `
                         <div class="flex justify-start">
                             <div class="max-w-xs lg:max-w-md">
-                                <div coolhand-feedback data-coolhand-session-id="demo-chat-${messageCount}" class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg pl-4 pr-14 py-2 transition-colors duration-200">
+                                <div coolhand-feedback class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg pl-4 pr-14 py-2 transition-colors duration-200">
                                     <p class="text-sm text-gray-800 dark:text-gray-200">This is a sample assistant response.</p>
                                 </div>
                                 <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">AI Assistant • ${getCurrentTime()}</p>
