@@ -61,6 +61,12 @@ export class FeedbackWidget {
   // Widget style ("overlay", "pixel", or "hidden")
   private widgetStyle: WidgetStyle = 'overlay';
 
+  // Explanation tracking
+  private isShowingExplanation: boolean = false;
+  private explanationText: string = '';
+  private explanationDebounceTimer: ReturnType<typeof setTimeout> | null = null;
+  private explanationContainer: HTMLElement | null = null;
+
   constructor(
     targetElement: HTMLElement,
     originalText: string,
@@ -256,14 +262,22 @@ export class FeedbackWidget {
 
     document.addEventListener('click', (e: Event) => {
       if (!root.contains(e.target as Node)) {
-        this.hideOptions();
+        if (this.isShowingExplanation) {
+          this.closeExplanationUI();
+        } else {
+          this.hideOptions();
+        }
       }
     });
 
     // Global escape key handler
     document.addEventListener('keydown', (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && this.isExpanded) {
-        this.hideOptions();
+      if (e.key === 'Escape') {
+        if (this.isShowingExplanation) {
+          this.closeExplanationUI();
+        } else if (this.isExpanded) {
+          this.hideOptions();
+        }
       }
     });
   }
@@ -392,16 +406,203 @@ export class FeedbackWidget {
       activeEl.blur();
     }
 
-    // Now hide the options panel (safe since nothing inside has focus)
-    this.hideOptions();
+    // Send feedback to the server, then show explanation UI
+    this.sendFeedback(feedbackValue).then(() => {
+      this.showExplanationUI();
+    });
+  }
 
-    // Move focus to trigger for keyboard users
-    if (this.trigger) {
-      this.trigger.focus();
+  /**
+   * Show the explanation textarea UI after feedback selection
+   */
+  private showExplanationUI(): void {
+    if (!this.optionsPanel) return;
+
+    this.isShowingExplanation = true;
+    this.explanationText = '';
+
+    // Get the selected feedback icon to show in header
+    const selectedIcon = this.selectedType ? FEEDBACK_TYPE_TO_ICON[this.selectedType] : '';
+
+    // Create explanation container HTML
+    const explanationHtml = `
+      <div class="coolhand-explanation-container">
+        <div class="coolhand-explanation-header">
+          <span class="coolhand-explanation-icon" aria-hidden="true">${selectedIcon}</span>
+          <span class="coolhand-explanation-title">How could this result be better?</span>
+          <button class="coolhand-explanation-close" aria-label="Close without adding explanation">
+            <span aria-hidden="true">${closeIcon}</span>
+          </button>
+        </div>
+        <textarea
+          class="coolhand-explanation-textarea"
+          placeholder="Optional: Tell us more..."
+          aria-label="Explain your feedback"
+          rows="3"
+        ></textarea>
+      </div>
+    `;
+
+    // Clear existing content and add explanation UI
+    this.optionsPanel.innerHTML = explanationHtml;
+    this.optionsPanel.classList.add('expanded', 'explanation-mode');
+    this.optionsPanel.setAttribute('aria-hidden', 'false');
+
+    // Store reference and attach events
+    this.explanationContainer = this.optionsPanel.querySelector('.coolhand-explanation-container');
+    const textarea = this.optionsPanel.querySelector('.coolhand-explanation-textarea') as HTMLTextAreaElement;
+    const closeBtn = this.optionsPanel.querySelector('.coolhand-explanation-close');
+
+    if (textarea) {
+      textarea.addEventListener('input', this.handleExplanationInput.bind(this));
+      textarea.addEventListener('blur', this.handleExplanationBlur.bind(this));
+      // Focus the textarea for immediate typing
+      setTimeout(() => textarea.focus(), 50);
     }
 
-    // Send feedback to the server
-    this.sendFeedback(feedbackValue);
+    if (closeBtn) {
+      closeBtn.addEventListener('click', (e: Event) => {
+        e.stopPropagation();
+        this.closeExplanationUI();
+      });
+    }
+
+    // Show trigger button (hidden during feedback selection)
+    if (this.trigger) {
+      this.trigger.style.display = 'none';
+    }
+  }
+
+  /**
+   * Handle explanation textarea input with debouncing
+   */
+  private handleExplanationInput(e: Event): void {
+    const textarea = e.target as HTMLTextAreaElement;
+    this.explanationText = textarea.value;
+
+    // Clear any existing timer
+    if (this.explanationDebounceTimer) {
+      clearTimeout(this.explanationDebounceTimer);
+    }
+
+    // Set new debounce timer
+    this.explanationDebounceTimer = setTimeout(() => {
+      this.sendExplanation();
+    }, DEBOUNCE_MS);
+  }
+
+  /**
+   * Handle explanation textarea blur - send immediately but don't close
+   * (closing is handled by document click handler or X button)
+   */
+  private handleExplanationBlur(): void {
+    // Clear any pending debounce timer
+    if (this.explanationDebounceTimer) {
+      clearTimeout(this.explanationDebounceTimer);
+      this.explanationDebounceTimer = null;
+    }
+
+    // Send explanation if there's any text
+    if (this.explanationText.trim()) {
+      this.sendExplanation();
+    }
+  }
+
+  /**
+   * Send explanation to the API
+   */
+  private async sendExplanation(): Promise<void> {
+    const explanation = this.explanationText.trim();
+    if (!explanation) return;
+
+    const existingFeedbackId = this.targetElement.getAttribute(FEEDBACK_ID_ATTRIBUTE);
+    if (!existingFeedbackId) {
+      console.error('[CoolhandJS] Cannot send explanation: no feedback ID found');
+      return;
+    }
+
+    const payload: FeedbackApiPayload = {
+      llm_request_log_feedback: {
+        like: this.selectedFeedback,
+        original_output: this.originalText,
+        explanation: explanation,
+        collector: `coolhand-js-${VERSION}`,
+      },
+    };
+
+    if (this.options.clientUniqueId) {
+      payload.llm_request_log_feedback.client_unique_id = this.options.clientUniqueId;
+    }
+
+    if (this.options.workloadId) {
+      payload.llm_request_log_feedback.workload_hashid = this.options.workloadId;
+    }
+
+    try {
+      const response = await fetch(`${COOLHAND_API_URL}/${existingFeedbackId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-API-Key': this.apiKey,
+          Accept: 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data: FeedbackApiResponse = await response.json();
+      console.log('[CoolhandJS] Explanation submitted successfully:', data);
+
+      // Announce success to screen readers
+      this.announce('Thank you for your feedback');
+    } catch (error) {
+      const err = error as Error;
+      console.error('[CoolhandJS] Error submitting explanation:', err);
+
+      if (this.options.onError) {
+        this.options.onError(err);
+      }
+    }
+  }
+
+  /**
+   * Close the explanation UI and restore normal state
+   */
+  private closeExplanationUI(): void {
+    if (!this.isShowingExplanation) return;
+
+    // Send any pending explanation
+    if (this.explanationDebounceTimer) {
+      clearTimeout(this.explanationDebounceTimer);
+      this.explanationDebounceTimer = null;
+    }
+    if (this.explanationText.trim()) {
+      this.sendExplanation();
+    }
+
+    this.isShowingExplanation = false;
+    this.explanationText = '';
+    this.explanationContainer = null;
+
+    // Hide the options panel
+    if (this.optionsPanel) {
+      this.optionsPanel.classList.remove('expanded', 'explanation-mode');
+      this.optionsPanel.setAttribute('aria-hidden', 'true');
+    }
+
+    // Show trigger with checkmark animation
+    if (this.trigger) {
+      this.trigger.style.display = 'flex';
+      this.trigger.classList.add('showing-checkmark');
+      setTimeout(() => {
+        if (this.trigger) {
+          this.trigger.classList.remove('showing-checkmark');
+        }
+      }, 800);
+    }
   }
 
   /**
@@ -617,10 +818,14 @@ export class FeedbackWidget {
    * Remove the widget from the DOM and clean up event listeners
    */
   public destroy(): void {
-    // Clear any pending debounce timer
+    // Clear any pending debounce timers
     if (this.debounceTimer) {
       clearTimeout(this.debounceTimer);
       this.debounceTimer = null;
+    }
+    if (this.explanationDebounceTimer) {
+      clearTimeout(this.explanationDebounceTimer);
+      this.explanationDebounceTimer = null;
     }
 
     // Remove input monitoring event listeners

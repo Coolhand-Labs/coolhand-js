@@ -60,6 +60,7 @@ export interface FeedbackApiPayload {
     client_unique_id?: string;
     workload_hashid?: string;
     revised_output?: string;
+    explanation?: string;
   };
 }
 
