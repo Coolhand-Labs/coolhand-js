@@ -97,9 +97,27 @@
                     Initialize Widgets
                 </button>
             </div>
+            <!-- Explanation Sampling Slider -->
+            <div class="mt-3 flex items-center gap-3">
+                <label for="explanationSampleSlider" class="text-sm font-medium text-gray-700 dark:text-gray-300 whitespace-nowrap">
+                    Explanation Prompt Rate:
+                </label>
+                <input
+                    id="explanationSampleSlider"
+                    type="range"
+                    min="0"
+                    max="1"
+                    step="0.1"
+                    value="1"
+                    class="flex-1 h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-blue-500"
+                />
+                <span id="explanationSampleValue" class="text-sm font-mono text-gray-700 dark:text-gray-300 w-12 text-right">100%</span>
+            </div>
             <div id="initStatus" class="mt-2 text-sm"></div>
             <p class="mt-2 text-xs text-gray-600 dark:text-gray-400">
                 Choose widget style and initialize. <strong>Overlay</strong>: hand icon trigger. <strong>Pixel</strong>: tiny dot that expands on hover. <strong>Hidden</strong>: no UI, tracks edits only.
+                <br/>
+                <strong>Explanation Prompt Rate</strong>: How often to ask for explanation after feedback (0% = never, 100% = always).
             </p>
         </div>
 
@@ -305,6 +323,14 @@ In conclusion, the results indicate strong performance across all metrics, with 
             console.log('✓ CoolhandJS library loaded successfully');
 
             const widgetStyleSelect = document.getElementById('widgetStyleSelect');
+            const explanationSampleSlider = document.getElementById('explanationSampleSlider');
+            const explanationSampleValue = document.getElementById('explanationSampleValue');
+
+            // Update displayed value when slider changes
+            explanationSampleSlider.addEventListener('input', () => {
+                const value = parseFloat(explanationSampleSlider.value);
+                explanationSampleValue.textContent = Math.round(value * 100) + '%';
+            });
 
             initButton.addEventListener('click', () => {
                 const apiKey = apiKeyInput.value.trim();
@@ -317,11 +343,13 @@ In conclusion, the results indicate strong performance across all metrics, with 
                 // Generate a unique client ID for this page view
                 const clientUniqueId = 'demo-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
                 const widgetStyle = widgetStyleSelect.value;
+                const explanationSample = parseFloat(explanationSampleSlider.value);
 
-                // Initialize CoolhandJS with auto-attachment, global client ID, and widget style
-                if (CoolhandJS.init(apiKey, { clientUniqueId, widgetStyle })) {
-                    initStatus.innerHTML = '<span class="text-green-600 dark:text-green-400">✓ Initialized with style: ' + widgetStyle + ', client ID: ' + clientUniqueId + '</span>';
-                    console.log('✓ CoolhandJS initialized with widgetStyle:', widgetStyle, ', clientUniqueId:', clientUniqueId);
+                // Initialize CoolhandJS with auto-attachment, global client ID, widget style, and explanation sample
+                if (CoolhandJS.init(apiKey, { clientUniqueId, widgetStyle, explanationSample })) {
+                    const samplePercent = Math.round(explanationSample * 100) + '%';
+                    initStatus.innerHTML = '<span class="text-green-600 dark:text-green-400">✓ Initialized with style: ' + widgetStyle + ', explanation rate: ' + samplePercent + '</span>';
+                    console.log('✓ CoolhandJS initialized with widgetStyle:', widgetStyle, ', explanationSample:', explanationSample, ', clientUniqueId:', clientUniqueId);
                 } else {
                     initStatus.innerHTML = '<span class="text-red-600 dark:text-red-400">❌ Initialization failed</span>';
                 }

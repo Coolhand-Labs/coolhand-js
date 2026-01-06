@@ -20,6 +20,13 @@ export type FeedbackType = 'down' | 'neutral' | 'up';
 export type WidgetStyle = 'overlay' | 'pixel' | 'hidden';
 
 /**
+ * Explanation prompt mode for per-element override
+ * - always: Always show explanation prompt after feedback
+ * - never: Never show explanation prompt after feedback
+ */
+export type ExplanationPromptMode = 'always' | 'never';
+
+/**
  * Options for CoolhandFeedback.init()
  */
 export interface InitOptions {
@@ -29,6 +36,11 @@ export interface InitOptions {
   clientUniqueId?: string;
   /** Default widget style for all widgets. Default: 'overlay' */
   widgetStyle?: WidgetStyle;
+  /**
+   * Probability (0-1) of showing explanation prompt after feedback.
+   * 0 = never ask, 1 = always ask, 0.2 = ask 20% of the time. Default: 1
+   */
+  explanationSample?: number;
 }
 
 /**
@@ -41,6 +53,11 @@ export interface AttachOptions {
   workloadId?: string;
   /** Widget display style (overrides global setting) */
   widgetStyle?: WidgetStyle;
+  /**
+   * Probability (0-1) of showing explanation prompt after feedback.
+   * 0 = never ask, 1 = always ask, 0.2 = ask 20% of the time. Default: 1
+   */
+  explanationSample?: number;
   /** Callback fired on successful feedback submission */
   onSuccess?: (feedback: FeedbackValue, response: FeedbackApiResponse) => void;
   /** Callback fired on feedback submission error */

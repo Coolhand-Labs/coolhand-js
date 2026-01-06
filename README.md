@@ -14,6 +14,7 @@ A lightweight, standalone JavaScript library for adding user feedback collection
 - ♿ **Accessible**: WCAG 2.1 AA compliant with full keyboard navigation and screen reader support
 - 🔄 **Smart Updates**: Automatically tracks and updates feedback when users change their response
 - ✏️ **Revised Output Tracking**: Automatically captures edits to textarea/input content
+- 💬 **Explanation Prompts**: Optionally ask users to explain their feedback with configurable sampling
 
 ## Accessibility
 
@@ -108,6 +109,7 @@ Initialize the library with your Coolhand API key. Automatically attaches to all
   - `autoAttach` (boolean): Enable auto-attachment (default: true)
   - `clientUniqueId` (string): Optional client identifier sent with all feedback (e.g., user ID, session ID)
   - `widgetStyle` (string): Default widget style for all widgets - `"overlay"` (default), `"pixel"`, or `"hidden"`
+  - `explanationSample` (number): Probability (0-1) of showing explanation prompt after feedback. `0` = never ask, `1` = always ask (default), `0.2` = ask 20% of the time
 
 **Returns:**
 - `boolean`: True if initialization succeeded, false otherwise
@@ -122,6 +124,12 @@ CoolhandJS.init('ch_api_abc123...', { clientUniqueId: 'user-123' });
 
 // Use minimal pixel style for all widgets
 CoolhandJS.init('ch_api_abc123...', { widgetStyle: 'pixel' });
+
+// Ask for explanation only 30% of the time
+CoolhandJS.init('ch_api_abc123...', { explanationSample: 0.3 });
+
+// Never ask for explanation (just collect ratings)
+CoolhandJS.init('ch_api_abc123...', { explanationSample: 0 });
 
 // Disable auto-attachment
 CoolhandJS.init('ch_api_abc123...', { autoAttach: false });
@@ -139,6 +147,7 @@ Manually attach a feedback widget to an HTML element. Usually not needed since a
 - `clientUniqueId` (string): Optional client identifier (overrides global setting from init)
 - `workloadId` (string): Optional workload hash ID to associate feedback with a specific workload. Improves fuzzy matching accuracy.
 - `widgetStyle` (string): Widget display style (overrides global setting) - `"overlay"`, `"pixel"`, or `"hidden"`
+- `explanationSample` (number): Probability (0-1) of showing explanation prompt (overrides global setting)
 - `onSuccess` (function): Callback when feedback is successfully submitted
 - `onError` (function): Callback when an error occurs
 - `onRevisedOutput` (function): Callback when revised output is sent (for textarea/input elements)
@@ -217,7 +226,9 @@ The AI generated this response which the user can edit.
 - `coolhand-feedback`: Enables automatic widget attachment
 - `data-coolhand-widget-style`: Widget display style - `"overlay"` (default), `"pixel"` (minimal 8px dot that expands on hover), or `"hidden"` (no UI, still tracks input changes)
 - `data-coolhand-workload-id`: Optional workload hash ID to associate feedback with a specific workload. When provided, improves fuzzy matching accuracy for connecting feedback to the original LLM request.
+- `data-coolhand-explanation-prompt`: Override explanation prompt behavior for this element - `"always"` (always show) or `"never"` (never show). Takes priority over the global `explanationSample` setting.
 - `data-coolhand-feedback-id`: **Set automatically** after successful feedback submission. Contains the feedback ID returned from the API. When present, subsequent feedback changes automatically update the existing feedback instead of creating duplicates.
+- `data-coolhand-explanation`: **Set automatically** after user submits an explanation. Contains the explanation text for reference.
 
 ## Feedback Values
 
@@ -226,6 +237,67 @@ The widget sends three types of feedback to the API endpoint:
 - 👍 **Thumbs Up**: `like: true`
 - 😐 **Neutral**: `like: null`
 - 👎 **Thumbs Down**: `like: false`
+
+## Explanation Feature
+
+After a user selects a feedback rating, the widget can prompt them to provide additional context about their feedback. This helps you understand *why* users rated content the way they did.
+
+### How It Works
+
+1. User clicks the feedback trigger and selects a rating (thumbs up/neutral/thumbs down)
+2. The rating is immediately submitted to the API
+3. The widget transforms into a text input asking "How could this result be better?"
+4. User can optionally type an explanation
+5. The explanation is auto-saved (debounced) or when the user clicks Submit/closes the widget
+6. If the user returns to the widget later, they see a summary view showing their rating and explanation, which they can edit
+
+### Controlling Explanation Prompts
+
+You can control how often the explanation prompt appears using the `explanationSample` option:
+
+```javascript
+// Always ask for explanation (default)
+CoolhandJS.init('your-api-key', { explanationSample: 1 });
+
+// Never ask for explanation (ratings only)
+CoolhandJS.init('your-api-key', { explanationSample: 0 });
+
+// Ask 25% of the time (random sampling)
+CoolhandJS.init('your-api-key', { explanationSample: 0.25 });
+```
+
+### Per-Element Overrides
+
+You can override the global setting for specific elements using the `data-coolhand-explanation-prompt` attribute:
+
+```html
+<!-- Always ask for explanation on this element, regardless of global setting -->
+<div coolhand-feedback data-coolhand-explanation-prompt="always">
+  Important AI response where we always want detailed feedback
+</div>
+
+<!-- Never ask for explanation on this element -->
+<div coolhand-feedback data-coolhand-explanation-prompt="never">
+  Simple response where a quick rating is sufficient
+</div>
+```
+
+The attribute takes priority over the global `explanationSample` setting, allowing fine-grained control over which outputs get detailed feedback.
+
+### API Payload
+
+When an explanation is provided, it's sent to the API as part of the feedback:
+
+```json
+{
+  "llm_request_log_feedback": {
+    "like": true,
+    "original_output": "The AI-generated content...",
+    "explanation": "This was helpful because it clearly explained the concept.",
+    "collector": "coolhand-js-0.3.0"
+  }
+}
+```
 
 ## Requirements
 

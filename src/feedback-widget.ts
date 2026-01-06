@@ -14,6 +14,7 @@ import {
   ORIGINAL_OUTPUT_ATTRIBUTE,
   WIDGET_STYLE_ATTRIBUTE,
   EXPLANATION_ATTRIBUTE,
+  EXPLANATION_PROMPT_ATTRIBUTE,
   DEBOUNCE_MS,
 } from './constants';
 import type {
@@ -23,6 +24,7 @@ import type {
   FeedbackApiPayload,
   FeedbackApiResponse,
   WidgetStyle,
+  ExplanationPromptMode,
 } from './types';
 import { FEEDBACK_TYPE_TO_VALUE } from './types';
 
@@ -69,6 +71,9 @@ export class FeedbackWidget {
   private explanationDebounceTimer: ReturnType<typeof setTimeout> | null = null;
   private explanationContainer: HTMLElement | null = null;
 
+  // Explanation sampling (0-1 probability of showing explanation prompt)
+  private explanationSample: number = 1;
+
   constructor(
     targetElement: HTMLElement,
     originalText: string,
@@ -87,6 +92,11 @@ export class FeedbackWidget {
       this.widgetStyle = styleAttr;
     } else if (options.widgetStyle) {
       this.widgetStyle = options.widgetStyle;
+    }
+
+    // Set explanation sample rate (0-1, clamped)
+    if (typeof options.explanationSample === 'number') {
+      this.explanationSample = Math.max(0, Math.min(1, options.explanationSample));
     }
 
     // Detect if this is an input or textarea element
@@ -569,10 +579,53 @@ export class FeedbackWidget {
       activeEl.blur();
     }
 
-    // Send feedback to the server, then show explanation UI
+    // Send feedback to the server, then maybe show explanation UI
     this.sendFeedback(feedbackValue).then(() => {
-      this.showExplanationUI();
+      if (this.shouldShowExplanation()) {
+        this.showExplanationUI();
+      } else {
+        // Close the panel without showing explanation
+        this.hideOptions();
+        // Show checkmark animation
+        if (this.trigger) {
+          this.trigger.classList.add('showing-checkmark');
+          setTimeout(() => {
+            if (this.trigger) {
+              this.trigger.classList.remove('showing-checkmark');
+            }
+          }, 800);
+        }
+      }
     });
+  }
+
+  /**
+   * Determine whether to show the explanation prompt after feedback
+   * Priority: element attribute > sampling probability
+   */
+  private shouldShowExplanation(): boolean {
+    // Check element attribute for override
+    const promptAttr = this.targetElement.getAttribute(EXPLANATION_PROMPT_ATTRIBUTE) as ExplanationPromptMode | null;
+
+    if (promptAttr === 'never') {
+      return false;
+    }
+
+    if (promptAttr === 'always') {
+      return true;
+    }
+
+    // Use sampling probability
+    if (this.explanationSample === 0) {
+      return false;
+    }
+
+    if (this.explanationSample === 1) {
+      return true;
+    }
+
+    // Random sampling
+    return Math.random() < this.explanationSample;
   }
 
   /**

@@ -41,6 +41,11 @@ export const WIDGET_STYLE_ATTRIBUTE = 'data-coolhand-widget-style';
 export const EXPLANATION_ATTRIBUTE = 'data-coolhand-explanation';
 
 /**
+ * Data attribute for explanation prompt mode override ("always" or "never")
+ */
+export const EXPLANATION_PROMPT_ATTRIBUTE = 'data-coolhand-explanation-prompt';
+
+/**
  * Debounce delay in milliseconds for input change events
  */
 export const DEBOUNCE_MS = 1000;

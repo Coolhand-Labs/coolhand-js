@@ -9,6 +9,7 @@ export class CoolhandFeedback {
   private apiKey: string | null = null;
   private clientUniqueId: string | null = null;
   private widgetStyle: WidgetStyle | null = null;
+  private explanationSample: number | null = null;
   private instances: WeakMap<HTMLElement, FeedbackWidget> = new WeakMap();
   private observer: MutationObserver | null = null;
   private isAutoAttaching: boolean = false;
@@ -44,6 +45,11 @@ export class CoolhandFeedback {
 
     // Store global widget style if provided
     this.widgetStyle = options.widgetStyle || null;
+
+    // Store global explanation sample rate if provided
+    this.explanationSample = typeof options.explanationSample === 'number'
+      ? Math.max(0, Math.min(1, options.explanationSample))
+      : null;
 
     // Auto-attach to existing elements if enabled
     if (options.autoAttach !== false) {
@@ -142,6 +148,11 @@ export class CoolhandFeedback {
       options.widgetStyle = this.widgetStyle;
     }
 
+    // Apply global explanationSample
+    if (this.explanationSample !== null) {
+      options.explanationSample = this.explanationSample;
+    }
+
     if (element.dataset.coolhandWorkloadId) {
       options.workloadId = element.dataset.coolhandWorkloadId;
     }
@@ -196,6 +207,9 @@ export class CoolhandFeedback {
     }
     if (!mergedOptions.widgetStyle && this.widgetStyle) {
       mergedOptions.widgetStyle = this.widgetStyle;
+    }
+    if (mergedOptions.explanationSample === undefined && this.explanationSample !== null) {
+      mergedOptions.explanationSample = this.explanationSample;
     }
 
     const instance = new FeedbackWidget(
