@@ -121,8 +121,9 @@ The widget sends the following payload to the Coolhand API:
 {
   "llm_request_log_feedback": {
     "like": true,
-    "original_output": "The text content from the element",
-    "collector": "coolhand-js-0.2.0",
+    "original_output": "The AI-generated content...",
+    "explanation": "This was helpful because it clearly explained the concept.",
+    "collector": "coolhand-js-0.3.0",
     "client_unique_id": "optional-session-id",
     "workload_hashid": "optional-workload-id",
     "revised_output": "optional-edited-content"
@@ -136,6 +137,7 @@ The widget sends the following payload to the Coolhand API:
 |-------|----------|-------------|
 | `like` | Yes | `true`, `false`, or `null` for feedback sentiment |
 | `original_output` | Yes | The original text content from the element |
+| `explanation` | No | User-provided explanation for their feedback |
 | `collector` | Yes | SDK identifier with version |
 | `client_unique_id` | No | Session identifier for internal matching |
 | `workload_hashid` | No | Workload ID to improve fuzzy matching accuracy |

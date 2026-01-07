@@ -1729,8 +1729,8 @@ describe('FeedbackWidget', () => {
       expect(optionsPanel?.classList.contains('explanation-mode')).toBe(true);
     });
 
-    it('should never show explanation when element has data-coolhand-explanation-prompt="never"', async () => {
-      element.setAttribute(EXPLANATION_PROMPT_ATTRIBUTE, 'never');
+    it('should never show explanation when element has data-coolhand-explanation-sample-rate="0"', async () => {
+      element.setAttribute(EXPLANATION_PROMPT_ATTRIBUTE, '0');
 
       widget = new FeedbackWidget(element, 'Test content', 'test-api-key', {
         explanationSample: 1, // Would normally always show
@@ -1751,8 +1751,8 @@ describe('FeedbackWidget', () => {
       expect(optionsPanel?.classList.contains('explanation-mode')).toBe(false);
     });
 
-    it('should always show explanation when element has data-coolhand-explanation-prompt="always"', async () => {
-      element.setAttribute(EXPLANATION_PROMPT_ATTRIBUTE, 'always');
+    it('should always show explanation when element has data-coolhand-explanation-sample-rate="1"', async () => {
+      element.setAttribute(EXPLANATION_PROMPT_ATTRIBUTE, '1');
 
       widget = new FeedbackWidget(element, 'Test content', 'test-api-key', {
         explanationSample: 0, // Would normally never show

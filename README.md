@@ -147,7 +147,7 @@ Manually attach a feedback widget to an HTML element. Usually not needed since a
 - `clientUniqueId` (string): Optional client identifier (overrides global setting from init)
 - `workloadId` (string): Optional workload hash ID to associate feedback with a specific workload. Improves fuzzy matching accuracy.
 - `widgetStyle` (string): Widget display style (overrides global setting) - `"overlay"`, `"pixel"`, or `"hidden"`
-- `explanationSample` (number): Probability (0-1) of showing explanation prompt (overrides global setting)
+- `explanationSample` (number): Probability (0-1) of showing explanation prompt (overrides global setting). Default: `1` (always ask)
 - `onSuccess` (function): Callback when feedback is successfully submitted
 - `onError` (function): Callback when an error occurs
 - `onRevisedOutput` (function): Callback when revised output is sent (for textarea/input elements)
@@ -226,7 +226,7 @@ The AI generated this response which the user can edit.
 - `coolhand-feedback`: Enables automatic widget attachment
 - `data-coolhand-widget-style`: Widget display style - `"overlay"` (default), `"pixel"` (minimal 8px dot that expands on hover), or `"hidden"` (no UI, still tracks input changes)
 - `data-coolhand-workload-id`: Optional workload hash ID to associate feedback with a specific workload. When provided, improves fuzzy matching accuracy for connecting feedback to the original LLM request.
-- `data-coolhand-explanation-prompt`: Override explanation prompt behavior for this element - `"always"` (always show) or `"never"` (never show). Takes priority over the global `explanationSample` setting.
+- `data-coolhand-explanation-sample-rate`: Override explanation sample rate for this element (float `"0"` to `"1"`). `"1"` = always show, `"0"` = never show, `"0.5"` = 50% chance. Takes priority over the global `explanationSample` setting.
 - `data-coolhand-feedback-id`: **Set automatically** after successful feedback submission. Contains the feedback ID returned from the API. When present, subsequent feedback changes automatically update the existing feedback instead of creating duplicates.
 - `data-coolhand-explanation`: **Set automatically** after user submits an explanation. Contains the explanation text for reference.
 
@@ -268,36 +268,26 @@ CoolhandJS.init('your-api-key', { explanationSample: 0.25 });
 
 ### Per-Element Overrides
 
-You can override the global setting for specific elements using the `data-coolhand-explanation-prompt` attribute:
+You can override the global setting for specific elements using the `data-coolhand-explanation-sample-rate` attribute (float 0-1):
 
 ```html
 <!-- Always ask for explanation on this element, regardless of global setting -->
-<div coolhand-feedback data-coolhand-explanation-prompt="always">
+<div coolhand-feedback data-coolhand-explanation-sample-rate="1">
   Important AI response where we always want detailed feedback
 </div>
 
 <!-- Never ask for explanation on this element -->
-<div coolhand-feedback data-coolhand-explanation-prompt="never">
+<div coolhand-feedback data-coolhand-explanation-sample-rate="0">
   Simple response where a quick rating is sufficient
+</div>
+
+<!-- Ask 50% of the time on this element -->
+<div coolhand-feedback data-coolhand-explanation-sample-rate="0.5">
+  Response with custom sampling rate
 </div>
 ```
 
 The attribute takes priority over the global `explanationSample` setting, allowing fine-grained control over which outputs get detailed feedback.
-
-### API Payload
-
-When an explanation is provided, it's sent to the API as part of the feedback:
-
-```json
-{
-  "llm_request_log_feedback": {
-    "like": true,
-    "original_output": "The AI-generated content...",
-    "explanation": "This was helpful because it clearly explained the concept.",
-    "collector": "coolhand-js-0.3.0"
-  }
-}
-```
 
 ## Requirements
 

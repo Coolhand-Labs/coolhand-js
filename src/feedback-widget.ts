@@ -24,7 +24,6 @@ import type {
   FeedbackApiPayload,
   FeedbackApiResponse,
   WidgetStyle,
-  ExplanationPromptMode,
 } from './types';
 import { FEEDBACK_TYPE_TO_VALUE } from './types';
 
@@ -607,31 +606,30 @@ export class FeedbackWidget {
 
   /**
    * Determine whether to show the explanation prompt after feedback
-   * Priority: element attribute > sampling probability
+   * Priority: element attribute (float 0-1) > instance sample rate
    */
   private shouldShowExplanation(): boolean {
-    // Check element attribute for override
-    const promptAttr = this.targetElement.getAttribute(EXPLANATION_PROMPT_ATTRIBUTE) as ExplanationPromptMode | null;
+    // Check element attribute for override (float 0-1)
+    const attrValue = this.targetElement.getAttribute(EXPLANATION_PROMPT_ATTRIBUTE);
+    let rate = this.explanationSample;
 
-    if (promptAttr === 'never') {
+    if (attrValue !== null) {
+      const parsed = parseFloat(attrValue);
+      if (!isNaN(parsed)) {
+        rate = Math.max(0, Math.min(1, parsed));
+      }
+    }
+
+    if (rate === 0) {
       return false;
     }
 
-    if (promptAttr === 'always') {
-      return true;
-    }
-
-    // Use sampling probability
-    if (this.explanationSample === 0) {
-      return false;
-    }
-
-    if (this.explanationSample === 1) {
+    if (rate === 1) {
       return true;
     }
 
     // Random sampling
-    return Math.random() < this.explanationSample;
+    return Math.random() < rate;
   }
 
   /**

@@ -20,13 +20,6 @@ export type FeedbackType = 'down' | 'neutral' | 'up';
 export type WidgetStyle = 'overlay' | 'pixel' | 'hidden';
 
 /**
- * Explanation prompt mode for per-element override
- * - always: Always show explanation prompt after feedback
- * - never: Never show explanation prompt after feedback
- */
-export type ExplanationPromptMode = 'always' | 'never';
-
-/**
  * Options for CoolhandFeedback.init()
  */
 export interface InitOptions {
