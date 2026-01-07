@@ -281,6 +281,10 @@ export const widgetStyles = `
     background: var(--coolhand-bg-hover);
   }
 
+  .coolhand-close:hover svg {
+    stroke: var(--coolhand-text);
+  }
+
   .coolhand-close:focus {
     outline: none;
   }
@@ -414,12 +418,14 @@ export const widgetStyles = `
     display: none;
   }
 
-  /* Pixel mode: show options on hover */
-  .coolhand-pixel-mode:hover .coolhand-trigger {
+  /* Pixel mode: show options on hover or focus (keyboard accessible) */
+  .coolhand-pixel-mode:hover .coolhand-trigger,
+  .coolhand-pixel-mode:focus-within .coolhand-trigger {
     display: none;
   }
 
-  .coolhand-pixel-mode:hover .coolhand-options {
+  .coolhand-pixel-mode:hover .coolhand-options,
+  .coolhand-pixel-mode:focus-within .coolhand-options {
     display: flex;
   }
 
@@ -427,6 +433,213 @@ export const widgetStyles = `
   .coolhand-pixel-mode .coolhand-trigger:focus-visible {
     outline: 2px solid var(--coolhand-accent);
     outline-offset: 2px;
+  }
+
+  /* Explanation mode styles */
+  .coolhand-options.explanation-mode {
+    width: 300px;
+    min-width: 300px;
+  }
+
+  .coolhand-explanation-container {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .coolhand-explanation-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .coolhand-explanation-icon {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+  }
+
+  .coolhand-explanation-icon svg {
+    width: 18px;
+    height: 18px;
+    fill: none;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  /* Color the icon based on the feedback type */
+  .coolhand-explanation-icon .coolhand-icon-thumbs-up {
+    stroke: var(--coolhand-success);
+  }
+
+  .coolhand-explanation-icon .coolhand-icon-thumbs-down {
+    stroke: #ef4444;
+  }
+
+  .coolhand-explanation-icon .coolhand-icon-neutral {
+    stroke: #3B82F6;
+  }
+
+  .coolhand-explanation-title {
+    flex: 1;
+    font-size: var(--coolhand-font-size);
+    font-weight: 500;
+    color: var(--coolhand-text);
+    line-height: 1.4;
+    font-family: var(--coolhand-font-family);
+  }
+
+  .coolhand-explanation-close {
+    all: initial;
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    cursor: pointer;
+    border-radius: var(--coolhand-border-radius);
+    transition: background 0.15s ease;
+  }
+
+  .coolhand-explanation-close:hover {
+    background: var(--coolhand-bg-hover);
+  }
+
+  .coolhand-explanation-close:hover svg {
+    stroke: var(--coolhand-text);
+  }
+
+  .coolhand-explanation-close:focus {
+    outline: none;
+  }
+
+  .coolhand-explanation-close:focus-visible {
+    outline: 2px solid var(--coolhand-accent);
+    outline-offset: 2px;
+  }
+
+  .coolhand-explanation-close svg {
+    width: 14px;
+    height: 14px;
+    fill: none;
+    stroke: var(--coolhand-text-muted);
+    stroke-width: 2;
+    stroke-linecap: round;
+  }
+
+  .coolhand-explanation-textarea {
+    all: initial;
+    box-sizing: border-box;
+    display: block;
+    width: 100%;
+    min-height: 70px;
+    padding: 10px;
+    font-family: var(--coolhand-font-family);
+    font-size: var(--coolhand-font-size);
+    color: var(--coolhand-text);
+    background: var(--coolhand-bg);
+    border: 1px solid var(--coolhand-border);
+    border-radius: var(--coolhand-border-radius);
+    resize: none;
+    line-height: 1.5;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  }
+
+  .coolhand-explanation-textarea::placeholder {
+    color: var(--coolhand-text-muted);
+  }
+
+  .coolhand-explanation-textarea:focus {
+    outline: none;
+    border-color: var(--coolhand-accent);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+  }
+
+  /* Reduced motion for explanation textarea */
+  @media (prefers-reduced-motion: reduce) {
+    .coolhand-explanation-close,
+    .coolhand-explanation-textarea {
+      transition: none;
+    }
+  }
+
+  /* Summary mode styles */
+  .coolhand-options.summary-mode {
+    width: 300px;
+    min-width: 300px;
+  }
+
+  .coolhand-summary-container {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .coolhand-summary-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .coolhand-summary-icons {
+    display: flex;
+    gap: 6px;
+  }
+
+  .coolhand-summary-label {
+    font-size: var(--coolhand-font-size);
+    font-weight: 500;
+    color: var(--coolhand-text-muted);
+    font-family: var(--coolhand-font-family);
+  }
+
+  /* Submit button */
+  .coolhand-submit-btn {
+    all: initial;
+    box-sizing: border-box;
+    display: block;
+    width: 100%;
+    padding: 8px 16px;
+    font-family: var(--coolhand-font-family);
+    font-size: var(--coolhand-font-size);
+    font-weight: 500;
+    color: #ffffff;
+    background: var(--coolhand-accent);
+    border: none;
+    border-radius: var(--coolhand-border-radius);
+    cursor: pointer;
+    text-align: center;
+    transition: background 0.15s ease, transform 0.1s ease;
+  }
+
+  .coolhand-submit-btn:hover {
+    background: #1d4ed8;
+  }
+
+  .coolhand-submit-btn:active {
+    transform: scale(0.98);
+  }
+
+  .coolhand-submit-btn:focus {
+    outline: none;
+  }
+
+  .coolhand-submit-btn:focus-visible {
+    outline: 2px solid var(--coolhand-accent);
+    outline-offset: 2px;
+  }
+
+  /* Reduced motion for submit button */
+  @media (prefers-reduced-motion: reduce) {
+    .coolhand-submit-btn {
+      transition: none;
+    }
   }
 </style>
 `;
