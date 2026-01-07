@@ -54,6 +54,7 @@ export class FeedbackWidget {
   private selectedIconContainer: HTMLElement | null = null;
   private statusRegion: HTMLElement | null = null;
   private feedbackButtons: NodeListOf<Element> | null = null;
+  private wrapper: HTMLElement | null = null;
 
   // Input/textarea monitoring
   private isInputElement: boolean = false;
@@ -234,6 +235,7 @@ export class FeedbackWidget {
     this.optionsPanel = root.querySelector('.coolhand-options');
     this.selectedIconContainer = root.querySelector('.coolhand-selected-icon');
     this.statusRegion = root.querySelector('.coolhand-sr-only');
+    this.wrapper = root.querySelector('.coolhand-feedback-wrapper');
     const closeBtn = root.querySelector('.coolhand-close');
     this.feedbackButtons = root.querySelectorAll('.coolhand-option');
 
@@ -394,20 +396,24 @@ export class FeedbackWidget {
             <span aria-hidden="true">${closeIcon}</span>
           </button>
         </div>
-        <div class="coolhand-summary-label">Your feedback:</div>
+        <div id="coolhand-summary-label" class="coolhand-summary-label">Your feedback:</div>
         <textarea
           class="coolhand-explanation-textarea"
           placeholder="How could this result be better?"
           aria-label="Your feedback explanation"
+          aria-describedby="coolhand-summary-label"
           rows="3"
         >${existingExplanation}</textarea>
-        <button class="coolhand-submit-btn" type="button">Submit</button>
+        <button class="coolhand-submit-btn" type="button" aria-label="Submit feedback changes">Submit</button>
       </div>
     `;
 
     this.optionsPanel.innerHTML = summaryHtml;
     this.optionsPanel.classList.add('expanded', 'summary-mode');
     this.optionsPanel.setAttribute('aria-hidden', 'false');
+
+    // Announce mode change to screen readers
+    this.announce('Showing your previous feedback. You can edit your rating or explanation.');
 
     // Set up event listeners
     const closeBtn = this.optionsPanel.querySelector('.coolhand-explanation-close');
@@ -645,7 +651,7 @@ export class FeedbackWidget {
       <div class="coolhand-explanation-container">
         <div class="coolhand-explanation-header">
           <span class="coolhand-explanation-icon" aria-hidden="true">${selectedIcon}</span>
-          <span class="coolhand-explanation-title">How could this result be better?</span>
+          <span id="coolhand-explanation-title" class="coolhand-explanation-title">How could this result be better?</span>
           <button class="coolhand-explanation-close" aria-label="Close without adding explanation">
             <span aria-hidden="true">${closeIcon}</span>
           </button>
@@ -654,9 +660,10 @@ export class FeedbackWidget {
           class="coolhand-explanation-textarea"
           placeholder="Optional: Tell us more..."
           aria-label="Explain your feedback"
+          aria-describedby="coolhand-explanation-title"
           rows="3"
         ></textarea>
-        <button class="coolhand-submit-btn" type="button">Submit</button>
+        <button class="coolhand-submit-btn" type="button" aria-label="Submit feedback">Submit</button>
       </div>
     `;
 
@@ -786,6 +793,11 @@ export class FeedbackWidget {
       payload.llm_request_log_feedback.workload_hashid = this.options.workloadId;
     }
 
+    // Set aria-busy during API call
+    if (this.wrapper) {
+      this.wrapper.setAttribute('aria-busy', 'true');
+    }
+
     try {
       const response = await fetch(`${COOLHAND_API_URL}/${existingFeedbackId}`, {
         method: 'PATCH',
@@ -815,6 +827,11 @@ export class FeedbackWidget {
 
       if (this.options.onError) {
         this.options.onError(err);
+      }
+    } finally {
+      // Clear aria-busy after API call completes
+      if (this.wrapper) {
+        this.wrapper.setAttribute('aria-busy', 'false');
       }
     }
   }
@@ -885,6 +902,11 @@ export class FeedbackWidget {
       : COOLHAND_API_URL;
     const method = isUpdate ? 'PATCH' : 'POST';
 
+    // Set aria-busy during API call
+    if (this.wrapper) {
+      this.wrapper.setAttribute('aria-busy', 'true');
+    }
+
     try {
       const response = await fetch(url, {
         method,
@@ -940,6 +962,11 @@ export class FeedbackWidget {
 
       if (this.options.onError) {
         this.options.onError(err);
+      }
+    } finally {
+      // Clear aria-busy after API call completes
+      if (this.wrapper) {
+        this.wrapper.setAttribute('aria-busy', 'false');
       }
     }
   }
@@ -1028,6 +1055,11 @@ export class FeedbackWidget {
       : COOLHAND_API_URL;
     const method = existingFeedbackId ? 'PATCH' : 'POST';
 
+    // Set aria-busy during API call
+    if (this.wrapper) {
+      this.wrapper.setAttribute('aria-busy', 'true');
+    }
+
     try {
       const response = await fetch(url, {
         method,
@@ -1061,6 +1093,11 @@ export class FeedbackWidget {
 
       if (this.options.onError) {
         this.options.onError(err);
+      }
+    } finally {
+      // Clear aria-busy after API call completes
+      if (this.wrapper) {
+        this.wrapper.setAttribute('aria-busy', 'false');
       }
     }
   }

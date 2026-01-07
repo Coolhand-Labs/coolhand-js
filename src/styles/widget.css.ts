@@ -281,6 +281,10 @@ export const widgetStyles = `
     background: var(--coolhand-bg-hover);
   }
 
+  .coolhand-close:hover svg {
+    stroke: var(--coolhand-text);
+  }
+
   .coolhand-close:focus {
     outline: none;
   }
@@ -414,12 +418,14 @@ export const widgetStyles = `
     display: none;
   }
 
-  /* Pixel mode: show options on hover */
-  .coolhand-pixel-mode:hover .coolhand-trigger {
+  /* Pixel mode: show options on hover or focus (keyboard accessible) */
+  .coolhand-pixel-mode:hover .coolhand-trigger,
+  .coolhand-pixel-mode:focus-within .coolhand-trigger {
     display: none;
   }
 
-  .coolhand-pixel-mode:hover .coolhand-options {
+  .coolhand-pixel-mode:hover .coolhand-options,
+  .coolhand-pixel-mode:focus-within .coolhand-options {
     display: flex;
   }
 
@@ -502,6 +508,10 @@ export const widgetStyles = `
 
   .coolhand-explanation-close:hover {
     background: var(--coolhand-bg-hover);
+  }
+
+  .coolhand-explanation-close:hover svg {
+    stroke: var(--coolhand-text);
   }
 
   .coolhand-explanation-close:focus {
