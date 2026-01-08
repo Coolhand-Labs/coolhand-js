@@ -156,20 +156,22 @@
             <div class="flex justify-between items-start mb-4">
                 <h2 class="text-xl font-semibold text-gray-800 dark:text-gray-200">Editable AI Response (Textarea)</h2>
                 <label class="flex items-center gap-2 cursor-pointer">
-                    <span class="text-sm text-gray-500 dark:text-gray-400">Hide Widget</span>
+                    <span class="text-sm text-gray-500 dark:text-gray-400">Highlight</span>
                     <input
                         type="checkbox"
-                        id="textarea-widget-toggle"
+                        id="textarea-highlight-toggle"
+                        checked
                         class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
                     />
                 </label>
             </div>
             <p class="text-sm text-gray-500 dark:text-gray-400 mb-3">
-                This textarea tracks revisions. Edit the text - changes are sent after 1 second of no typing (or immediately on blur).
+                This textarea tracks revisions. Toggle highlight to see the pulsating gradient border effect.
             </p>
             <textarea
                 id="editable-textarea"
                 coolhand-feedback
+                data-coolhand-highlight
                 data-coolhand-workload-id="workload-textarea-001"
                 class="w-full min-h-[200px] px-3 py-2 text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-vertical transition-colors duration-200"
                 placeholder="Enter your text here...">This is a sample AI-generated response that demonstrates how an LLM might structure its output. The text includes multiple paragraphs to show formatting.
@@ -379,19 +381,19 @@ In conclusion, the results indicate strong performance across all metrics, with 
             // No need for manual attachment code
 
             // Widget visibility toggles (only if elements exist)
-            const textareaToggle = document.getElementById('textarea-widget-toggle');
+            const textareaHighlightToggle = document.getElementById('textarea-highlight-toggle');
             const inputToggle = document.getElementById('input-widget-toggle');
             const textarea = document.getElementById('editable-textarea');
             const inputField = document.getElementById('editable-input');
 
-            if (textareaToggle && textarea) {
-                textareaToggle.addEventListener('change', (e) => {
+            if (textareaHighlightToggle && textarea) {
+                textareaHighlightToggle.addEventListener('change', (e) => {
                     if (e.target.checked) {
-                        textarea.setAttribute('data-coolhand-widget-style', 'hidden');
-                        showNotification('Textarea widget hidden (revision tracking still active)');
+                        textarea.setAttribute('data-coolhand-highlight', '');
+                        showNotification('Highlight enabled');
                     } else {
-                        textarea.removeAttribute('data-coolhand-widget-style');
-                        showNotification('Textarea widget visible');
+                        textarea.removeAttribute('data-coolhand-highlight');
+                        showNotification('Highlight disabled');
                     }
                     // Re-initialize to apply change
                     if (typeof CoolhandJS !== 'undefined') {

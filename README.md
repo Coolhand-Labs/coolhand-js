@@ -229,6 +229,7 @@ The AI generated this response which the user can edit.
 - `data-coolhand-explanation-sample-rate`: Override explanation sample rate for this element (float `"0"` to `"1"`). `"1"` = always show, `"0"` = never show, `"0.5"` = 50% chance. Takes priority over the global `explanationSample` setting.
 - `data-coolhand-feedback-id`: **Set automatically** after successful feedback submission. Contains the feedback ID returned from the API. When present, subsequent feedback changes automatically update the existing feedback instead of creating duplicates.
 - `data-coolhand-explanation`: **Set automatically** after user submits an explanation. Contains the explanation text for reference.
+- `data-coolhand-highlight`: Enables a pulsating gradient border around the widget trigger to draw user attention. Great for onboarding or encouraging feedback.
 
 ## Feedback Values
 

@@ -13,6 +13,7 @@ import {
   FEEDBACK_ID_ATTRIBUTE,
   ORIGINAL_OUTPUT_ATTRIBUTE,
   WIDGET_STYLE_ATTRIBUTE,
+  HIGHLIGHT_ATTRIBUTE,
   EXPLANATION_ATTRIBUTE,
   EXPLANATION_PROMPT_ATTRIBUTE,
   DEBOUNCE_MS,
@@ -224,12 +225,18 @@ export class FeedbackWidget {
     }
 
     this.attachEvents(root);
+
+    // Apply highlight class if attribute is present
+    if (this.targetElement.hasAttribute(HIGHLIGHT_ATTRIBUTE) && this.wrapper) {
+      this.wrapper.classList.add('coolhand-highlight');
+    }
   }
 
   /**
    * Attach event listeners to widget elements
    */
   private attachEvents(root: ShadowRoot | HTMLElement): void {
+    this.wrapper = root.querySelector('.coolhand-feedback-wrapper');
     this.trigger = root.querySelector('.coolhand-trigger');
     this.optionsPanel = root.querySelector('.coolhand-options');
     this.selectedIconContainer = root.querySelector('.coolhand-selected-icon');
@@ -520,6 +527,9 @@ export class FeedbackWidget {
    * Hide the options panel
    */
   private hideOptions(): void {
+    // Only remove highlight if panel was actually open (user interacted)
+    const wasExpanded = this.isExpanded;
+
     this.isExpanded = false;
     if (this.trigger) {
       this.trigger.style.display = 'flex';
@@ -529,6 +539,22 @@ export class FeedbackWidget {
       this.optionsPanel.classList.remove('expanded');
       this.optionsPanel.setAttribute('aria-hidden', 'true');
     }
+    // Remove highlight only when closing after user interaction
+    if (wasExpanded) {
+      this.removeHighlight();
+    }
+  }
+
+  /**
+   * Remove the pulsating highlight effect permanently
+   */
+  private removeHighlight(): void {
+    // Remove highlight class from wrapper
+    if (this.wrapper) {
+      this.wrapper.classList.remove('coolhand-highlight');
+    }
+    // Remove highlight attribute from target element
+    this.targetElement.removeAttribute(HIGHLIGHT_ATTRIBUTE);
   }
 
   /**
@@ -586,6 +612,9 @@ export class FeedbackWidget {
 
     // Send feedback to the server, then maybe show explanation UI
     this.sendFeedback(feedbackValue).then(() => {
+      // Always remove highlight when user submits feedback (works for all widget styles)
+      this.removeHighlight();
+
       if (this.shouldShowExplanation()) {
         this.showExplanationUI();
       } else {
@@ -697,7 +726,7 @@ export class FeedbackWidget {
       });
     }
 
-    // Show trigger button (hidden during feedback selection)
+    // Hide trigger button during explanation mode
     if (this.trigger) {
       this.trigger.style.display = 'none';
     }

@@ -54,3 +54,8 @@ export const DEBOUNCE_MS = 1000;
  * CSS class prefix for all widget styles
  */
 export const CSS_PREFIX = 'coolhand';
+
+/**
+ * Data attribute to enable pulsating gradient border highlight
+ */
+export const HIGHLIGHT_ATTRIBUTE = 'data-coolhand-highlight';
