@@ -36,6 +36,16 @@ export const ORIGINAL_OUTPUT_ATTRIBUTE = 'data-coolhand-original-output';
 export const WIDGET_STYLE_ATTRIBUTE = 'data-coolhand-widget-style';
 
 /**
+ * Data attribute for storing user's explanation
+ */
+export const EXPLANATION_ATTRIBUTE = 'data-coolhand-explanation';
+
+/**
+ * Data attribute for explanation sample rate override (float 0-1)
+ */
+export const EXPLANATION_PROMPT_ATTRIBUTE = 'data-coolhand-explanation-sample-rate';
+
+/**
  * Debounce delay in milliseconds for input change events
  */
 export const DEBOUNCE_MS = 1000;

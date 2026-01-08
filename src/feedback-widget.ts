@@ -14,6 +14,8 @@ import {
   ORIGINAL_OUTPUT_ATTRIBUTE,
   WIDGET_STYLE_ATTRIBUTE,
   HIGHLIGHT_ATTRIBUTE,
+  EXPLANATION_ATTRIBUTE,
+  EXPLANATION_PROMPT_ATTRIBUTE,
   DEBOUNCE_MS,
 } from './constants';
 import type {
@@ -63,6 +65,16 @@ export class FeedbackWidget {
   // Widget style ("overlay", "pixel", or "hidden")
   private widgetStyle: WidgetStyle = 'overlay';
 
+  // Explanation tracking
+  private isShowingExplanation: boolean = false;
+  private isShowingSummary: boolean = false;
+  private explanationText: string = '';
+  private explanationDebounceTimer: ReturnType<typeof setTimeout> | null = null;
+  private explanationContainer: HTMLElement | null = null;
+
+  // Explanation sampling (0-1 probability of showing explanation prompt)
+  private explanationSample: number = 1;
+
   constructor(
     targetElement: HTMLElement,
     originalText: string,
@@ -81,6 +93,11 @@ export class FeedbackWidget {
       this.widgetStyle = styleAttr;
     } else if (options.widgetStyle) {
       this.widgetStyle = options.widgetStyle;
+    }
+
+    // Set explanation sample rate (0-1, clamped)
+    if (typeof options.explanationSample === 'number') {
+      this.explanationSample = Math.max(0, Math.min(1, options.explanationSample));
     }
 
     // Detect if this is an input or textarea element
@@ -224,6 +241,7 @@ export class FeedbackWidget {
     this.optionsPanel = root.querySelector('.coolhand-options');
     this.selectedIconContainer = root.querySelector('.coolhand-selected-icon');
     this.statusRegion = root.querySelector('.coolhand-sr-only');
+    this.wrapper = root.querySelector('.coolhand-feedback-wrapper');
     const closeBtn = root.querySelector('.coolhand-close');
     this.feedbackButtons = root.querySelectorAll('.coolhand-option');
 
@@ -263,15 +281,31 @@ export class FeedbackWidget {
     });
 
     document.addEventListener('click', (e: Event) => {
-      if (!root.contains(e.target as Node)) {
-        this.hideOptions();
+      // Use composedPath() to correctly detect clicks inside Shadow DOM
+      const path = e.composedPath();
+      const clickedInsideWidget = path.includes(root);
+
+      if (!clickedInsideWidget) {
+        if (this.isShowingExplanation) {
+          this.closeExplanationUI();
+        } else if (this.isShowingSummary) {
+          this.closeSummaryUI();
+        } else {
+          this.hideOptions();
+        }
       }
     });
 
     // Global escape key handler
     document.addEventListener('keydown', (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && this.isExpanded) {
-        this.hideOptions();
+      if (e.key === 'Escape') {
+        if (this.isShowingExplanation) {
+          this.closeExplanationUI();
+        } else if (this.isShowingSummary) {
+          this.closeSummaryUI();
+        } else if (this.isExpanded) {
+          this.hideOptions();
+        }
       }
     });
   }
@@ -320,6 +354,14 @@ export class FeedbackWidget {
         this.trigger.style.display = 'none';
         this.trigger.setAttribute('aria-expanded', 'true');
       }
+
+      // Check if feedback already exists - show summary view instead
+      const existingFeedbackId = this.targetElement.getAttribute(FEEDBACK_ID_ATTRIBUTE);
+      if (existingFeedbackId && this.selectedType) {
+        this.showFeedbackSummary();
+        return;
+      }
+
       if (this.optionsPanel) {
         this.optionsPanel.classList.add('expanded');
         this.optionsPanel.setAttribute('aria-hidden', 'false');
@@ -330,6 +372,155 @@ export class FeedbackWidget {
     } else {
       this.hideOptions();
     }
+  }
+
+  /**
+   * Show summary view of existing feedback
+   */
+  private showFeedbackSummary(): void {
+    if (!this.optionsPanel) return;
+
+    this.isShowingSummary = true;
+    const existingExplanation = this.targetElement.getAttribute(EXPLANATION_ATTRIBUTE) || '';
+
+    // Build the summary HTML with all three icons (selected one highlighted)
+    const summaryHtml = `
+      <div class="coolhand-summary-container">
+        <div class="coolhand-summary-header">
+          <div class="coolhand-summary-icons" role="radiogroup" aria-label="Change your feedback">
+            <button class="coolhand-option${this.selectedType === 'down' ? ' selected' : ''}" data-feedback="down" aria-label="Not useful" role="radio" aria-checked="${this.selectedType === 'down'}">
+              <span aria-hidden="true">${thumbsDownIcon}</span>
+            </button>
+            <button class="coolhand-option${this.selectedType === 'neutral' ? ' selected' : ''}" data-feedback="neutral" aria-label="Somewhat useful" role="radio" aria-checked="${this.selectedType === 'neutral'}">
+              <span aria-hidden="true">${neutralIcon}</span>
+            </button>
+            <button class="coolhand-option${this.selectedType === 'up' ? ' selected' : ''}" data-feedback="up" aria-label="Very useful" role="radio" aria-checked="${this.selectedType === 'up'}">
+              <span aria-hidden="true">${thumbsUpIcon}</span>
+            </button>
+          </div>
+          <button class="coolhand-explanation-close" aria-label="Close feedback summary">
+            <span aria-hidden="true">${closeIcon}</span>
+          </button>
+        </div>
+        <div id="coolhand-summary-label" class="coolhand-summary-label">Your feedback:</div>
+        <textarea
+          class="coolhand-explanation-textarea"
+          placeholder="How could this result be better?"
+          aria-label="Your feedback explanation"
+          aria-describedby="coolhand-summary-label"
+          rows="3"
+        >${existingExplanation}</textarea>
+        <button class="coolhand-submit-btn" type="button" aria-label="Submit feedback changes">Submit</button>
+      </div>
+    `;
+
+    this.optionsPanel.innerHTML = summaryHtml;
+    this.optionsPanel.classList.add('expanded', 'summary-mode');
+    this.optionsPanel.setAttribute('aria-hidden', 'false');
+
+    // Announce mode change to screen readers
+    this.announce('Showing your previous feedback. You can edit your rating or explanation.');
+
+    // Set up event listeners
+    const closeBtn = this.optionsPanel.querySelector('.coolhand-explanation-close');
+    const textarea = this.optionsPanel.querySelector('.coolhand-explanation-textarea') as HTMLTextAreaElement;
+    const feedbackButtons = this.optionsPanel.querySelectorAll('.coolhand-option');
+    const submitBtn = this.optionsPanel.querySelector('.coolhand-submit-btn');
+
+    if (closeBtn) {
+      closeBtn.addEventListener('click', (e: Event) => {
+        e.stopPropagation();
+        this.closeSummaryUI();
+      });
+    }
+
+    if (textarea) {
+      this.explanationText = existingExplanation;
+      textarea.addEventListener('input', this.handleExplanationInput.bind(this));
+      textarea.addEventListener('blur', this.handleExplanationBlur.bind(this));
+    }
+
+    if (submitBtn) {
+      submitBtn.addEventListener('click', (e: Event) => {
+        e.stopPropagation();
+        this.handleExplanationSubmit();
+      });
+    }
+
+    // Allow changing feedback selection
+    feedbackButtons.forEach((btn) => {
+      btn.addEventListener('click', (e: Event) => {
+        e.stopPropagation();
+        this.handleSummaryFeedbackChange(btn as HTMLElement, feedbackButtons);
+      });
+    });
+  }
+
+  /**
+   * Handle feedback change in summary view
+   */
+  private handleSummaryFeedbackChange(
+    selectedBtn: HTMLElement,
+    allBtns: NodeListOf<Element>
+  ): void {
+    // Update visual and ARIA states
+    allBtns.forEach((btn) => {
+      btn.classList.remove('selected');
+      btn.setAttribute('aria-checked', 'false');
+    });
+    selectedBtn.classList.add('selected');
+    selectedBtn.setAttribute('aria-checked', 'true');
+
+    const feedbackType = selectedBtn.dataset.feedback as FeedbackType | undefined;
+    if (!feedbackType) return;
+
+    const feedbackValue = FEEDBACK_TYPE_TO_VALUE[feedbackType];
+    this.selectedFeedback = feedbackValue;
+    this.selectedType = feedbackType;
+
+    // Update trigger icon
+    if (this.trigger && this.selectedIconContainer) {
+      this.selectedIconContainer.innerHTML = FEEDBACK_TYPE_TO_ICON[feedbackType];
+      this.trigger.setAttribute('data-selected', feedbackType);
+    }
+
+    // Send updated feedback
+    this.sendFeedback(feedbackValue);
+  }
+
+  /**
+   * Close the summary UI
+   */
+  private closeSummaryUI(): void {
+    if (!this.isShowingSummary) return;
+
+    // Send any pending explanation
+    if (this.explanationDebounceTimer) {
+      clearTimeout(this.explanationDebounceTimer);
+      this.explanationDebounceTimer = null;
+    }
+    if (this.explanationText.trim()) {
+      this.sendExplanation();
+    }
+
+    this.isShowingSummary = false;
+
+    if (this.optionsPanel) {
+      this.optionsPanel.classList.remove('expanded', 'summary-mode');
+      this.optionsPanel.setAttribute('aria-hidden', 'true');
+    }
+
+    if (this.trigger) {
+      this.trigger.style.display = 'flex';
+      this.trigger.classList.add('showing-checkmark');
+      setTimeout(() => {
+        if (this.trigger) {
+          this.trigger.classList.remove('showing-checkmark');
+        }
+      }, 800);
+    }
+
+    this.isExpanded = false;
   }
 
   /**
@@ -419,19 +610,294 @@ export class FeedbackWidget {
       activeEl.blur();
     }
 
-    // Now hide the options panel (safe since nothing inside has focus)
-    this.hideOptions();
+    // Send feedback to the server, then maybe show explanation UI
+    this.sendFeedback(feedbackValue).then(() => {
+      // Always remove highlight when user submits feedback (works for all widget styles)
+      this.removeHighlight();
 
-    // Always remove highlight when user submits feedback (works for all widget styles)
-    this.removeHighlight();
+      if (this.shouldShowExplanation()) {
+        this.showExplanationUI();
+      } else {
+        // Close the panel without showing explanation
+        this.hideOptions();
+        // Show checkmark animation
+        if (this.trigger) {
+          this.trigger.classList.add('showing-checkmark');
+          setTimeout(() => {
+            if (this.trigger) {
+              this.trigger.classList.remove('showing-checkmark');
+            }
+          }, 800);
+        }
+      }
+    });
+  }
 
-    // Move focus to trigger for keyboard users
-    if (this.trigger) {
-      this.trigger.focus();
+  /**
+   * Determine whether to show the explanation prompt after feedback
+   * Priority: element attribute (float 0-1) > instance sample rate
+   */
+  private shouldShowExplanation(): boolean {
+    // Check element attribute for override (float 0-1)
+    const attrValue = this.targetElement.getAttribute(EXPLANATION_PROMPT_ATTRIBUTE);
+    let rate = this.explanationSample;
+
+    if (attrValue !== null) {
+      const parsed = parseFloat(attrValue);
+      if (!isNaN(parsed)) {
+        rate = Math.max(0, Math.min(1, parsed));
+      }
     }
 
-    // Send feedback to the server
-    this.sendFeedback(feedbackValue);
+    if (rate === 0) {
+      return false;
+    }
+
+    if (rate === 1) {
+      return true;
+    }
+
+    // Random sampling
+    return Math.random() < rate;
+  }
+
+  /**
+   * Show the explanation textarea UI after feedback selection
+   */
+  private showExplanationUI(): void {
+    if (!this.optionsPanel) return;
+
+    this.isShowingExplanation = true;
+    this.explanationText = '';
+
+    // Get the selected feedback icon to show in header
+    const selectedIcon = this.selectedType ? FEEDBACK_TYPE_TO_ICON[this.selectedType] : '';
+
+    // Create explanation container HTML
+    const explanationHtml = `
+      <div class="coolhand-explanation-container">
+        <div class="coolhand-explanation-header">
+          <span class="coolhand-explanation-icon" aria-hidden="true">${selectedIcon}</span>
+          <span id="coolhand-explanation-title" class="coolhand-explanation-title">How could this result be better?</span>
+          <button class="coolhand-explanation-close" aria-label="Close without adding explanation">
+            <span aria-hidden="true">${closeIcon}</span>
+          </button>
+        </div>
+        <textarea
+          class="coolhand-explanation-textarea"
+          placeholder="Optional: Tell us more..."
+          aria-label="Explain your feedback"
+          aria-describedby="coolhand-explanation-title"
+          rows="3"
+        ></textarea>
+        <button class="coolhand-submit-btn" type="button" aria-label="Submit feedback">Submit</button>
+      </div>
+    `;
+
+    // Clear existing content and add explanation UI
+    this.optionsPanel.innerHTML = explanationHtml;
+    this.optionsPanel.classList.add('expanded', 'explanation-mode');
+    this.optionsPanel.setAttribute('aria-hidden', 'false');
+
+    // Store reference and attach events
+    this.explanationContainer = this.optionsPanel.querySelector('.coolhand-explanation-container');
+    const textarea = this.optionsPanel.querySelector('.coolhand-explanation-textarea') as HTMLTextAreaElement;
+    const closeBtn = this.optionsPanel.querySelector('.coolhand-explanation-close');
+    const submitBtn = this.optionsPanel.querySelector('.coolhand-submit-btn');
+
+    if (textarea) {
+      textarea.addEventListener('input', this.handleExplanationInput.bind(this));
+      textarea.addEventListener('blur', this.handleExplanationBlur.bind(this));
+      // Focus the textarea for immediate typing
+      setTimeout(() => textarea.focus(), 50);
+    }
+
+    if (closeBtn) {
+      closeBtn.addEventListener('click', (e: Event) => {
+        e.stopPropagation();
+        this.closeExplanationUI();
+      });
+    }
+
+    if (submitBtn) {
+      submitBtn.addEventListener('click', (e: Event) => {
+        e.stopPropagation();
+        this.handleExplanationSubmit();
+      });
+    }
+
+    // Hide trigger button during explanation mode
+    if (this.trigger) {
+      this.trigger.style.display = 'none';
+    }
+  }
+
+  /**
+   * Handle explanation textarea input with debouncing
+   */
+  private handleExplanationInput(e: Event): void {
+    const textarea = e.target as HTMLTextAreaElement;
+    this.explanationText = textarea.value;
+
+    // Clear any existing timer
+    if (this.explanationDebounceTimer) {
+      clearTimeout(this.explanationDebounceTimer);
+    }
+
+    // Set new debounce timer
+    this.explanationDebounceTimer = setTimeout(() => {
+      this.sendExplanation();
+    }, DEBOUNCE_MS);
+  }
+
+  /**
+   * Handle explanation textarea blur - send immediately but don't close
+   * (closing is handled by document click handler or X button)
+   */
+  private handleExplanationBlur(): void {
+    // Clear any pending debounce timer
+    if (this.explanationDebounceTimer) {
+      clearTimeout(this.explanationDebounceTimer);
+      this.explanationDebounceTimer = null;
+    }
+
+    // Send explanation if there's any text
+    if (this.explanationText.trim()) {
+      this.sendExplanation();
+    }
+  }
+
+  /**
+   * Handle explicit submit button click - send explanation and close UI
+   */
+  private handleExplanationSubmit(): void {
+    // Clear any pending debounce timer
+    if (this.explanationDebounceTimer) {
+      clearTimeout(this.explanationDebounceTimer);
+      this.explanationDebounceTimer = null;
+    }
+
+    // Send explanation if there's any text
+    if (this.explanationText.trim()) {
+      this.sendExplanation();
+    }
+
+    // Close the UI (either explanation or summary mode)
+    if (this.isShowingExplanation) {
+      this.closeExplanationUI();
+    } else if (this.isShowingSummary) {
+      this.closeSummaryUI();
+    }
+  }
+
+  /**
+   * Send explanation to the API
+   */
+  private async sendExplanation(): Promise<void> {
+    const explanation = this.explanationText.trim();
+    if (!explanation) return;
+
+    const existingFeedbackId = this.targetElement.getAttribute(FEEDBACK_ID_ATTRIBUTE);
+    if (!existingFeedbackId) {
+      console.error('[CoolhandJS] Cannot send explanation: no feedback ID found');
+      return;
+    }
+
+    const payload: FeedbackApiPayload = {
+      llm_request_log_feedback: {
+        like: this.selectedFeedback,
+        original_output: this.originalText,
+        explanation: explanation,
+        collector: `coolhand-js-${VERSION}`,
+      },
+    };
+
+    if (this.options.clientUniqueId) {
+      payload.llm_request_log_feedback.client_unique_id = this.options.clientUniqueId;
+    }
+
+    if (this.options.workloadId) {
+      payload.llm_request_log_feedback.workload_hashid = this.options.workloadId;
+    }
+
+    // Set aria-busy during API call
+    if (this.wrapper) {
+      this.wrapper.setAttribute('aria-busy', 'true');
+    }
+
+    try {
+      const response = await fetch(`${COOLHAND_API_URL}/${existingFeedbackId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-API-Key': this.apiKey,
+          Accept: 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data: FeedbackApiResponse = await response.json();
+      console.log('[CoolhandJS] Explanation submitted successfully:', data);
+
+      // Store the explanation in a data attribute for later retrieval
+      this.targetElement.setAttribute(EXPLANATION_ATTRIBUTE, explanation);
+
+      // Announce success to screen readers
+      this.announce('Thank you for your feedback');
+    } catch (error) {
+      const err = error as Error;
+      console.error('[CoolhandJS] Error submitting explanation:', err);
+
+      if (this.options.onError) {
+        this.options.onError(err);
+      }
+    } finally {
+      // Clear aria-busy after API call completes
+      if (this.wrapper) {
+        this.wrapper.setAttribute('aria-busy', 'false');
+      }
+    }
+  }
+
+  /**
+   * Close the explanation UI and restore normal state
+   */
+  private closeExplanationUI(): void {
+    if (!this.isShowingExplanation) return;
+
+    // Send any pending explanation
+    if (this.explanationDebounceTimer) {
+      clearTimeout(this.explanationDebounceTimer);
+      this.explanationDebounceTimer = null;
+    }
+    if (this.explanationText.trim()) {
+      this.sendExplanation();
+    }
+
+    this.isShowingExplanation = false;
+    this.explanationText = '';
+    this.explanationContainer = null;
+
+    // Hide the options panel
+    if (this.optionsPanel) {
+      this.optionsPanel.classList.remove('expanded', 'explanation-mode');
+      this.optionsPanel.setAttribute('aria-hidden', 'true');
+    }
+
+    // Show trigger with checkmark animation
+    if (this.trigger) {
+      this.trigger.style.display = 'flex';
+      this.trigger.classList.add('showing-checkmark');
+      setTimeout(() => {
+        if (this.trigger) {
+          this.trigger.classList.remove('showing-checkmark');
+        }
+      }, 800);
+    }
   }
 
   /**
@@ -462,6 +928,11 @@ export class FeedbackWidget {
       ? `${COOLHAND_API_URL}/${existingFeedbackId}`
       : COOLHAND_API_URL;
     const method = isUpdate ? 'PATCH' : 'POST';
+
+    // Set aria-busy during API call
+    if (this.wrapper) {
+      this.wrapper.setAttribute('aria-busy', 'true');
+    }
 
     try {
       const response = await fetch(url, {
@@ -518,6 +989,11 @@ export class FeedbackWidget {
 
       if (this.options.onError) {
         this.options.onError(err);
+      }
+    } finally {
+      // Clear aria-busy after API call completes
+      if (this.wrapper) {
+        this.wrapper.setAttribute('aria-busy', 'false');
       }
     }
   }
@@ -606,6 +1082,11 @@ export class FeedbackWidget {
       : COOLHAND_API_URL;
     const method = existingFeedbackId ? 'PATCH' : 'POST';
 
+    // Set aria-busy during API call
+    if (this.wrapper) {
+      this.wrapper.setAttribute('aria-busy', 'true');
+    }
+
     try {
       const response = await fetch(url, {
         method,
@@ -640,6 +1121,11 @@ export class FeedbackWidget {
       if (this.options.onError) {
         this.options.onError(err);
       }
+    } finally {
+      // Clear aria-busy after API call completes
+      if (this.wrapper) {
+        this.wrapper.setAttribute('aria-busy', 'false');
+      }
     }
   }
 
@@ -647,10 +1133,14 @@ export class FeedbackWidget {
    * Remove the widget from the DOM and clean up event listeners
    */
   public destroy(): void {
-    // Clear any pending debounce timer
+    // Clear any pending debounce timers
     if (this.debounceTimer) {
       clearTimeout(this.debounceTimer);
       this.debounceTimer = null;
+    }
+    if (this.explanationDebounceTimer) {
+      clearTimeout(this.explanationDebounceTimer);
+      this.explanationDebounceTimer = null;
     }
 
     // Remove input monitoring event listeners

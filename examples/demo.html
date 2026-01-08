@@ -97,15 +97,53 @@
                     Initialize Widgets
                 </button>
             </div>
+            <!-- Explanation Sampling Slider -->
+            <div class="mt-3 flex items-center gap-3">
+                <label for="explanationSampleSlider" class="text-sm font-medium text-gray-700 dark:text-gray-300 whitespace-nowrap">
+                    Explanation Prompt Rate:
+                </label>
+                <input
+                    id="explanationSampleSlider"
+                    type="range"
+                    min="0"
+                    max="1"
+                    step="0.1"
+                    value="1"
+                    class="flex-1 h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-blue-500"
+                />
+                <span id="explanationSampleValue" class="text-sm font-mono text-gray-700 dark:text-gray-300 w-12 text-right">100%</span>
+            </div>
             <div id="initStatus" class="mt-2 text-sm"></div>
             <p class="mt-2 text-xs text-gray-600 dark:text-gray-400">
                 Choose widget style and initialize. <strong>Overlay</strong>: hand icon trigger. <strong>Pixel</strong>: tiny dot that expands on hover. <strong>Hidden</strong>: no UI, tracks edits only.
+                <br/>
+                <strong>Explanation Prompt Rate</strong>: How often to ask for explanation after feedback (0% = never, 100% = always).
             </p>
         </div>
 
         <!-- 1. Static paragraph with Lorem Ipsum -->
         <div id="article-content" coolhand-feedback class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 transition-colors duration-200">
-            <h2 class="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-4">Generated Article</h2>
+            <div class="flex justify-between items-start mb-4">
+                <h2 class="text-xl font-semibold text-gray-800 dark:text-gray-200">Generated Article</h2>
+                <div class="flex items-center gap-2">
+                    <label for="articleSampleSlider" class="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">
+                        Explanation Prompt Sample %
+                    </label>
+                    <input
+                        id="articleSampleSlider"
+                        type="range"
+                        min="0"
+                        max="1"
+                        step="0.1"
+                        value="1"
+                        class="w-20 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-blue-500"
+                    />
+                    <span id="articleSampleValue" class="text-xs font-mono text-gray-500 dark:text-gray-400 w-10">100%</span>
+                </div>
+            </div>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mb-3">
+                Per-element override via <code class="bg-gray-100 dark:bg-gray-700 px-1 rounded">data-coolhand-explanation-sample-rate</code>. Adjust slider to test.
+            </p>
             <div class="prose prose-gray dark:prose-invert max-w-none">
                 <p class="text-gray-600 dark:text-gray-300 leading-relaxed">
                     Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo.
@@ -307,6 +345,14 @@ In conclusion, the results indicate strong performance across all metrics, with 
             console.log('✓ CoolhandJS library loaded successfully');
 
             const widgetStyleSelect = document.getElementById('widgetStyleSelect');
+            const explanationSampleSlider = document.getElementById('explanationSampleSlider');
+            const explanationSampleValue = document.getElementById('explanationSampleValue');
+
+            // Update displayed value when slider changes
+            explanationSampleSlider.addEventListener('input', () => {
+                const value = parseFloat(explanationSampleSlider.value);
+                explanationSampleValue.textContent = Math.round(value * 100) + '%';
+            });
 
             initButton.addEventListener('click', () => {
                 const apiKey = apiKeyInput.value.trim();
@@ -319,11 +365,13 @@ In conclusion, the results indicate strong performance across all metrics, with 
                 // Generate a unique client ID for this page view
                 const clientUniqueId = 'demo-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
                 const widgetStyle = widgetStyleSelect.value;
+                const explanationSample = parseFloat(explanationSampleSlider.value);
 
-                // Initialize CoolhandJS with auto-attachment, global client ID, and widget style
-                if (CoolhandJS.init(apiKey, { clientUniqueId, widgetStyle })) {
-                    initStatus.innerHTML = '<span class="text-green-600 dark:text-green-400">✓ Initialized with style: ' + widgetStyle + ', client ID: ' + clientUniqueId + '</span>';
-                    console.log('✓ CoolhandJS initialized with widgetStyle:', widgetStyle, ', clientUniqueId:', clientUniqueId);
+                // Initialize CoolhandJS with auto-attachment, global client ID, widget style, and explanation sample
+                if (CoolhandJS.init(apiKey, { clientUniqueId, widgetStyle, explanationSample })) {
+                    const samplePercent = Math.round(explanationSample * 100) + '%';
+                    initStatus.innerHTML = '<span class="text-green-600 dark:text-green-400">✓ Initialized with style: ' + widgetStyle + ', explanation rate: ' + samplePercent + '</span>';
+                    console.log('✓ CoolhandJS initialized with widgetStyle:', widgetStyle, ', explanationSample:', explanationSample, ', clientUniqueId:', clientUniqueId);
                 } else {
                     initStatus.innerHTML = '<span class="text-red-600 dark:text-red-400">❌ Initialization failed</span>';
                 }
@@ -369,6 +417,29 @@ In conclusion, the results indicate strong performance across all metrics, with 
                         CoolhandJS.detach(inputField);
                         CoolhandJS.attach(inputField);
                     }
+                });
+            }
+
+            // Article per-element explanation sample rate slider
+            const articleSampleSlider = document.getElementById('articleSampleSlider');
+            const articleSampleValue = document.getElementById('articleSampleValue');
+            const articleContent = document.getElementById('article-content');
+
+            if (articleSampleSlider && articleSampleValue && articleContent) {
+                articleSampleSlider.addEventListener('input', () => {
+                    const value = parseFloat(articleSampleSlider.value);
+                    articleSampleValue.textContent = Math.round(value * 100) + '%';
+
+                    // Set the per-element attribute
+                    articleContent.setAttribute('data-coolhand-explanation-sample-rate', value.toString());
+
+                    // Re-attach the widget to apply the new setting
+                    if (typeof CoolhandJS !== 'undefined') {
+                        CoolhandJS.detach(articleContent);
+                        CoolhandJS.attach(articleContent);
+                    }
+
+                    showNotification(`Article explanation rate set to ${Math.round(value * 100)}%`);
                 });
             }
 

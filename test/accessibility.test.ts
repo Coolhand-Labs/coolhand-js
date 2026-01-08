@@ -276,5 +276,215 @@ describe('Accessibility', () => {
 
       expect(styles).toContain('prefers-reduced-motion');
     });
+
+    it('should support keyboard accessibility in pixel mode via focus-within CSS', async () => {
+      document.body.innerHTML = `
+        <div coolhand-feedback data-coolhand-widget-style="pixel">Test content</div>
+      `;
+
+      CoolhandJS.init('test-api-key');
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      // Verify pixel mode has focus-within styles for keyboard accessibility
+      const shadowRoot = getShadowRoot();
+      const styleElement = shadowRoot?.querySelector('style');
+      const styles = styleElement?.textContent || '';
+
+      // Should have focus-within rules alongside hover for pixel mode
+      expect(styles).toContain('.coolhand-pixel-mode:focus-within');
+    });
+
+    it('should set aria-busy during API calls', async () => {
+      document.body.innerHTML = `
+        <div coolhand-feedback>Test content</div>
+      `;
+
+      // Use explanationSample: 0 to skip explanation mode and keep flow simple
+      CoolhandJS.init('test-api-key', { explanationSample: 0 });
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      const shadowRoot = getShadowRoot();
+      const wrapper = shadowRoot?.querySelector('.coolhand-feedback-wrapper');
+
+      // Expand options
+      const trigger = shadowRoot?.querySelector(
+        '.coolhand-trigger'
+      ) as HTMLElement;
+      trigger?.click();
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      // Click thumbs up (triggers API call)
+      const thumbsUp = shadowRoot?.querySelector(
+        '[data-feedback="up"]'
+      ) as HTMLElement;
+      thumbsUp?.click();
+
+      // Wait for API call to complete
+      await new Promise((resolve) => setTimeout(resolve, 150));
+
+      // After API call completes, aria-busy should be explicitly set to false
+      // (it's set true at start of API call, then false in finally block)
+      expect(wrapper?.getAttribute('aria-busy')).toBe('false');
+    });
+
+    it('should have contextual aria-label on submit buttons', async () => {
+      document.body.innerHTML = `
+        <div coolhand-feedback>Test content</div>
+      `;
+
+      CoolhandJS.init('test-api-key', { explanationSample: 1 });
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      const shadowRoot = getShadowRoot();
+
+      // Expand options and click thumbs up to trigger explanation mode
+      const trigger = shadowRoot?.querySelector(
+        '.coolhand-trigger'
+      ) as HTMLElement;
+      trigger?.click();
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      const thumbsUp = shadowRoot?.querySelector(
+        '[data-feedback="up"]'
+      ) as HTMLElement;
+      thumbsUp?.click();
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      // Check submit button has contextual aria-label
+      const submitBtn = shadowRoot?.querySelector('.coolhand-submit-btn');
+      expect(submitBtn?.getAttribute('aria-label')).toBe('Submit feedback');
+    });
+
+    it('should link textarea to title with aria-describedby in explanation mode', async () => {
+      document.body.innerHTML = `
+        <div coolhand-feedback>Test content</div>
+      `;
+
+      CoolhandJS.init('test-api-key', { explanationSample: 1 });
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      const shadowRoot = getShadowRoot();
+
+      // Expand options and click thumbs up to trigger explanation mode
+      const trigger = shadowRoot?.querySelector(
+        '.coolhand-trigger'
+      ) as HTMLElement;
+      trigger?.click();
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      const thumbsUp = shadowRoot?.querySelector(
+        '[data-feedback="up"]'
+      ) as HTMLElement;
+      thumbsUp?.click();
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      // Check textarea has aria-describedby linking to title
+      const textarea = shadowRoot?.querySelector('.coolhand-explanation-textarea');
+      const title = shadowRoot?.querySelector('#coolhand-explanation-title');
+
+      expect(title).not.toBeNull();
+      expect(textarea?.getAttribute('aria-describedby')).toBe('coolhand-explanation-title');
+    });
+
+    it('should announce summary mode to screen readers', async () => {
+      document.body.innerHTML = `
+        <div coolhand-feedback>Test content</div>
+      `;
+
+      // Use explanationSample: 0 to simplify the test flow
+      CoolhandJS.init('test-api-key', { explanationSample: 0 });
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      const shadowRoot = getShadowRoot();
+      const liveRegion = shadowRoot?.querySelector('[aria-live="polite"]');
+
+      // Step 1: Expand options
+      const trigger = shadowRoot?.querySelector('.coolhand-trigger') as HTMLElement;
+      trigger?.click();
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      // Step 2: Submit feedback to set selectedType and get feedback ID
+      const thumbsUp = shadowRoot?.querySelector('[data-feedback="up"]') as HTMLElement;
+      thumbsUp?.click();
+      await new Promise((resolve) => setTimeout(resolve, 150));
+
+      // Step 3: Collapse (click trigger or simulate collapse)
+      trigger?.click();
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      // Step 4: Re-expand - this should trigger summary mode
+      trigger?.click();
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      // Live region should have announcement text
+      expect(liveRegion?.textContent).toContain('previous feedback');
+    });
+
+    it('should have aria-describedby and contextual aria-label in summary mode', async () => {
+      document.body.innerHTML = `
+        <div coolhand-feedback>Test content</div>
+      `;
+
+      // Use explanationSample: 0 to simplify test flow
+      CoolhandJS.init('test-api-key', { explanationSample: 0 });
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      const shadowRoot = getShadowRoot();
+
+      // Step 1: Expand options
+      const trigger = shadowRoot?.querySelector('.coolhand-trigger') as HTMLElement;
+      trigger?.click();
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      // Step 2: Submit feedback to set selectedType and get feedback ID
+      const thumbsUp = shadowRoot?.querySelector('[data-feedback="up"]') as HTMLElement;
+      thumbsUp?.click();
+      await new Promise((resolve) => setTimeout(resolve, 150));
+
+      // Step 3: Collapse
+      trigger?.click();
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      // Step 4: Re-expand - triggers summary mode
+      trigger?.click();
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      // Check summary mode has proper aria attributes
+      const textarea = shadowRoot?.querySelector('.coolhand-explanation-textarea');
+      const label = shadowRoot?.querySelector('#coolhand-summary-label');
+      const submitBtn = shadowRoot?.querySelector('.coolhand-submit-btn');
+
+      expect(label).not.toBeNull();
+      expect(textarea?.getAttribute('aria-describedby')).toBe('coolhand-summary-label');
+      expect(submitBtn?.getAttribute('aria-label')).toBe('Submit feedback changes');
+    });
+
+    it('should have keyboard-accessible close button in explanation mode', async () => {
+      document.body.innerHTML = `
+        <div coolhand-feedback>Test content</div>
+      `;
+
+      CoolhandJS.init('test-api-key', { explanationSample: 1 });
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      const shadowRoot = getShadowRoot();
+
+      // Expand options and click thumbs up to trigger explanation mode
+      const trigger = shadowRoot?.querySelector(
+        '.coolhand-trigger'
+      ) as HTMLElement;
+      trigger?.click();
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      const thumbsUp = shadowRoot?.querySelector(
+        '[data-feedback="up"]'
+      ) as HTMLElement;
+      thumbsUp?.click();
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      // Check close button has aria-label
+      const closeBtn = shadowRoot?.querySelector('.coolhand-explanation-close');
+      expect(closeBtn?.getAttribute('aria-label')).toBe('Close without adding explanation');
+    });
   });
 });

@@ -1,6 +1,6 @@
 import { jest, describe, it, expect, beforeEach, afterEach } from '@jest/globals';
 import { FeedbackWidget } from '../src/feedback-widget';
-import { COOLHAND_API_URL, VERSION, FEEDBACK_ID_ATTRIBUTE, ORIGINAL_OUTPUT_ATTRIBUTE, WIDGET_STYLE_ATTRIBUTE, DEBOUNCE_MS } from '../src/constants';
+import { COOLHAND_API_URL, VERSION, FEEDBACK_ID_ATTRIBUTE, ORIGINAL_OUTPUT_ATTRIBUTE, WIDGET_STYLE_ATTRIBUTE, EXPLANATION_PROMPT_ATTRIBUTE, DEBOUNCE_MS } from '../src/constants';
 
 // Mock fetch globally
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -435,7 +435,7 @@ describe('FeedbackWidget', () => {
       expect(onError).toHaveBeenCalledWith(expect.any(Error));
     });
 
-    it('should close options panel after selection', async () => {
+    it('should transform panel to explanation mode after selection', async () => {
       widget = new FeedbackWidget(element, 'Test content', 'test-api-key');
 
       const container = element.querySelector('[data-coolhand-widget]');
@@ -450,7 +450,13 @@ describe('FeedbackWidget', () => {
       expect(options?.classList.contains('expanded')).toBe(true);
 
       thumbsUp?.click();
-      expect(options?.classList.contains('expanded')).toBe(false);
+
+      // Wait for async operations
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      // Panel should still be expanded but in explanation mode
+      expect(options?.classList.contains('expanded')).toBe(true);
+      expect(options?.classList.contains('explanation-mode')).toBe(true);
     });
   });
 
@@ -519,10 +525,14 @@ describe('FeedbackWidget', () => {
       expect(options?.classList.contains('expanded')).toBe(true);
 
       // Dispatch a click event on the document that originates from inside the shadowRoot
-      // The widget's document click handler checks if the shadowRoot contains the target
+      // The widget's document click handler uses composedPath() to detect clicks inside Shadow DOM
       const wrapper = shadowRoot?.querySelector('.coolhand-feedback-wrapper') as HTMLElement;
       const clickEvent = new MouseEvent('click', { bubbles: true });
       Object.defineProperty(clickEvent, 'target', { value: wrapper, writable: false });
+      // Mock composedPath to simulate a real browser's behavior with Shadow DOM
+      Object.defineProperty(clickEvent, 'composedPath', {
+        value: () => [wrapper, shadowRoot, container, element, document.body, document.documentElement, document, window],
+      });
       document.dispatchEvent(clickEvent);
 
       // Options should still be expanded because click was inside the widget
@@ -1432,6 +1442,436 @@ describe('FeedbackWidget', () => {
       const shadowRoot = container?.shadowRoot;
       const wrapper = shadowRoot?.querySelector('.coolhand-feedback-wrapper');
       expect(wrapper?.classList.contains('coolhand-pixel-mode')).toBe(true);
+    });
+  });
+
+  describe('Feedback Explanation', () => {
+    // Helper to flush all pending promises
+    const flushPromises = () => new Promise(resolve => setTimeout(resolve, 0));
+
+    beforeEach(() => {
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            id: 12345,
+            like: true,
+            created_at: '2024-01-01T00:00:00Z',
+            updated_at: '2024-01-01T00:00:00Z',
+          }),
+      });
+    });
+
+    it('should show explanation UI after feedback is selected', async () => {
+      widget = new FeedbackWidget(element, 'Test content', 'test-api-key');
+
+      const container = element.querySelector('[data-coolhand-widget]');
+      const shadowRoot = container?.shadowRoot;
+      const trigger = shadowRoot?.querySelector('.coolhand-trigger') as HTMLElement;
+      const thumbsUp = shadowRoot?.querySelector('[data-feedback="up"]') as HTMLElement;
+
+      trigger?.click();
+      thumbsUp?.click();
+
+      // Wait for async operations to complete
+      await flushPromises();
+
+      // Check that explanation UI is shown
+      const optionsPanel = shadowRoot?.querySelector('.coolhand-options');
+      expect(optionsPanel?.classList.contains('explanation-mode')).toBe(true);
+      expect(shadowRoot?.querySelector('.coolhand-explanation-container')).not.toBeNull();
+      expect(shadowRoot?.querySelector('.coolhand-explanation-textarea')).not.toBeNull();
+      expect(shadowRoot?.querySelector('.coolhand-explanation-title')?.textContent).toBe(
+        'How could this result be better?'
+      );
+    });
+
+    it('should show the selected feedback icon in explanation header', async () => {
+      widget = new FeedbackWidget(element, 'Test content', 'test-api-key');
+
+      const container = element.querySelector('[data-coolhand-widget]');
+      const shadowRoot = container?.shadowRoot;
+      const trigger = shadowRoot?.querySelector('.coolhand-trigger') as HTMLElement;
+      const thumbsUp = shadowRoot?.querySelector('[data-feedback="up"]') as HTMLElement;
+
+      trigger?.click();
+      thumbsUp?.click();
+
+      await flushPromises();
+
+      // Check that the icon is displayed in the explanation header
+      const explanationIcon = shadowRoot?.querySelector('.coolhand-explanation-icon');
+      expect(explanationIcon).not.toBeNull();
+      expect(explanationIcon?.querySelector('svg')).not.toBeNull();
+    });
+
+    it('should submit explanation with debouncing', async () => {
+      jest.useFakeTimers();
+
+      widget = new FeedbackWidget(element, 'Test content', 'test-api-key');
+
+      const container = element.querySelector('[data-coolhand-widget]');
+      const shadowRoot = container?.shadowRoot;
+      const trigger = shadowRoot?.querySelector('.coolhand-trigger') as HTMLElement;
+      const thumbsUp = shadowRoot?.querySelector('[data-feedback="up"]') as HTMLElement;
+
+      trigger?.click();
+      thumbsUp?.click();
+
+      // Run timers to complete the async operations
+      await jest.runAllTimersAsync();
+
+      // Clear mock to track only explanation calls
+      mockFetch.mockClear();
+
+      const textarea = shadowRoot?.querySelector('.coolhand-explanation-textarea') as HTMLTextAreaElement;
+      expect(textarea).not.toBeNull();
+      textarea.value = 'This was very helpful because it explained the concept clearly.';
+      textarea.dispatchEvent(new Event('input', { bubbles: true }));
+
+      // Should not have called fetch yet (debouncing)
+      expect(mockFetch).not.toHaveBeenCalled();
+
+      // Advance timers past debounce
+      jest.advanceTimersByTime(DEBOUNCE_MS);
+      await jest.runAllTimersAsync();
+
+      // Should have called PATCH with explanation
+      expect(mockFetch).toHaveBeenCalledWith(
+        `${COOLHAND_API_URL}/12345`,
+        expect.objectContaining({
+          method: 'PATCH',
+          body: expect.stringContaining('"explanation":"This was very helpful because it explained the concept clearly."'),
+        })
+      );
+
+      jest.useRealTimers();
+    });
+
+    it('should submit explanation immediately on blur', async () => {
+      widget = new FeedbackWidget(element, 'Test content', 'test-api-key');
+
+      const container = element.querySelector('[data-coolhand-widget]');
+      const shadowRoot = container?.shadowRoot;
+      const trigger = shadowRoot?.querySelector('.coolhand-trigger') as HTMLElement;
+      const thumbsUp = shadowRoot?.querySelector('[data-feedback="up"]') as HTMLElement;
+
+      trigger?.click();
+      thumbsUp?.click();
+
+      await flushPromises();
+
+      mockFetch.mockClear();
+
+      const textarea = shadowRoot?.querySelector('.coolhand-explanation-textarea') as HTMLTextAreaElement;
+      expect(textarea).not.toBeNull();
+      textarea.value = 'Quick explanation';
+      textarea.dispatchEvent(new Event('input', { bubbles: true }));
+      textarea.dispatchEvent(new Event('blur', { bubbles: true }));
+
+      await flushPromises();
+
+      // Should have called fetch immediately without waiting for debounce
+      expect(mockFetch).toHaveBeenCalledWith(
+        `${COOLHAND_API_URL}/12345`,
+        expect.objectContaining({
+          method: 'PATCH',
+          body: expect.stringContaining('"explanation":"Quick explanation"'),
+        })
+      );
+    });
+
+    it('should close explanation UI when close button is clicked', async () => {
+      jest.useFakeTimers();
+
+      widget = new FeedbackWidget(element, 'Test content', 'test-api-key');
+
+      const container = element.querySelector('[data-coolhand-widget]');
+      const shadowRoot = container?.shadowRoot;
+      const trigger = shadowRoot?.querySelector('.coolhand-trigger') as HTMLElement;
+      const thumbsUp = shadowRoot?.querySelector('[data-feedback="up"]') as HTMLElement;
+
+      trigger?.click();
+      thumbsUp?.click();
+
+      await jest.runAllTimersAsync();
+
+      const closeBtn = shadowRoot?.querySelector('.coolhand-explanation-close') as HTMLElement;
+      expect(closeBtn).not.toBeNull();
+      closeBtn?.click();
+
+      // Options panel should no longer have explanation-mode class
+      const optionsPanel = shadowRoot?.querySelector('.coolhand-options');
+      expect(optionsPanel?.classList.contains('explanation-mode')).toBe(false);
+      expect(optionsPanel?.classList.contains('expanded')).toBe(false);
+
+      // Trigger should be visible again
+      expect(trigger?.style.display).toBe('flex');
+
+      jest.useRealTimers();
+    });
+
+    it('should not submit empty explanation', async () => {
+      widget = new FeedbackWidget(element, 'Test content', 'test-api-key');
+
+      const container = element.querySelector('[data-coolhand-widget]');
+      const shadowRoot = container?.shadowRoot;
+      const trigger = shadowRoot?.querySelector('.coolhand-trigger') as HTMLElement;
+      const thumbsUp = shadowRoot?.querySelector('[data-feedback="up"]') as HTMLElement;
+
+      trigger?.click();
+      thumbsUp?.click();
+
+      await flushPromises();
+
+      mockFetch.mockClear();
+
+      const textarea = shadowRoot?.querySelector('.coolhand-explanation-textarea') as HTMLTextAreaElement;
+      expect(textarea).not.toBeNull();
+      // Leave textarea empty or with only whitespace
+      textarea.value = '   ';
+      textarea.dispatchEvent(new Event('input', { bubbles: true }));
+      textarea.dispatchEvent(new Event('blur', { bubbles: true }));
+
+      await flushPromises();
+
+      // Should not have called fetch for empty explanation
+      expect(mockFetch).not.toHaveBeenCalled();
+    });
+
+    it('should show checkmark after closing explanation UI', async () => {
+      jest.useFakeTimers();
+
+      widget = new FeedbackWidget(element, 'Test content', 'test-api-key');
+
+      const container = element.querySelector('[data-coolhand-widget]');
+      const shadowRoot = container?.shadowRoot;
+      const trigger = shadowRoot?.querySelector('.coolhand-trigger') as HTMLElement;
+      const thumbsUp = shadowRoot?.querySelector('[data-feedback="up"]') as HTMLElement;
+
+      trigger?.click();
+      thumbsUp?.click();
+
+      await jest.runAllTimersAsync();
+
+      const closeBtn = shadowRoot?.querySelector('.coolhand-explanation-close') as HTMLElement;
+      closeBtn?.click();
+
+      // Trigger should show checkmark
+      expect(trigger?.classList.contains('showing-checkmark')).toBe(true);
+
+      // Advance timer past checkmark duration
+      jest.advanceTimersByTime(800);
+
+      // Checkmark should be hidden
+      expect(trigger?.classList.contains('showing-checkmark')).toBe(false);
+
+      jest.useRealTimers();
+    });
+  });
+
+  describe('Explanation Sampling', () => {
+    // Helper to flush all pending promises
+    const flushPromises = () => new Promise(resolve => setTimeout(resolve, 0));
+
+    beforeEach(() => {
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            id: 12345,
+            like: true,
+            created_at: '2024-01-01T00:00:00Z',
+            updated_at: '2024-01-01T00:00:00Z',
+          }),
+      });
+    });
+
+    it('should never show explanation when explanationSample is 0', async () => {
+      widget = new FeedbackWidget(element, 'Test content', 'test-api-key', {
+        explanationSample: 0,
+      });
+
+      const container = element.querySelector('[data-coolhand-widget]');
+      const shadowRoot = container?.shadowRoot;
+      const trigger = shadowRoot?.querySelector('.coolhand-trigger') as HTMLElement;
+      const thumbsUp = shadowRoot?.querySelector('[data-feedback="up"]') as HTMLElement;
+
+      trigger?.click();
+      thumbsUp?.click();
+
+      await flushPromises();
+
+      // Should NOT show explanation mode
+      const optionsPanel = shadowRoot?.querySelector('.coolhand-options');
+      expect(optionsPanel?.classList.contains('explanation-mode')).toBe(false);
+      // Panel should be closed
+      expect(optionsPanel?.classList.contains('expanded')).toBe(false);
+    });
+
+    it('should always show explanation when explanationSample is 1', async () => {
+      widget = new FeedbackWidget(element, 'Test content', 'test-api-key', {
+        explanationSample: 1,
+      });
+
+      const container = element.querySelector('[data-coolhand-widget]');
+      const shadowRoot = container?.shadowRoot;
+      const trigger = shadowRoot?.querySelector('.coolhand-trigger') as HTMLElement;
+      const thumbsUp = shadowRoot?.querySelector('[data-feedback="up"]') as HTMLElement;
+
+      trigger?.click();
+      thumbsUp?.click();
+
+      await flushPromises();
+
+      // Should show explanation mode
+      const optionsPanel = shadowRoot?.querySelector('.coolhand-options');
+      expect(optionsPanel?.classList.contains('explanation-mode')).toBe(true);
+    });
+
+    it('should never show explanation when element has data-coolhand-explanation-sample-rate="0"', async () => {
+      element.setAttribute(EXPLANATION_PROMPT_ATTRIBUTE, '0');
+
+      widget = new FeedbackWidget(element, 'Test content', 'test-api-key', {
+        explanationSample: 1, // Would normally always show
+      });
+
+      const container = element.querySelector('[data-coolhand-widget]');
+      const shadowRoot = container?.shadowRoot;
+      const trigger = shadowRoot?.querySelector('.coolhand-trigger') as HTMLElement;
+      const thumbsUp = shadowRoot?.querySelector('[data-feedback="up"]') as HTMLElement;
+
+      trigger?.click();
+      thumbsUp?.click();
+
+      await flushPromises();
+
+      // Should NOT show explanation mode due to attribute override
+      const optionsPanel = shadowRoot?.querySelector('.coolhand-options');
+      expect(optionsPanel?.classList.contains('explanation-mode')).toBe(false);
+    });
+
+    it('should always show explanation when element has data-coolhand-explanation-sample-rate="1"', async () => {
+      element.setAttribute(EXPLANATION_PROMPT_ATTRIBUTE, '1');
+
+      widget = new FeedbackWidget(element, 'Test content', 'test-api-key', {
+        explanationSample: 0, // Would normally never show
+      });
+
+      const container = element.querySelector('[data-coolhand-widget]');
+      const shadowRoot = container?.shadowRoot;
+      const trigger = shadowRoot?.querySelector('.coolhand-trigger') as HTMLElement;
+      const thumbsUp = shadowRoot?.querySelector('[data-feedback="up"]') as HTMLElement;
+
+      trigger?.click();
+      thumbsUp?.click();
+
+      await flushPromises();
+
+      // Should show explanation mode due to attribute override
+      const optionsPanel = shadowRoot?.querySelector('.coolhand-options');
+      expect(optionsPanel?.classList.contains('explanation-mode')).toBe(true);
+    });
+
+    it('should use sampling when explanationSample is between 0 and 1', async () => {
+      // Mock Math.random to return a specific value
+      const mockRandom = jest.spyOn(Math, 'random');
+
+      // Test with random value below threshold (should show)
+      mockRandom.mockReturnValue(0.1);
+
+      widget = new FeedbackWidget(element, 'Test content', 'test-api-key', {
+        explanationSample: 0.5, // 50% chance
+      });
+
+      let container = element.querySelector('[data-coolhand-widget]');
+      let shadowRoot = container?.shadowRoot;
+      let trigger = shadowRoot?.querySelector('.coolhand-trigger') as HTMLElement;
+      let thumbsUp = shadowRoot?.querySelector('[data-feedback="up"]') as HTMLElement;
+
+      trigger?.click();
+      thumbsUp?.click();
+
+      await flushPromises();
+
+      // 0.1 < 0.5, so should show explanation
+      let optionsPanel = shadowRoot?.querySelector('.coolhand-options');
+      expect(optionsPanel?.classList.contains('explanation-mode')).toBe(true);
+
+      // Clean up and test again with value above threshold
+      widget.destroy();
+      document.body.innerHTML = '';
+      element = document.createElement('div');
+      element.textContent = 'Test content for feedback';
+      document.body.appendChild(element);
+
+      mockRandom.mockReturnValue(0.9);
+
+      widget = new FeedbackWidget(element, 'Test content', 'test-api-key', {
+        explanationSample: 0.5,
+      });
+
+      container = element.querySelector('[data-coolhand-widget]');
+      shadowRoot = container?.shadowRoot;
+      trigger = shadowRoot?.querySelector('.coolhand-trigger') as HTMLElement;
+      thumbsUp = shadowRoot?.querySelector('[data-feedback="up"]') as HTMLElement;
+
+      trigger?.click();
+      thumbsUp?.click();
+
+      await flushPromises();
+
+      // 0.9 >= 0.5, so should NOT show explanation
+      optionsPanel = shadowRoot?.querySelector('.coolhand-options');
+      expect(optionsPanel?.classList.contains('explanation-mode')).toBe(false);
+
+      mockRandom.mockRestore();
+    });
+
+    it('should clamp explanationSample to valid range', async () => {
+      // Test with value > 1 (should clamp to 1)
+      widget = new FeedbackWidget(element, 'Test content', 'test-api-key', {
+        explanationSample: 5, // Should be clamped to 1
+      });
+
+      let container = element.querySelector('[data-coolhand-widget]');
+      let shadowRoot = container?.shadowRoot;
+      let trigger = shadowRoot?.querySelector('.coolhand-trigger') as HTMLElement;
+      let thumbsUp = shadowRoot?.querySelector('[data-feedback="up"]') as HTMLElement;
+
+      trigger?.click();
+      thumbsUp?.click();
+
+      await flushPromises();
+
+      // Clamped to 1, so should always show
+      let optionsPanel = shadowRoot?.querySelector('.coolhand-options');
+      expect(optionsPanel?.classList.contains('explanation-mode')).toBe(true);
+
+      // Clean up and test with negative value
+      widget.destroy();
+      document.body.innerHTML = '';
+      element = document.createElement('div');
+      element.textContent = 'Test content for feedback';
+      document.body.appendChild(element);
+
+      widget = new FeedbackWidget(element, 'Test content', 'test-api-key', {
+        explanationSample: -1, // Should be clamped to 0
+      });
+
+      container = element.querySelector('[data-coolhand-widget]');
+      shadowRoot = container?.shadowRoot;
+      trigger = shadowRoot?.querySelector('.coolhand-trigger') as HTMLElement;
+      thumbsUp = shadowRoot?.querySelector('[data-feedback="up"]') as HTMLElement;
+
+      trigger?.click();
+      thumbsUp?.click();
+
+      await flushPromises();
+
+      // Clamped to 0, so should never show
+      optionsPanel = shadowRoot?.querySelector('.coolhand-options');
+      expect(optionsPanel?.classList.contains('explanation-mode')).toBe(false);
     });
   });
 });
