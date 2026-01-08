@@ -13,6 +13,7 @@ import {
   FEEDBACK_ID_ATTRIBUTE,
   ORIGINAL_OUTPUT_ATTRIBUTE,
   WIDGET_STYLE_ATTRIBUTE,
+  HIGHLIGHT_ATTRIBUTE,
   DEBOUNCE_MS,
 } from './constants';
 import type {
@@ -51,6 +52,7 @@ export class FeedbackWidget {
   private selectedIconContainer: HTMLElement | null = null;
   private statusRegion: HTMLElement | null = null;
   private feedbackButtons: NodeListOf<Element> | null = null;
+  private wrapper: HTMLElement | null = null;
 
   // Input/textarea monitoring
   private isInputElement: boolean = false;
@@ -206,12 +208,18 @@ export class FeedbackWidget {
     }
 
     this.attachEvents(root);
+
+    // Apply highlight class if attribute is present
+    if (this.targetElement.hasAttribute(HIGHLIGHT_ATTRIBUTE) && this.wrapper) {
+      this.wrapper.classList.add('coolhand-highlight');
+    }
   }
 
   /**
    * Attach event listeners to widget elements
    */
   private attachEvents(root: ShadowRoot | HTMLElement): void {
+    this.wrapper = root.querySelector('.coolhand-feedback-wrapper');
     this.trigger = root.querySelector('.coolhand-trigger');
     this.optionsPanel = root.querySelector('.coolhand-options');
     this.selectedIconContainer = root.querySelector('.coolhand-selected-icon');
@@ -328,6 +336,9 @@ export class FeedbackWidget {
    * Hide the options panel
    */
   private hideOptions(): void {
+    // Only remove highlight if panel was actually open (user interacted)
+    const wasExpanded = this.isExpanded;
+
     this.isExpanded = false;
     if (this.trigger) {
       this.trigger.style.display = 'flex';
@@ -337,6 +348,22 @@ export class FeedbackWidget {
       this.optionsPanel.classList.remove('expanded');
       this.optionsPanel.setAttribute('aria-hidden', 'true');
     }
+    // Remove highlight only when closing after user interaction
+    if (wasExpanded) {
+      this.removeHighlight();
+    }
+  }
+
+  /**
+   * Remove the pulsating highlight effect permanently
+   */
+  private removeHighlight(): void {
+    // Remove highlight class from wrapper
+    if (this.wrapper) {
+      this.wrapper.classList.remove('coolhand-highlight');
+    }
+    // Remove highlight attribute from target element
+    this.targetElement.removeAttribute(HIGHLIGHT_ATTRIBUTE);
   }
 
   /**
@@ -394,6 +421,9 @@ export class FeedbackWidget {
 
     // Now hide the options panel (safe since nothing inside has focus)
     this.hideOptions();
+
+    // Always remove highlight when user submits feedback (works for all widget styles)
+    this.removeHighlight();
 
     // Move focus to trigger for keyboard users
     if (this.trigger) {

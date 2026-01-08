@@ -428,5 +428,50 @@ export const widgetStyles = `
     outline: 2px solid var(--coolhand-accent);
     outline-offset: 2px;
   }
+
+  /* Pulsating highlight effect */
+  @keyframes coolhand-highlight-pulse {
+    0%, 100% {
+      box-shadow:
+        0 0 6px 2px rgba(59, 130, 246, 0.7),
+        0 0 12px 5px rgba(139, 92, 246, 0.5);
+    }
+    33% {
+      box-shadow:
+        0 0 6px 2px rgba(139, 92, 246, 0.7),
+        0 0 12px 5px rgba(236, 72, 153, 0.5);
+    }
+    66% {
+      box-shadow:
+        0 0 6px 2px rgba(236, 72, 153, 0.7),
+        0 0 12px 5px rgba(59, 130, 246, 0.5);
+    }
+  }
+
+  .coolhand-highlight .coolhand-trigger {
+    animation: coolhand-highlight-pulse 2s ease-in-out infinite !important;
+  }
+
+  /* Highlight on expanded options panel */
+  .coolhand-highlight .coolhand-options.expanded {
+    animation: coolhand-highlight-pulse 2.5s ease-in-out infinite;
+  }
+
+  /* Highlight on pixel mode hover-revealed options */
+  .coolhand-highlight.coolhand-pixel-mode:hover .coolhand-options {
+    animation: coolhand-highlight-pulse 2.5s ease-in-out infinite;
+  }
+
+  /* Reduced motion: disable animations but keep static glow */
+  @media (prefers-reduced-motion: reduce) {
+    .coolhand-highlight .coolhand-trigger,
+    .coolhand-highlight .coolhand-options.expanded,
+    .coolhand-highlight.coolhand-pixel-mode:hover .coolhand-options {
+      animation: none;
+      box-shadow:
+        0 0 6px 2px rgba(59, 130, 246, 0.7),
+        0 0 12px 5px rgba(139, 92, 246, 0.5);
+    }
+  }
 </style>
 `;

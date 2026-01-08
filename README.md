@@ -218,6 +218,7 @@ The AI generated this response which the user can edit.
 - `data-coolhand-widget-style`: Widget display style - `"overlay"` (default), `"pixel"` (minimal 8px dot that expands on hover), or `"hidden"` (no UI, still tracks input changes)
 - `data-coolhand-workload-id`: Optional workload hash ID to associate feedback with a specific workload. When provided, improves fuzzy matching accuracy for connecting feedback to the original LLM request.
 - `data-coolhand-feedback-id`: **Set automatically** after successful feedback submission. Contains the feedback ID returned from the API. When present, subsequent feedback changes automatically update the existing feedback instead of creating duplicates.
+- `data-coolhand-highlight`: Enables a pulsating gradient border around the widget trigger to draw user attention. Great for onboarding or encouraging feedback.
 
 ## Feedback Values
 
