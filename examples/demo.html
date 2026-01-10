@@ -325,6 +325,11 @@ In conclusion, the results indicate strong performance across all metrics, with 
 
             htmlElement.className = newTheme;
             localStorage.setItem('theme', newTheme);
+
+            // Update CoolhandJS color scheme if initialized
+            if (typeof CoolhandJS !== 'undefined' && CoolhandJS.setColorScheme) {
+                CoolhandJS.setColorScheme(newTheme);
+            }
         });
 
         // Coolhand Widget Initialization
@@ -367,11 +372,14 @@ In conclusion, the results indicate strong performance across all metrics, with 
                 const widgetStyle = widgetStyleSelect.value;
                 const explanationSample = parseFloat(explanationSampleSlider.value);
 
-                // Initialize CoolhandJS with auto-attachment, global client ID, widget style, and explanation sample
-                if (CoolhandJS.init(apiKey, { clientUniqueId, widgetStyle, explanationSample })) {
+                // Get current color scheme from page theme
+                const colorScheme = htmlElement.className === 'dark' ? 'dark' : 'light';
+
+                // Initialize CoolhandJS with auto-attachment, global client ID, widget style, explanation sample, and color scheme
+                if (CoolhandJS.init(apiKey, { clientUniqueId, widgetStyle, explanationSample, colorScheme })) {
                     const samplePercent = Math.round(explanationSample * 100) + '%';
-                    initStatus.innerHTML = '<span class="text-green-600 dark:text-green-400">✓ Initialized with style: ' + widgetStyle + ', explanation rate: ' + samplePercent + '</span>';
-                    console.log('✓ CoolhandJS initialized with widgetStyle:', widgetStyle, ', explanationSample:', explanationSample, ', clientUniqueId:', clientUniqueId);
+                    initStatus.innerHTML = '<span class="text-green-600 dark:text-green-400">✓ Initialized with style: ' + widgetStyle + ', explanation rate: ' + samplePercent + ', theme: ' + colorScheme + '</span>';
+                    console.log('✓ CoolhandJS initialized with widgetStyle:', widgetStyle, ', explanationSample:', explanationSample, ', colorScheme:', colorScheme, ', clientUniqueId:', clientUniqueId);
                 } else {
                     initStatus.innerHTML = '<span class="text-red-600 dark:text-red-400">❌ Initialization failed</span>';
                 }

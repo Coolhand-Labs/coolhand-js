@@ -20,6 +20,14 @@ export type FeedbackType = 'down' | 'neutral' | 'up';
 export type WidgetStyle = 'overlay' | 'pixel' | 'hidden';
 
 /**
+ * Widget color scheme
+ * - light: Light theme (default)
+ * - dark: Dark theme
+ * - system: Follow system preference (prefers-color-scheme)
+ */
+export type ColorScheme = 'light' | 'dark' | 'system';
+
+/**
  * Options for CoolhandFeedback.init()
  */
 export interface InitOptions {
@@ -29,6 +37,8 @@ export interface InitOptions {
   clientUniqueId?: string;
   /** Default widget style for all widgets. Default: 'overlay' */
   widgetStyle?: WidgetStyle;
+  /** Color scheme for all widgets. Default: 'light' */
+  colorScheme?: ColorScheme;
   /**
    * Probability (0-1) of showing explanation prompt after feedback.
    * 0 = never ask, 1 = always ask, 0.2 = ask 20% of the time. Default: 1
@@ -46,6 +56,8 @@ export interface AttachOptions {
   workloadId?: string;
   /** Widget display style (overrides global setting) */
   widgetStyle?: WidgetStyle;
+  /** Color scheme (overrides global setting) */
+  colorScheme?: ColorScheme;
   /**
    * Probability (0-1) of showing explanation prompt after feedback.
    * 0 = never ask, 1 = always ask, 0.2 = ask 20% of the time. Default: 1

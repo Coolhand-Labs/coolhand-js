@@ -25,6 +25,7 @@ import type {
   FeedbackApiPayload,
   FeedbackApiResponse,
   WidgetStyle,
+  ColorScheme,
 } from './types';
 import { FEEDBACK_TYPE_TO_VALUE } from './types';
 
@@ -65,6 +66,9 @@ export class FeedbackWidget {
   // Widget style ("overlay", "pixel", or "hidden")
   private widgetStyle: WidgetStyle = 'overlay';
 
+  // Color scheme ("light", "dark", or "system")
+  private colorScheme: ColorScheme = 'light';
+
   // Explanation tracking
   private isShowingExplanation: boolean = false;
   private isShowingSummary: boolean = false;
@@ -98,6 +102,11 @@ export class FeedbackWidget {
     // Set explanation sample rate (0-1, clamped)
     if (typeof options.explanationSample === 'number') {
       this.explanationSample = Math.max(0, Math.min(1, options.explanationSample));
+    }
+
+    // Set color scheme (default to 'light')
+    if (options.colorScheme) {
+      this.colorScheme = options.colorScheme;
     }
 
     // Detect if this is an input or textarea element
@@ -173,16 +182,35 @@ export class FeedbackWidget {
   }
 
   /**
+   * Get the effective color scheme class (resolves 'system' to actual preference)
+   */
+  private getColorSchemeClass(): string {
+    let effectiveScheme = this.colorScheme;
+
+    if (effectiveScheme === 'system') {
+      // Check system preference
+      if (typeof window !== 'undefined' && window.matchMedia) {
+        effectiveScheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      } else {
+        effectiveScheme = 'light';
+      }
+    }
+
+    return effectiveScheme === 'dark' ? ' coolhand-dark' : '';
+  }
+
+  /**
    * Render the widget HTML and attach events
    */
   private render(root: ShadowRoot | HTMLElement): void {
     const uniqueId = `coolhand-${Math.random().toString(36).substr(2, 9)}`;
     const optionsPanelId = `${uniqueId}-options`;
     const pixelModeClass = this.widgetStyle === 'pixel' ? ' coolhand-pixel-mode' : '';
+    const colorSchemeClass = this.getColorSchemeClass();
 
     const html = `
       ${this.useShadowDOM ? '' : widgetStyles}
-      <div class="coolhand-feedback-wrapper${pixelModeClass}" role="region" aria-label="Feedback">
+      <div class="coolhand-feedback-wrapper${pixelModeClass}${colorSchemeClass}" role="region" aria-label="Feedback">
         <div class="coolhand-sr-only" aria-live="polite" aria-atomic="true"></div>
         <button
           class="coolhand-trigger"
@@ -1125,6 +1153,33 @@ export class FeedbackWidget {
       // Clear aria-busy after API call completes
       if (this.wrapper) {
         this.wrapper.setAttribute('aria-busy', 'false');
+      }
+    }
+  }
+
+  /**
+   * Update the color scheme dynamically
+   * @param colorScheme - The new color scheme ('light', 'dark', or 'system')
+   */
+  public setColorScheme(colorScheme: ColorScheme): void {
+    this.colorScheme = colorScheme;
+
+    if (this.wrapper) {
+      // Remove existing color scheme class
+      this.wrapper.classList.remove('coolhand-dark');
+
+      // Add new class if dark mode
+      let effectiveScheme = colorScheme;
+      if (effectiveScheme === 'system') {
+        if (typeof window !== 'undefined' && window.matchMedia) {
+          effectiveScheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        } else {
+          effectiveScheme = 'light';
+        }
+      }
+
+      if (effectiveScheme === 'dark') {
+        this.wrapper.classList.add('coolhand-dark');
       }
     }
   }
