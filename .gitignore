@@ -26,3 +26,5 @@ Thumbs.db
 # Testing
 coverage/
 .nyc_output/
+localhost-key.pem
+localhost.pem

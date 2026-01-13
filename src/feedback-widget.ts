@@ -816,6 +816,10 @@ export class FeedbackWidget {
       payload.llm_request_log_feedback.client_unique_id = this.options.clientUniqueId;
     }
 
+    if (this.options.coolhandFingerprintId) {
+      payload.llm_request_log_feedback.coolhand_fingerprint_id = this.options.coolhandFingerprintId;
+    }
+
     if (this.options.workloadId) {
       payload.llm_request_log_feedback.workload_hashid = this.options.workloadId;
     }
@@ -917,6 +921,10 @@ export class FeedbackWidget {
 
     if (this.options.clientUniqueId) {
       payload.llm_request_log_feedback.client_unique_id = this.options.clientUniqueId;
+    }
+
+    if (this.options.coolhandFingerprintId) {
+      payload.llm_request_log_feedback.coolhand_fingerprint_id = this.options.coolhandFingerprintId;
     }
 
     if (this.options.workloadId) {
@@ -1070,6 +1078,10 @@ export class FeedbackWidget {
 
     if (this.options.clientUniqueId) {
       payload.llm_request_log_feedback.client_unique_id = this.options.clientUniqueId;
+    }
+
+    if (this.options.coolhandFingerprintId) {
+      payload.llm_request_log_feedback.coolhand_fingerprint_id = this.options.coolhandFingerprintId;
     }
 
     if (this.options.workloadId) {

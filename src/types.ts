@@ -34,6 +34,12 @@ export interface InitOptions {
    * 0 = never ask, 1 = always ask, 0.2 = ask 20% of the time. Default: 1
    */
   explanationSample?: number;
+  /**
+   * Whether to enable automatic fingerprint tracking via cookie.
+   * Default: true. Set to false to disable fingerprinting.
+   * Note: Requires HTTPS for cross-site (iframe) support.
+   */
+  enableFingerprint?: boolean;
 }
 
 /**
@@ -57,6 +63,11 @@ export interface AttachOptions {
   onError?: (error: Error) => void;
   /** Callback fired when revised output is sent (for textarea/input elements) */
   onRevisedOutput?: (revisedOutput: string, response: FeedbackApiResponse) => void;
+  /**
+   * Auto-generated fingerprint ID from cookie (set internally by CoolhandFeedback)
+   * @internal
+   */
+  coolhandFingerprintId?: string;
 }
 
 /**
@@ -68,6 +79,7 @@ export interface FeedbackApiPayload {
     original_output: string;
     collector: string;
     client_unique_id?: string;
+    coolhand_fingerprint_id?: string;
     workload_hashid?: string;
     revised_output?: string;
     explanation?: string;

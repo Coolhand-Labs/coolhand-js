@@ -1,4 +1,5 @@
 import { FeedbackWidget } from './feedback-widget';
+import { getOrCreateFingerprintId } from './cookie';
 import type { InitOptions, AttachOptions, WidgetStyle } from './types';
 
 /**
@@ -10,6 +11,7 @@ export class CoolhandFeedback {
   private clientUniqueId: string | null = null;
   private widgetStyle: WidgetStyle | null = null;
   private explanationSample: number | null = null;
+  private fingerprintId: string | null = null;
   private instances: WeakMap<HTMLElement, FeedbackWidget> = new WeakMap();
   private observer: MutationObserver | null = null;
   private isAutoAttaching: boolean = false;
@@ -50,6 +52,13 @@ export class CoolhandFeedback {
     this.explanationSample = typeof options.explanationSample === 'number'
       ? Math.max(0, Math.min(1, options.explanationSample))
       : null;
+
+    // Initialize fingerprint ID from cookie (unless explicitly disabled)
+    if (options.enableFingerprint !== false) {
+      this.fingerprintId = getOrCreateFingerprintId();
+    } else {
+      this.fingerprintId = null;
+    }
 
     // Auto-attach to existing elements if enabled
     if (options.autoAttach !== false) {
@@ -153,6 +162,11 @@ export class CoolhandFeedback {
       options.explanationSample = this.explanationSample;
     }
 
+    // Apply global fingerprintId
+    if (this.fingerprintId) {
+      options.coolhandFingerprintId = this.fingerprintId;
+    }
+
     if (element.dataset.coolhandWorkloadId) {
       options.workloadId = element.dataset.coolhandWorkloadId;
     }
@@ -210,6 +224,9 @@ export class CoolhandFeedback {
     }
     if (mergedOptions.explanationSample === undefined && this.explanationSample !== null) {
       mergedOptions.explanationSample = this.explanationSample;
+    }
+    if (!mergedOptions.coolhandFingerprintId && this.fingerprintId) {
+      mergedOptions.coolhandFingerprintId = this.fingerprintId;
     }
 
     const instance = new FeedbackWidget(
