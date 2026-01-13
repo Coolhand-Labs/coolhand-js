@@ -1,5 +1,5 @@
 import { FeedbackWidget } from './feedback-widget';
-import type { InitOptions, AttachOptions, WidgetStyle } from './types';
+import type { InitOptions, AttachOptions, WidgetStyle, ColorScheme } from './types';
 
 /**
  * CoolhandFeedback manages the overall feedback system
@@ -9,8 +9,10 @@ export class CoolhandFeedback {
   private apiKey: string | null = null;
   private clientUniqueId: string | null = null;
   private widgetStyle: WidgetStyle | null = null;
+  private colorScheme: ColorScheme = 'light';
   private explanationSample: number | null = null;
   private instances: WeakMap<HTMLElement, FeedbackWidget> = new WeakMap();
+  private attachedElements: Set<HTMLElement> = new Set();
   private observer: MutationObserver | null = null;
   private isAutoAttaching: boolean = false;
 
@@ -45,6 +47,9 @@ export class CoolhandFeedback {
 
     // Store global widget style if provided
     this.widgetStyle = options.widgetStyle || null;
+
+    // Store global color scheme (default to 'light')
+    this.colorScheme = options.colorScheme || 'light';
 
     // Store global explanation sample rate if provided
     this.explanationSample = typeof options.explanationSample === 'number'
@@ -148,6 +153,9 @@ export class CoolhandFeedback {
       options.widgetStyle = this.widgetStyle;
     }
 
+    // Apply global colorScheme
+    options.colorScheme = this.colorScheme;
+
     // Apply global explanationSample
     if (this.explanationSample !== null) {
       options.explanationSample = this.explanationSample;
@@ -208,6 +216,9 @@ export class CoolhandFeedback {
     if (!mergedOptions.widgetStyle && this.widgetStyle) {
       mergedOptions.widgetStyle = this.widgetStyle;
     }
+    if (!mergedOptions.colorScheme) {
+      mergedOptions.colorScheme = this.colorScheme;
+    }
     if (mergedOptions.explanationSample === undefined && this.explanationSample !== null) {
       mergedOptions.explanationSample = this.explanationSample;
     }
@@ -219,6 +230,7 @@ export class CoolhandFeedback {
       mergedOptions
     );
     this.instances.set(element, instance);
+    this.attachedElements.add(element);
     return instance;
   }
 
@@ -250,6 +262,7 @@ export class CoolhandFeedback {
     if (instance) {
       instance.destroy();
       this.instances.delete(element);
+      this.attachedElements.delete(element);
     }
   }
 
@@ -261,6 +274,25 @@ export class CoolhandFeedback {
       this.observer.disconnect();
       this.observer = null;
     }
+    this.attachedElements.clear();
     this.isAutoAttaching = false;
+  }
+
+  /**
+   * Update the color scheme for all existing widgets
+   * @param colorScheme - The new color scheme ('light', 'dark', or 'system')
+   */
+  public setColorScheme(colorScheme: ColorScheme): void {
+    this.colorScheme = colorScheme;
+
+    // Update all existing widget instances
+    this.attachedElements.forEach((element) => {
+      const instance = this.instances.get(element);
+      if (instance) {
+        instance.setColorScheme(colorScheme);
+      }
+    });
+
+    console.log(`[CoolhandJS] Color scheme updated to: ${colorScheme}`);
   }
 }

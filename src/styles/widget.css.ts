@@ -29,6 +29,17 @@ export const widgetStyles = `
     font-family: var(--coolhand-font-family);
   }
 
+  /* Dark mode overrides */
+  .coolhand-dark, :host(.coolhand-dark) {
+    --coolhand-bg: #1f2937;
+    --coolhand-bg-hover: #374151;
+    --coolhand-border: #4b5563;
+    --coolhand-text: #f3f4f6;
+    --coolhand-text-muted: #9ca3af;
+    --coolhand-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    --coolhand-shadow-hover: 0 6px 16px rgba(0, 0, 0, 0.4);
+  }
+
   .coolhand-feedback-wrapper * {
     box-sizing: border-box;
     margin: 0;
@@ -338,6 +349,12 @@ export const widgetStyles = `
     border-color: var(--coolhand-success);
   }
 
+  /* Dark mode checkmark state */
+  .coolhand-dark .coolhand-trigger.showing-checkmark {
+    background: #064e3b;
+    border-color: var(--coolhand-success);
+  }
+
   /* Visually hidden class for screen reader announcements */
   .coolhand-sr-only {
     position: absolute;
@@ -603,6 +620,11 @@ export const widgetStyles = `
     outline: none;
     border-color: var(--coolhand-accent);
     box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+  }
+
+  /* Dark mode textarea focus */
+  .coolhand-dark .coolhand-explanation-textarea:focus {
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.25);
   }
 
   /* Reduced motion for explanation textarea */
