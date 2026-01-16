@@ -112,6 +112,7 @@ Initialize the library with your Coolhand API key. Automatically attaches to all
   - `widgetStyle` (string): Default widget style for all widgets - `"overlay"` (default), `"pixel"`, or `"hidden"`
   - `explanationSample` (number): Probability (0-1) of showing explanation prompt after feedback. `0` = never ask, `1` = always ask (default), `0.2` = ask 20% of the time
   - `enableFingerprint` (boolean): *(Experimental)* Enable automatic cookie-based user fingerprinting (default: true). Set to `false` to disable.
+  - `autoHighlight` (boolean): *(Experimental)* Enable automatic highlight on first visit (default: true). When enabled, all feedback widgets show a pulsating highlight until the user interacts with any widget. State is persisted in a cookie.
 
 **Returns:**
 - `boolean`: True if initialization succeeded, false otherwise
@@ -138,6 +139,9 @@ CoolhandJS.init('ch_api_abc123...', { autoAttach: false });
 
 // Disable fingerprint cookie (experimental feature)
 CoolhandJS.init('ch_api_abc123...', { enableFingerprint: false });
+
+// Disable auto-highlight on first visit (experimental feature)
+CoolhandJS.init('ch_api_abc123...', { autoHighlight: false });
 ```
 
 ### `CoolhandJS.attach(element, options)` (Manual Method)

@@ -1,5 +1,5 @@
 import { FeedbackWidget } from './feedback-widget';
-import { getOrCreateFingerprintId } from './cookie';
+import { getOrCreateFingerprintId, hasFeedbackBeenViewed, markFeedbackAsViewed } from './cookie';
 import type { InitOptions, AttachOptions, WidgetStyle, ColorScheme } from './types';
 
 /**
@@ -13,6 +13,7 @@ export class CoolhandFeedback {
   private colorScheme: ColorScheme = 'light';
   private explanationSample: number | null = null;
   private fingerprintId: string | null = null;
+  private autoHighlight: boolean = false;
   private instances: WeakMap<HTMLElement, FeedbackWidget> = new WeakMap();
   private attachedElements: Set<HTMLElement> = new Set();
   private observer: MutationObserver | null = null;
@@ -63,6 +64,15 @@ export class CoolhandFeedback {
       this.fingerprintId = getOrCreateFingerprintId();
     } else {
       this.fingerprintId = null;
+    }
+
+    // Initialize auto-highlight (unless explicitly disabled)
+    // Auto-highlight shows on all widgets until user interacts with any widget
+    if (options.autoHighlight !== false) {
+      // Only enable auto-highlight if feedback hasn't been viewed yet
+      this.autoHighlight = !hasFeedbackBeenViewed();
+    } else {
+      this.autoHighlight = false;
     }
 
     // Auto-attach to existing elements if enabled
@@ -175,6 +185,12 @@ export class CoolhandFeedback {
       options.coolhandFingerprintId = this.fingerprintId;
     }
 
+    // Apply global autoHighlight
+    if (this.autoHighlight) {
+      options.autoHighlight = true;
+      options.onFirstInteraction = (): void => this.handleFirstInteraction();
+    }
+
     if (element.dataset.coolhandWorkloadId) {
       options.workloadId = element.dataset.coolhandWorkloadId;
     }
@@ -238,6 +254,12 @@ export class CoolhandFeedback {
     }
     if (!mergedOptions.coolhandFingerprintId && this.fingerprintId) {
       mergedOptions.coolhandFingerprintId = this.fingerprintId;
+    }
+
+    // Apply auto-highlight if enabled and not already set
+    if (mergedOptions.autoHighlight === undefined && this.autoHighlight) {
+      mergedOptions.autoHighlight = true;
+      mergedOptions.onFirstInteraction = (): void => this.handleFirstInteraction();
     }
 
     const instance = new FeedbackWidget(
@@ -311,5 +333,32 @@ export class CoolhandFeedback {
     });
 
     console.log(`[CoolhandJS] Color scheme updated to: ${colorScheme}`);
+  }
+
+  /**
+   * Handle first interaction with any feedback widget
+   * Marks feedback as viewed in cookie and removes auto-highlights from all widgets
+   * @internal
+   */
+  private handleFirstInteraction(): void {
+    if (!this.autoHighlight) {
+      return; // Already handled or not enabled
+    }
+
+    // Mark in cookie that feedback has been viewed
+    markFeedbackAsViewed();
+
+    // Disable auto-highlight for future widgets
+    this.autoHighlight = false;
+
+    // Remove auto-highlights from all existing widgets
+    this.attachedElements.forEach((element) => {
+      const instance = this.instances.get(element);
+      if (instance) {
+        instance.removeAutoHighlight();
+      }
+    });
+
+    console.log('[CoolhandJS] First interaction detected, auto-highlights removed');
   }
 }

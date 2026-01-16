@@ -1,13 +1,32 @@
 /**
- * Cookie utility module for CoolhandJS fingerprint tracking
+ * Cookie utility module for CoolhandJS fingerprint and state tracking
  *
- * Handles generation and persistence of a unique fingerprint ID via cookies.
+ * Handles generation and persistence of:
+ * - Unique fingerprint ID for user tracking
+ * - Feedback viewed state for auto-highlight feature
+ *
  * Uses SameSite=None; Secure for cross-site (iframe) support.
+ *
+ * Cookie format (JSON):
+ * {
+ *   "fingerprint": "<uuid>",
+ *   "feedbackViewed": false
+ * }
+ *
+ * Legacy format (plain UUID string) is supported for backward compatibility.
  */
 
 // Cookie configuration
 const COOKIE_NAME = 'coolhand_fingerprint';
 const COOKIE_MAX_AGE_DAYS = 365;
+
+/**
+ * Cookie data structure
+ */
+interface CookieData {
+  fingerprint: string;
+  feedbackViewed: boolean;
+}
 
 /**
  * UUID v4 validation regex
@@ -125,6 +144,46 @@ export function isCookieSupported(): boolean {
 }
 
 /**
+ * Parse cookie value to CookieData structure
+ * Handles both legacy (plain UUID) and new (JSON) formats
+ */
+function parseCookieData(cookieValue: string | null): CookieData | null {
+  if (!cookieValue) {
+    return null;
+  }
+
+  // Try to parse as JSON (new format)
+  try {
+    const data = JSON.parse(cookieValue);
+    if (data && typeof data.fingerprint === 'string' && isValidUUID(data.fingerprint)) {
+      return {
+        fingerprint: data.fingerprint,
+        feedbackViewed: data.feedbackViewed === true,
+      };
+    }
+  } catch {
+    // Not JSON, try legacy format
+  }
+
+  // Try as legacy format (plain UUID string)
+  if (isValidUUID(cookieValue)) {
+    return {
+      fingerprint: cookieValue,
+      feedbackViewed: false, // Legacy cookies haven't viewed feedback yet
+    };
+  }
+
+  return null;
+}
+
+/**
+ * Serialize CookieData to cookie value string
+ */
+function serializeCookieData(data: CookieData): string {
+  return JSON.stringify(data);
+}
+
+/**
  * Get or create a fingerprint ID
  *
  * - If a valid fingerprint cookie exists, returns its value (and refreshes expiration)
@@ -139,20 +198,24 @@ export function getOrCreateFingerprintId(): string | null {
     return null;
   }
 
-  // Try to get existing fingerprint
+  // Try to get existing cookie data
   const existing = getCookie(COOKIE_NAME);
-  let fingerprintId: string;
+  const cookieData = parseCookieData(existing);
 
-  if (existing && isValidUUID(existing)) {
-    // Use existing ID but refresh expiration (Safari ITP workaround)
-    fingerprintId = existing;
+  let data: CookieData;
+  if (cookieData) {
+    // Use existing data but refresh expiration (Safari ITP workaround)
+    data = cookieData;
   } else {
-    // Generate new fingerprint
-    fingerprintId = generateUUID();
+    // Generate new fingerprint with default state
+    data = {
+      fingerprint: generateUUID(),
+      feedbackViewed: false,
+    };
   }
 
   // Always refresh the cookie to extend expiration (Safari ITP limits to 7 days)
-  const cookieSet = setCookie(COOKIE_NAME, fingerprintId, COOKIE_MAX_AGE_DAYS);
+  const cookieSet = setCookie(COOKIE_NAME, serializeCookieData(data), COOKIE_MAX_AGE_DAYS);
 
   if (!cookieSet) {
     // HTTPS required - return null on HTTP
@@ -161,8 +224,9 @@ export function getOrCreateFingerprintId(): string | null {
 
   // Verify cookie was set (some browsers may block)
   const verification = getCookie(COOKIE_NAME);
-  if (verification === fingerprintId) {
-    return fingerprintId;
+  const verifiedData = parseCookieData(verification);
+  if (verifiedData && verifiedData.fingerprint === data.fingerprint) {
+    return data.fingerprint;
   }
 
   // Cookie blocked - return null gracefully
@@ -170,4 +234,56 @@ export function getOrCreateFingerprintId(): string | null {
     '[CoolhandJS] Unable to set fingerprint cookie - cookies may be blocked'
   );
   return null;
+}
+
+/**
+ * Check if feedback has been viewed (user has interacted with any feedback widget)
+ *
+ * Returns false if:
+ * - Cookies are not supported
+ * - Cookie doesn't exist
+ * - Cookie exists but feedbackViewed is false
+ * - Legacy cookie format (plain UUID)
+ */
+export function hasFeedbackBeenViewed(): boolean {
+  if (!isCookieSupported()) {
+    return false;
+  }
+
+  const existing = getCookie(COOKIE_NAME);
+  const cookieData = parseCookieData(existing);
+
+  return cookieData?.feedbackViewed === true;
+}
+
+/**
+ * Mark feedback as viewed (user has interacted with a feedback widget)
+ *
+ * Updates the cookie to set feedbackViewed = true.
+ * Creates a new cookie with fingerprint if one doesn't exist.
+ *
+ * Returns true if cookie was updated successfully, false otherwise.
+ */
+export function markFeedbackAsViewed(): boolean {
+  if (!isCookieSupported()) {
+    return false;
+  }
+
+  // Get existing data or create new
+  const existing = getCookie(COOKIE_NAME);
+  let cookieData = parseCookieData(existing);
+
+  if (!cookieData) {
+    // Create new cookie data
+    cookieData = {
+      fingerprint: generateUUID(),
+      feedbackViewed: true,
+    };
+  } else {
+    // Update existing data
+    cookieData.feedbackViewed = true;
+  }
+
+  // Save updated cookie
+  return setCookie(COOKIE_NAME, serializeCookieData(cookieData), COOKIE_MAX_AGE_DAYS);
 }

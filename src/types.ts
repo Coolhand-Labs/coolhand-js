@@ -50,6 +50,15 @@ export interface InitOptions {
    * Note: Requires HTTPS for cross-site (iframe) support.
    */
   enableFingerprint?: boolean;
+  /**
+   * Whether to enable automatic highlight on first visit.
+   * When enabled, all feedback widgets show a pulsating highlight until
+   * the user interacts with any feedback widget for the first time.
+   * The highlight state is persisted in a cookie.
+   * Default: true. Set to false to disable auto-highlight.
+   * Note: Requires cookies to be enabled. Falls back to no auto-highlight if cookies are blocked.
+   */
+  autoHighlight?: boolean;
 }
 
 /**
@@ -80,6 +89,16 @@ export interface AttachOptions {
    * @internal
    */
   coolhandFingerprintId?: string;
+  /**
+   * Whether auto-highlight is enabled (set internally by CoolhandFeedback)
+   * @internal
+   */
+  autoHighlight?: boolean;
+  /**
+   * Callback to notify parent when first interaction occurs (set internally by CoolhandFeedback)
+   * @internal
+   */
+  onFirstInteraction?: () => void;
 }
 
 /**

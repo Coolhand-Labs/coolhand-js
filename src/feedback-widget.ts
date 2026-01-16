@@ -79,6 +79,12 @@ export class FeedbackWidget {
   // Explanation sampling (0-1 probability of showing explanation prompt)
   private explanationSample: number = 1;
 
+  // Highlight source tracking ('explicit' = attribute, 'auto' = cookie-based, null = none)
+  private highlightSource: 'explicit' | 'auto' | null = null;
+
+  // Flag to track if first interaction callback has been fired
+  private hasNotifiedFirstInteraction: boolean = false;
+
   constructor(
     targetElement: HTMLElement,
     originalText: string,
@@ -254,9 +260,19 @@ export class FeedbackWidget {
 
     this.attachEvents(root);
 
-    // Apply highlight class if attribute is present
-    if (this.targetElement.hasAttribute(HIGHLIGHT_ATTRIBUTE) && this.wrapper) {
-      this.wrapper.classList.add('coolhand-highlight');
+    // Apply highlight based on source (explicit attribute or auto-highlight option)
+    if (this.targetElement.hasAttribute(HIGHLIGHT_ATTRIBUTE)) {
+      // Explicit highlight via attribute - persists until user completes feedback flow
+      this.highlightSource = 'explicit';
+      if (this.wrapper) {
+        this.wrapper.classList.add('coolhand-highlight');
+      }
+    } else if (this.options.autoHighlight) {
+      // Auto highlight from cookie state - removed on first interaction
+      this.highlightSource = 'auto';
+      if (this.wrapper) {
+        this.wrapper.classList.add('coolhand-highlight');
+      }
     }
   }
 
@@ -378,6 +394,9 @@ export class FeedbackWidget {
   private toggleOptions(): void {
     this.isExpanded = !this.isExpanded;
     if (this.isExpanded) {
+      // Notify parent of first interaction (for auto-highlight removal)
+      this.notifyFirstInteraction();
+
       if (this.trigger) {
         this.trigger.style.display = 'none';
         this.trigger.setAttribute('aria-expanded', 'true');
@@ -399,6 +418,20 @@ export class FeedbackWidget {
       }
     } else {
       this.hideOptions();
+    }
+  }
+
+  /**
+   * Notify parent of first interaction (triggers auto-highlight removal for all widgets)
+   */
+  private notifyFirstInteraction(): void {
+    if (this.hasNotifiedFirstInteraction) {
+      return; // Already notified
+    }
+    this.hasNotifiedFirstInteraction = true;
+
+    if (this.options.onFirstInteraction) {
+      this.options.onFirstInteraction();
     }
   }
 
@@ -574,15 +607,37 @@ export class FeedbackWidget {
   }
 
   /**
-   * Remove the pulsating highlight effect permanently
+   * Remove the pulsating highlight effect
+   * For explicit highlights (attribute), this removes both class and attribute
+   * For auto highlights, the attribute was never there so only class is removed
    */
   private removeHighlight(): void {
     // Remove highlight class from wrapper
     if (this.wrapper) {
       this.wrapper.classList.remove('coolhand-highlight');
     }
-    // Remove highlight attribute from target element
-    this.targetElement.removeAttribute(HIGHLIGHT_ATTRIBUTE);
+
+    // Only remove attribute if this was an explicit highlight
+    // Auto-highlights never had the attribute
+    if (this.highlightSource === 'explicit') {
+      this.targetElement.removeAttribute(HIGHLIGHT_ATTRIBUTE);
+    }
+
+    this.highlightSource = null;
+  }
+
+  /**
+   * Remove auto-highlight (called by parent when first interaction occurs on any widget)
+   * Only removes highlight if it was auto-applied, not explicit
+   */
+  public removeAutoHighlight(): void {
+    if (this.highlightSource === 'auto') {
+      if (this.wrapper) {
+        this.wrapper.classList.remove('coolhand-highlight');
+      }
+      this.highlightSource = null;
+    }
+    // If highlight was explicit (attribute), keep it
   }
 
   /**

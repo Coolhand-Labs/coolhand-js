@@ -123,8 +123,9 @@ The widget sends the following payload to the Coolhand API:
     "like": true,
     "original_output": "The AI-generated content...",
     "explanation": "This was helpful because it clearly explained the concept.",
-    "collector": "coolhand-js-0.3.0",
+    "collector": "coolhand-js-0.5.0",
     "client_unique_id": "optional-session-id",
+    "coolhand_fingerprint_id": "550e8400-e29b-41d4-a716-446655440000",
     "workload_hashid": "optional-workload-id",
     "revised_output": "optional-edited-content"
   }
@@ -140,6 +141,7 @@ The widget sends the following payload to the Coolhand API:
 | `explanation` | No | User-provided explanation for their feedback |
 | `collector` | Yes | SDK identifier with version |
 | `client_unique_id` | No | Session identifier for internal matching |
+| `coolhand_fingerprint_id` | No | Auto-generated UUID from cookie (v0.5.0+) |
 | `workload_hashid` | No | Workload ID to improve fuzzy matching accuracy |
 | `revised_output` | No | Edited content (only for textarea/input elements) |
 
@@ -182,3 +184,101 @@ For `<textarea>` and `<input>` elements, the widget monitors for content changes
 // 2. User edits textarea content
 // 3. After 1s of no typing -> PATCH to /123 with revised_output
 ```
+
+## User Fingerprinting (v0.5.0)
+
+The SDK automatically generates and persists a unique fingerprint ID via cookies to enable cross-session feedback correlation.
+
+### How It Works
+
+1. On first `init()`, a UUID v4 is generated and stored in a cookie (`coolhand_fingerprint`)
+2. The fingerprint is automatically included in all feedback API requests
+3. The cookie is refreshed on each `init()` call to extend its lifetime (Safari ITP workaround)
+4. If cookies are blocked or the site uses HTTP, fingerprinting gracefully degrades (no error, just no fingerprint)
+
+### Cookie Format
+
+The cookie stores JSON with both fingerprint and feedback-viewed state:
+
+```json
+{
+  "fingerprint": "550e8400-e29b-41d4-a716-446655440000",
+  "feedbackViewed": false
+}
+```
+
+Legacy cookies (plain UUID string) are automatically migrated to the new format.
+
+### Cookie Attributes
+
+| Attribute | Value | Reason |
+|-----------|-------|--------|
+| Name | `coolhand_fingerprint` | Identifies the cookie |
+| Max Age | 365 days | Long-term tracking |
+| Path | `/` | Available site-wide |
+| SameSite | `None` | Supports third-party iframes |
+| Secure | `true` | Required for SameSite=None |
+
+### Disabling Fingerprinting
+
+```javascript
+CoolhandJS.init('your-api-key', { enableFingerprint: false });
+```
+
+## Smart Auto-Highlight (v0.5.0)
+
+The SDK automatically highlights all feedback widgets for first-time visitors to encourage engagement. The highlight disappears once the user interacts with any widget.
+
+### How It Works
+
+1. **First visit (no cookie):** All feedback widgets show a pulsating gradient highlight
+2. **User clicks any widget:** Cookie is updated with `feedbackViewed: true`
+3. **Auto-highlights removed:** All auto-highlights disappear immediately across all widgets
+4. **Explicit highlights preserved:** Widgets with `data-coolhand-highlight` attribute keep their highlight
+5. **Subsequent visits:** No auto-highlights (cookie remembers the interaction)
+
+### Highlight Sources
+
+| Type | Source | When Removed |
+|------|--------|--------------|
+| **Explicit** | `data-coolhand-highlight` attribute | When user completes the feedback flow for that widget |
+| **Auto** | Cookie-based (first visit detection) | When user expands ANY feedback widget |
+
+### Implementation Details
+
+The SDK tracks the highlight source for each widget:
+
+```typescript
+// In FeedbackWidget
+private highlightSource: 'explicit' | 'auto' | null = null;
+
+// Explicit highlight: from HTML attribute
+if (this.targetElement.hasAttribute('data-coolhand-highlight')) {
+  this.highlightSource = 'explicit';
+}
+// Auto highlight: from cookie state (first visit)
+else if (this.options.autoHighlight) {
+  this.highlightSource = 'auto';
+}
+```
+
+When the first interaction occurs:
+1. The widget notifies `CoolhandFeedback` via `onFirstInteraction` callback
+2. `CoolhandFeedback` calls `markFeedbackAsViewed()` to update the cookie
+3. `CoolhandFeedback` iterates all widgets and calls `removeAutoHighlight()`
+4. Only widgets with `highlightSource === 'auto'` have their highlight removed
+
+### Disabling Auto-Highlight
+
+```javascript
+CoolhandJS.init('your-api-key', { autoHighlight: false });
+```
+
+### Edge Cases
+
+| Case | Behavior |
+|------|----------|
+| Cookies disabled | No auto-highlight (graceful degradation) |
+| Multiple tabs | Cookie sync only on page load (acceptable limitation) |
+| Dynamic widgets | Check cookie state before applying auto-highlight |
+| Re-initialization | Re-reads cookie state and applies highlights accordingly |
