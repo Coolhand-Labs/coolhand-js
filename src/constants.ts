@@ -59,3 +59,13 @@ export const CSS_PREFIX = 'coolhand';
  * Data attribute to enable pulsating gradient border highlight
  */
 export const HIGHLIGHT_ATTRIBUTE = 'data-coolhand-highlight';
+
+/**
+ * Data attribute for widget vertical placement ("top" or "bottom")
+ */
+export const PLACEMENT_VERTICAL_ATTRIBUTE = 'data-coolhand-placement-vertical';
+
+/**
+ * Data attribute for widget horizontal placement ("left" or "right")
+ */
+export const PLACEMENT_HORIZONTAL_ATTRIBUTE = 'data-coolhand-placement-horizontal';

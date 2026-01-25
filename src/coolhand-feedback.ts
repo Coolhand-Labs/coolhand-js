@@ -1,6 +1,6 @@
 import { FeedbackWidget } from './feedback-widget';
 import { getOrCreateFingerprintId, hasFeedbackBeenViewed, markFeedbackAsViewed } from './cookie';
-import type { InitOptions, AttachOptions, WidgetStyle, ColorScheme } from './types';
+import type { InitOptions, AttachOptions, WidgetStyle, ColorScheme, WidgetPlacementVertical, WidgetPlacementHorizontal } from './types';
 
 /**
  * CoolhandFeedback manages the overall feedback system
@@ -14,6 +14,8 @@ export class CoolhandFeedback {
   private explanationSample: number | null = null;
   private fingerprintId: string | null = null;
   private autoHighlight: boolean = false;
+  private placementVertical: WidgetPlacementVertical | null = null;
+  private placementHorizontal: WidgetPlacementHorizontal | null = null;
   private instances: WeakMap<HTMLElement, FeedbackWidget> = new WeakMap();
   private attachedElements: Set<HTMLElement> = new Set();
   private observer: MutationObserver | null = null;
@@ -58,6 +60,10 @@ export class CoolhandFeedback {
     this.explanationSample = typeof options.explanationSample === 'number'
       ? Math.max(0, Math.min(1, options.explanationSample))
       : null;
+
+    // Store global placement settings if provided
+    this.placementVertical = options.placementVertical || null;
+    this.placementHorizontal = options.placementHorizontal || null;
 
     // Initialize fingerprint ID from cookie (unless explicitly disabled)
     if (options.enableFingerprint !== false) {
@@ -191,6 +197,14 @@ export class CoolhandFeedback {
       options.onFirstInteraction = (): void => this.handleFirstInteraction();
     }
 
+    // Apply global placement settings
+    if (this.placementVertical) {
+      options.placementVertical = this.placementVertical;
+    }
+    if (this.placementHorizontal) {
+      options.placementHorizontal = this.placementHorizontal;
+    }
+
     if (element.dataset.coolhandWorkloadId) {
       options.workloadId = element.dataset.coolhandWorkloadId;
     }
@@ -260,6 +274,14 @@ export class CoolhandFeedback {
     if (mergedOptions.autoHighlight === undefined && this.autoHighlight) {
       mergedOptions.autoHighlight = true;
       mergedOptions.onFirstInteraction = (): void => this.handleFirstInteraction();
+    }
+
+    // Apply global placement settings if not provided
+    if (!mergedOptions.placementVertical && this.placementVertical) {
+      mergedOptions.placementVertical = this.placementVertical;
+    }
+    if (!mergedOptions.placementHorizontal && this.placementHorizontal) {
+      mergedOptions.placementHorizontal = this.placementHorizontal;
     }
 
     const instance = new FeedbackWidget(

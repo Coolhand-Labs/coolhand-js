@@ -20,13 +20,52 @@ export const widgetStyles = `
     --coolhand-font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     --coolhand-font-size: 12px;
 
+    --coolhand-offset: 8px;
+
     all: initial;
     display: block;
     position: absolute;
-    top: 8px;
-    right: 8px;
+    top: var(--coolhand-offset);
+    right: var(--coolhand-offset);
     z-index: 99999;
     font-family: var(--coolhand-font-family);
+  }
+
+  /* Placement modifiers - for wrapper inside shadow DOM */
+  .coolhand-placement-bottom {
+    top: auto;
+    bottom: var(--coolhand-offset);
+  }
+
+  .coolhand-placement-left {
+    right: auto;
+    left: var(--coolhand-offset);
+  }
+
+  /* Combined placement: bottom-left */
+  .coolhand-placement-bottom.coolhand-placement-left {
+    top: auto;
+    right: auto;
+    bottom: var(--coolhand-offset);
+    left: var(--coolhand-offset);
+  }
+
+  /* Placement modifiers - for shadow host (container element) */
+  :host(.coolhand-placement-bottom) {
+    top: auto;
+    bottom: var(--coolhand-offset);
+  }
+
+  :host(.coolhand-placement-left) {
+    right: auto;
+    left: var(--coolhand-offset);
+  }
+
+  :host(.coolhand-placement-bottom.coolhand-placement-left) {
+    top: auto;
+    right: auto;
+    bottom: var(--coolhand-offset);
+    left: var(--coolhand-offset);
   }
 
   /* Dark mode overrides */
@@ -156,6 +195,26 @@ export const widgetStyles = `
 
   .coolhand-options.expanded {
     display: flex;
+  }
+
+  /* Options panel positioning for left placement */
+  .coolhand-placement-left .coolhand-options {
+    right: auto;
+    left: 0;
+  }
+
+  /* Options panel positioning for bottom placement */
+  .coolhand-placement-bottom .coolhand-options {
+    top: auto;
+    bottom: 0;
+  }
+
+  /* Options panel positioning for bottom-left placement */
+  .coolhand-placement-bottom.coolhand-placement-left .coolhand-options {
+    top: auto;
+    right: auto;
+    bottom: 0;
+    left: 0;
   }
 
   /* Prompt text */

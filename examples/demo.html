@@ -121,9 +121,11 @@
             </p>
         </div>
 
+        <hr class="border-gray-200 dark:border-gray-700" />
+
         <!-- 1. Static paragraph with Lorem Ipsum -->
-        <div id="article-content" coolhand-feedback class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 transition-colors duration-200">
-            <div class="flex justify-between items-start mb-4">
+        <div class="space-y-2">
+            <div class="flex justify-between items-center">
                 <h2 class="text-xl font-semibold text-gray-800 dark:text-gray-200">Generated Article</h2>
                 <div class="flex items-center gap-2">
                     <label for="articleSampleSlider" class="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">
@@ -136,24 +138,28 @@
                         max="1"
                         step="0.1"
                         value="1"
-                        class="w-20 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-blue-500"
+                        class="w-32 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-blue-500"
                     />
                     <span id="articleSampleValue" class="text-xs font-mono text-gray-500 dark:text-gray-400 w-10">100%</span>
                 </div>
             </div>
-            <p class="text-xs text-gray-500 dark:text-gray-400 mb-3">
+            <p class="text-xs text-gray-500 dark:text-gray-400">
                 Per-element override via <code class="bg-gray-100 dark:bg-gray-700 px-1 rounded">data-coolhand-explanation-sample-rate</code>. Adjust slider to test.
             </p>
-            <div class="prose prose-gray dark:prose-invert max-w-none">
-                <p class="text-gray-600 dark:text-gray-300 leading-relaxed">
-                    Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo.
-                </p>
+            <div id="article-content" coolhand-feedback data-coolhand-placement-vertical="bottom" class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 transition-colors duration-200">
+                <div class="prose prose-gray dark:prose-invert max-w-none">
+                    <p class="text-gray-600 dark:text-gray-300 leading-relaxed">
+                        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo.
+                    </p>
+                </div>
             </div>
         </div>
 
+        <hr class="border-gray-200 dark:border-gray-700" />
+
         <!-- 2. Textarea with Revised Output Tracking -->
-        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 transition-colors duration-200">
-            <div class="flex justify-between items-start mb-4">
+        <div class="space-y-2">
+            <div class="flex justify-between items-center">
                 <h2 class="text-xl font-semibold text-gray-800 dark:text-gray-200">Editable AI Response (Textarea)</h2>
                 <label class="flex items-center gap-2 cursor-pointer">
                     <span class="text-sm text-gray-500 dark:text-gray-400">Highlight</span>
@@ -165,7 +171,7 @@
                     />
                 </label>
             </div>
-            <p class="text-sm text-gray-500 dark:text-gray-400 mb-3">
+            <p class="text-xs text-gray-500 dark:text-gray-400">
                 This textarea tracks revisions. Toggle highlight to see the pulsating gradient border effect.
             </p>
             <textarea
@@ -185,50 +191,87 @@ In conclusion, the results indicate strong performance across all metrics, with 
             <div id="textarea-status" class="mt-2 text-xs text-gray-500 dark:text-gray-400"></div>
         </div>
 
+        <hr class="border-gray-200 dark:border-gray-700" />
+
         <!-- 3. Input field with Revised Output Tracking -->
-        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 transition-colors duration-200">
-            <div class="flex justify-between items-start mb-4">
+        <div class="space-y-2">
+            <div class="flex justify-between items-center">
                 <h2 class="text-xl font-semibold text-gray-800 dark:text-gray-200">Editable AI Response (Input)</h2>
                 <label class="flex items-center gap-2 cursor-pointer">
                     <span class="text-sm text-gray-500 dark:text-gray-400">Hide Widget</span>
                     <input
                         type="checkbox"
                         id="input-widget-toggle"
+                        checked
                         class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
                     />
                 </label>
             </div>
-            <p class="text-sm text-gray-500 dark:text-gray-400 mb-3">
-                This input field also tracks revisions. Edit the text - changes are sent after 1 second of no typing (or immediately on blur).
+            <p class="text-xs text-gray-500 dark:text-gray-400">
+                Widgets can be hidden on individual elements via <code class="bg-gray-100 dark:bg-gray-700 px-1 rounded">data-coolhand-widget-style="hidden"</code> where binary sentiment collection is not necessary. Revision tracking still works - edits are sent after 1 second of no typing (or immediately on blur).
             </p>
             <input
                 id="editable-input"
                 type="text"
                 coolhand-feedback
                 data-coolhand-workload-id="workload-input-001"
+                data-coolhand-widget-style="hidden"
                 class="w-full px-4 py-3 text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200"
                 value="The quick brown fox jumps over the lazy dog - AI generated summary of the document."
             />
             <div id="input-status" class="mt-2 text-xs text-gray-500 dark:text-gray-400"></div>
         </div>
 
+        <hr class="border-gray-200 dark:border-gray-700" />
+
         <!-- 4. Static div with Workload ID -->
-        <div coolhand-feedback data-coolhand-workload-id="workload-static-001" class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 transition-colors duration-200">
-            <h2 class="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-4">Static Content with Workload ID</h2>
-            <p class="text-sm text-gray-500 dark:text-gray-400 mb-3">
-                This static content has a workload ID for improved fuzzy matching.
+        <div class="space-y-2">
+            <div class="flex justify-between items-center">
+                <h2 class="text-xl font-semibold text-gray-800 dark:text-gray-200">Static Content with Workload ID</h2>
+                <div class="flex items-center gap-4">
+                    <div class="flex items-center gap-2">
+                        <label for="placementVerticalSelect" class="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">Vertical:</label>
+                        <select
+                            id="placementVerticalSelect"
+                            class="px-2 py-1 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-600 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200"
+                        >
+                            <option value="top">Top</option>
+                            <option value="bottom" selected>Bottom (Default)</option>
+                        </select>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <label for="placementHorizontalSelect" class="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">Horizontal:</label>
+                        <select
+                            id="placementHorizontalSelect"
+                            class="px-2 py-1 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-600 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200"
+                        >
+                            <option value="right">Right</option>
+                            <option value="left" selected>Left (Default)</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <p class="text-xs text-gray-500 dark:text-gray-400">
+                Widget placement via <code class="bg-gray-100 dark:bg-gray-700 px-1 rounded">data-coolhand-placement-vertical</code> and <code class="bg-gray-100 dark:bg-gray-700 px-1 rounded">data-coolhand-placement-horizontal</code>. Use dropdowns to test.
             </p>
-            <div class="prose prose-gray dark:prose-invert max-w-none">
-                <p class="text-gray-600 dark:text-gray-300 leading-relaxed">
-                    This AI-generated content is associated with workload ID "workload-static-001". When you provide feedback, the workload ID helps match this feedback to the original LLM request in your backend, improving accuracy of feedback correlation.
-                </p>
+            <div id="static-content" coolhand-feedback data-coolhand-workload-id="workload-static-001" data-coolhand-placement-vertical="bottom" data-coolhand-placement-horizontal="left" class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 transition-colors duration-200">
+                <div class="prose prose-gray dark:prose-invert max-w-none">
+                    <p class="text-gray-600 dark:text-gray-300 leading-relaxed text-center">
+                        This AI-generated content is associated with workload ID "workload-static-001". When you provide feedback, the workload ID helps match this feedback to the original LLM request in your backend, improving accuracy of feedback correlation.
+                    </p>
+                </div>
             </div>
         </div>
 
+        <hr class="border-gray-200 dark:border-gray-700" />
+
         <!-- 5. Chatbot UI with hardcoded messages -->
-        <div id="chat-content" class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 transition-colors duration-200">
-            <h2 class="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-4">Chat Interface</h2>
-            <div class="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+        <div class="space-y-2">
+            <h2 class="text-xl font-semibold text-gray-800 dark:text-gray-200">Chat Interface</h2>
+            <p class="text-xs text-gray-500 dark:text-gray-400">
+                Each AI response has its own feedback widget. Send a message to see dynamically added widgets.
+            </p>
+            <div id="chat-content" class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
                 <!-- Chat messages container -->
                 <div id="chatMessages" class="chat-container h-96 overflow-y-auto bg-gray-50 dark:bg-gray-900 p-4 space-y-4 transition-colors duration-200">
                     <!-- User message -->
@@ -244,7 +287,7 @@ In conclusion, the results indicate strong performance across all metrics, with 
                     <!-- Bot message -->
                     <div class="flex justify-start">
                         <div class="max-w-xs lg:max-w-md">
-                            <div coolhand-feedback class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg pl-4 pr-14 py-2 transition-colors duration-200">
+                            <div coolhand-feedback data-coolhand-placement-vertical="bottom" class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg pl-4 pr-14 py-2 transition-colors duration-200">
                                 <p class="text-sm text-gray-800 dark:text-gray-200">Machine learning is like teaching a computer to recognize patterns and make decisions by showing it many examples, rather than explicitly programming every rule. Think of it like teaching a child to identify animals - instead of describing every detail, you show them many pictures until they can recognize cats, dogs, etc. on their own.</p>
                             </div>
                             <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">AI Assistant • 2:31 PM</p>
@@ -264,7 +307,7 @@ In conclusion, the results indicate strong performance across all metrics, with 
                     <!-- Bot message -->
                     <div class="flex justify-start">
                         <div class="max-w-xs lg:max-w-md">
-                            <div coolhand-feedback class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg pl-4 pr-14 py-2 transition-colors duration-200">
+                            <div coolhand-feedback data-coolhand-placement-vertical="bottom" class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg pl-4 pr-14 py-2 transition-colors duration-200">
                                 <p class="text-sm text-gray-800 dark:text-gray-200">Sure! A great example is email spam filtering. The system learns from millions of emails that users have marked as spam or not spam. It identifies patterns like certain words, sender addresses, or formatting that commonly appear in spam. Over time, it gets better at automatically filtering out unwanted emails without you having to create rules for every possible spam scenario.</p>
                             </div>
                             <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">AI Assistant • 2:33 PM</p>
@@ -284,7 +327,7 @@ In conclusion, the results indicate strong performance across all metrics, with 
                     <!-- Bot message -->
                     <div class="flex justify-start">
                         <div class="max-w-xs lg:max-w-md">
-                            <div coolhand-feedback class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg pl-4 pr-14 py-2 transition-colors duration-200">
+                            <div coolhand-feedback data-coolhand-placement-vertical="bottom" class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg pl-4 pr-14 py-2 transition-colors duration-200">
                                 <p class="text-sm text-gray-800 dark:text-gray-200">Accuracy varies widely depending on the task and data quality. For example, spam filters can achieve 99%+ accuracy, facial recognition systems often reach 95-99% accuracy in controlled conditions, while more complex tasks like natural language understanding might range from 70-90% depending on the specific application. The key is having enough quality training data and choosing the right algorithm for the task.</p>
                             </div>
                             <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">AI Assistant • 2:35 PM</p>
@@ -380,6 +423,32 @@ In conclusion, the results indicate strong performance across all metrics, with 
                     const samplePercent = Math.round(explanationSample * 100) + '%';
                     initStatus.innerHTML = '<span class="text-green-600 dark:text-green-400">✓ Initialized with style: ' + widgetStyle + ', explanation rate: ' + samplePercent + ', theme: ' + colorScheme + '</span>';
                     console.log('✓ CoolhandJS initialized with widgetStyle:', widgetStyle, ', explanationSample:', explanationSample, ', colorScheme:', colorScheme, ', clientUniqueId:', clientUniqueId);
+
+                    // Re-attach textarea and input with onRevisedOutput callbacks for status display
+                    const textareaEl = document.getElementById('editable-textarea');
+                    const inputEl = document.getElementById('editable-input');
+                    const textareaStatus = document.getElementById('textarea-status');
+                    const inputStatus = document.getElementById('input-status');
+
+                    if (textareaEl && textareaStatus) {
+                        CoolhandJS.detach(textareaEl);
+                        CoolhandJS.attach(textareaEl, {
+                            onRevisedOutput: () => {
+                                textareaStatus.innerHTML = '<span class="text-green-600 dark:text-green-400">✓ Revision automatically sent to Coolhand</span>';
+                                setTimeout(() => { textareaStatus.innerHTML = ''; }, 3000);
+                            }
+                        });
+                    }
+
+                    if (inputEl && inputStatus) {
+                        CoolhandJS.detach(inputEl);
+                        CoolhandJS.attach(inputEl, {
+                            onRevisedOutput: () => {
+                                inputStatus.innerHTML = '<span class="text-green-600 dark:text-green-400">✓ Revision automatically sent to Coolhand</span>';
+                                setTimeout(() => { inputStatus.innerHTML = ''; }, 3000);
+                            }
+                        });
+                    }
                 } else {
                     initStatus.innerHTML = '<span class="text-red-600 dark:text-red-400">❌ Initialization failed</span>';
                 }
@@ -394,6 +463,9 @@ In conclusion, the results indicate strong performance across all metrics, with 
             const textarea = document.getElementById('editable-textarea');
             const inputField = document.getElementById('editable-input');
 
+            const textareaStatusEl = document.getElementById('textarea-status');
+            const inputStatusEl = document.getElementById('input-status');
+
             if (textareaHighlightToggle && textarea) {
                 textareaHighlightToggle.addEventListener('change', (e) => {
                     if (e.target.checked) {
@@ -406,7 +478,14 @@ In conclusion, the results indicate strong performance across all metrics, with 
                     // Re-initialize to apply change
                     if (typeof CoolhandJS !== 'undefined') {
                         CoolhandJS.detach(textarea);
-                        CoolhandJS.attach(textarea);
+                        CoolhandJS.attach(textarea, {
+                            onRevisedOutput: () => {
+                                if (textareaStatusEl) {
+                                    textareaStatusEl.innerHTML = '<span class="text-green-600 dark:text-green-400">✓ Revision automatically sent to Coolhand</span>';
+                                    setTimeout(() => { textareaStatusEl.innerHTML = ''; }, 3000);
+                                }
+                            }
+                        });
                     }
                 });
             }
@@ -423,7 +502,14 @@ In conclusion, the results indicate strong performance across all metrics, with 
                     // Re-initialize to apply change
                     if (typeof CoolhandJS !== 'undefined') {
                         CoolhandJS.detach(inputField);
-                        CoolhandJS.attach(inputField);
+                        CoolhandJS.attach(inputField, {
+                            onRevisedOutput: () => {
+                                if (inputStatusEl) {
+                                    inputStatusEl.innerHTML = '<span class="text-green-600 dark:text-green-400">✓ Revision automatically sent to Coolhand</span>';
+                                    setTimeout(() => { inputStatusEl.innerHTML = ''; }, 3000);
+                                }
+                            }
+                        });
                     }
                 });
             }
@@ -449,6 +535,33 @@ In conclusion, the results indicate strong performance across all metrics, with 
 
                     showNotification(`Article explanation rate set to ${Math.round(value * 100)}%`);
                 });
+            }
+
+            // Widget placement dropdowns for static content
+            const placementVerticalSelect = document.getElementById('placementVerticalSelect');
+            const placementHorizontalSelect = document.getElementById('placementHorizontalSelect');
+            const staticContent = document.getElementById('static-content');
+
+            function updatePlacement() {
+                if (!staticContent || typeof CoolhandJS === 'undefined') return;
+
+                const vertical = placementVerticalSelect.value;
+                const horizontal = placementHorizontalSelect.value;
+
+                // Set the placement attributes
+                staticContent.setAttribute('data-coolhand-placement-vertical', vertical);
+                staticContent.setAttribute('data-coolhand-placement-horizontal', horizontal);
+
+                // Re-attach the widget to apply the new settings
+                CoolhandJS.detach(staticContent);
+                CoolhandJS.attach(staticContent);
+
+                showNotification(`Widget placement: ${vertical}-${horizontal}`);
+            }
+
+            if (placementVerticalSelect && placementHorizontalSelect && staticContent) {
+                placementVerticalSelect.addEventListener('change', updatePlacement);
+                placementHorizontalSelect.addEventListener('change', updatePlacement);
             }
 
             function showNotification(message, isError = false) {
@@ -504,7 +617,7 @@ In conclusion, the results indicate strong performance across all metrics, with 
                     const assistantHtml = `
                         <div class="flex justify-start">
                             <div class="max-w-xs lg:max-w-md">
-                                <div coolhand-feedback class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg pl-4 pr-14 py-2 transition-colors duration-200">
+                                <div coolhand-feedback data-coolhand-placement-vertical="bottom" class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg pl-4 pr-14 py-2 transition-colors duration-200">
                                     <p class="text-sm text-gray-800 dark:text-gray-200">This is a sample assistant response.</p>
                                 </div>
                                 <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">AI Assistant • ${getCurrentTime()}</p>
