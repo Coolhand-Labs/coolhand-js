@@ -16,6 +16,8 @@ import {
   HIGHLIGHT_ATTRIBUTE,
   EXPLANATION_ATTRIBUTE,
   EXPLANATION_PROMPT_ATTRIBUTE,
+  PLACEMENT_VERTICAL_ATTRIBUTE,
+  PLACEMENT_HORIZONTAL_ATTRIBUTE,
   DEBOUNCE_MS,
 } from './constants';
 import type {
@@ -26,6 +28,8 @@ import type {
   FeedbackApiResponse,
   WidgetStyle,
   ColorScheme,
+  WidgetPlacementVertical,
+  WidgetPlacementHorizontal,
 } from './types';
 import { FEEDBACK_TYPE_TO_VALUE } from './types';
 
@@ -68,6 +72,10 @@ export class FeedbackWidget {
 
   // Color scheme ("light", "dark", or "system")
   private colorScheme: ColorScheme = 'light';
+
+  // Placement settings
+  private placementVertical: WidgetPlacementVertical = 'top';
+  private placementHorizontal: WidgetPlacementHorizontal = 'right';
 
   // Explanation tracking
   private isShowingExplanation: boolean = false;
@@ -115,6 +123,22 @@ export class FeedbackWidget {
       this.colorScheme = options.colorScheme;
     }
 
+    // Determine vertical placement (priority: element attribute > options > default)
+    const verticalAttr = targetElement.getAttribute(PLACEMENT_VERTICAL_ATTRIBUTE) as WidgetPlacementVertical | null;
+    if (verticalAttr === 'top' || verticalAttr === 'bottom') {
+      this.placementVertical = verticalAttr;
+    } else if (options.placementVertical) {
+      this.placementVertical = options.placementVertical;
+    }
+
+    // Determine horizontal placement (priority: element attribute > options > default)
+    const horizontalAttr = targetElement.getAttribute(PLACEMENT_HORIZONTAL_ATTRIBUTE) as WidgetPlacementHorizontal | null;
+    if (horizontalAttr === 'left' || horizontalAttr === 'right') {
+      this.placementHorizontal = horizontalAttr;
+    } else if (options.placementHorizontal) {
+      this.placementHorizontal = options.placementHorizontal;
+    }
+
     // Detect if this is an input or textarea element
     this.isInputElement =
       targetElement instanceof HTMLInputElement ||
@@ -147,6 +171,14 @@ export class FeedbackWidget {
     const container = document.createElement('div');
     container.setAttribute('data-coolhand-widget', 'true');
     container.className = 'coolhand-feedback-container';
+
+    // Add placement classes to container for :host selector in Shadow DOM
+    if (this.placementVertical === 'bottom') {
+      container.classList.add('coolhand-placement-bottom');
+    }
+    if (this.placementHorizontal === 'left') {
+      container.classList.add('coolhand-placement-left');
+    }
 
     if (this.useShadowDOM) {
       this.shadowRoot = container.attachShadow({ mode: 'open' });
@@ -206,6 +238,20 @@ export class FeedbackWidget {
   }
 
   /**
+   * Get the placement CSS classes based on configuration
+   */
+  private getPlacementClasses(): string {
+    let classes = '';
+    if (this.placementVertical === 'bottom') {
+      classes += ' coolhand-placement-bottom';
+    }
+    if (this.placementHorizontal === 'left') {
+      classes += ' coolhand-placement-left';
+    }
+    return classes;
+  }
+
+  /**
    * Render the widget HTML and attach events
    */
   private render(root: ShadowRoot | HTMLElement): void {
@@ -213,10 +259,11 @@ export class FeedbackWidget {
     const optionsPanelId = `${uniqueId}-options`;
     const pixelModeClass = this.widgetStyle === 'pixel' ? ' coolhand-pixel-mode' : '';
     const colorSchemeClass = this.getColorSchemeClass();
+    const placementClasses = this.getPlacementClasses();
 
     const html = `
       ${this.useShadowDOM ? '' : widgetStyles}
-      <div class="coolhand-feedback-wrapper${pixelModeClass}${colorSchemeClass}" role="region" aria-label="Feedback">
+      <div class="coolhand-feedback-wrapper${pixelModeClass}${colorSchemeClass}${placementClasses}" role="region" aria-label="Feedback">
         <div class="coolhand-sr-only" aria-live="polite" aria-atomic="true"></div>
         <button
           class="coolhand-trigger"

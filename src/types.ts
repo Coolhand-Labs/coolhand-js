@@ -28,6 +28,20 @@ export type WidgetStyle = 'overlay' | 'pixel' | 'hidden';
 export type ColorScheme = 'light' | 'dark' | 'system';
 
 /**
+ * Widget vertical placement
+ * - top: Position widget at the top of the container (default)
+ * - bottom: Position widget at the bottom of the container
+ */
+export type WidgetPlacementVertical = 'top' | 'bottom';
+
+/**
+ * Widget horizontal placement
+ * - right: Position widget at the right of the container (default)
+ * - left: Position widget at the left of the container
+ */
+export type WidgetPlacementHorizontal = 'left' | 'right';
+
+/**
  * Options for CoolhandFeedback.init()
  */
 export interface InitOptions {
@@ -59,6 +73,16 @@ export interface InitOptions {
    * Note: Requires cookies to be enabled. Falls back to no auto-highlight if cookies are blocked.
    */
   autoHighlight?: boolean;
+  /**
+   * Vertical placement of the widget within its container.
+   * Default: 'top'
+   */
+  placementVertical?: WidgetPlacementVertical;
+  /**
+   * Horizontal placement of the widget within its container.
+   * Default: 'right'
+   */
+  placementHorizontal?: WidgetPlacementHorizontal;
 }
 
 /**
@@ -99,6 +123,16 @@ export interface AttachOptions {
    * @internal
    */
   onFirstInteraction?: () => void;
+  /**
+   * Vertical placement of the widget within its container.
+   * Default: 'top'
+   */
+  placementVertical?: WidgetPlacementVertical;
+  /**
+   * Horizontal placement of the widget within its container.
+   * Default: 'right'
+   */
+  placementHorizontal?: WidgetPlacementHorizontal;
 }
 
 /**

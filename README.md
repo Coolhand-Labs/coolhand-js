@@ -16,6 +16,7 @@ A lightweight, standalone JavaScript library for adding user feedback collection
 - ✏️ **Revised Output Tracking**: Automatically captures edits to textarea/input content
 - 💬 **Explanation Prompts**: Optionally ask users to explain their feedback with configurable sampling
 - 🍪 **User Fingerprinting** *(Experimental)*: Automatic cookie-based session tracking for cross-session feedback correlation
+- 📍 **Configurable Placement**: Position widgets at any corner (top-right, top-left, bottom-right, bottom-left)
 
 ## Accessibility
 
@@ -113,6 +114,8 @@ Initialize the library with your Coolhand API key. Automatically attaches to all
   - `explanationSample` (number): Probability (0-1) of showing explanation prompt after feedback. `0` = never ask, `1` = always ask (default), `0.2` = ask 20% of the time
   - `enableFingerprint` (boolean): *(Experimental)* Enable automatic cookie-based user fingerprinting (default: true). Set to `false` to disable.
   - `autoHighlight` (boolean): *(Experimental)* Enable automatic highlight on first visit (default: true). When enabled, all feedback widgets show a pulsating highlight until the user interacts with any widget. State is persisted in a cookie.
+  - `placementVertical` (string): Widget vertical position - `"top"` (default) or `"bottom"`
+  - `placementHorizontal` (string): Widget horizontal position - `"right"` (default) or `"left"`
 
 **Returns:**
 - `boolean`: True if initialization succeeded, false otherwise
@@ -142,6 +145,9 @@ CoolhandJS.init('ch_api_abc123...', { enableFingerprint: false });
 
 // Disable auto-highlight on first visit (experimental feature)
 CoolhandJS.init('ch_api_abc123...', { autoHighlight: false });
+
+// Position all widgets at bottom-left
+CoolhandJS.init('ch_api_abc123...', { placementVertical: 'bottom', placementHorizontal: 'left' });
 ```
 
 ### `CoolhandJS.attach(element, options)` (Manual Method)
@@ -160,6 +166,8 @@ Manually attach a feedback widget to an HTML element. Usually not needed since a
 - `onSuccess` (function): Callback when feedback is successfully submitted
 - `onError` (function): Callback when an error occurs
 - `onRevisedOutput` (function): Callback when revised output is sent (for textarea/input elements)
+- `placementVertical` (string): Widget vertical position - `"top"` (default) or `"bottom"`
+- `placementHorizontal` (string): Widget horizontal position - `"right"` (default) or `"left"`
 
 **Returns:**
 - `FeedbackWidget`: The widget instance, or null if attachment failed
@@ -215,6 +223,13 @@ CoolhandJS makes it incredibly easy to capture human feedback on AI outputs. Jus
 <div coolhand-feedback data-coolhand-workload-id="abc123def456">
   AI response associated with a specific workload
 </div>
+
+<!-- Widget positioned at bottom-left -->
+<div coolhand-feedback
+     data-coolhand-placement-vertical="bottom"
+     data-coolhand-placement-horizontal="left">
+  AI response with widget in bottom-left corner
+</div>
 ```
 
 ### Textarea/Input Support
@@ -239,6 +254,8 @@ The AI generated this response which the user can edit.
 - `data-coolhand-feedback-id`: **Set automatically** after successful feedback submission. Contains the feedback ID returned from the API. When present, subsequent feedback changes automatically update the existing feedback instead of creating duplicates.
 - `data-coolhand-explanation`: **Set automatically** after user submits an explanation. Contains the explanation text for reference.
 - `data-coolhand-highlight`: Enables a pulsating gradient border around the widget trigger to draw user attention. Great for onboarding or encouraging feedback.
+- `data-coolhand-placement-vertical`: Widget vertical position - `"top"` (default) or `"bottom"`. Overrides global `placementVertical` setting.
+- `data-coolhand-placement-horizontal`: Widget horizontal position - `"right"` (default) or `"left"`. Overrides global `placementHorizontal` setting.
 
 ## Feedback Values
 
