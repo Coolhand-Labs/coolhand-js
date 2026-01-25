@@ -44,6 +44,21 @@ export interface InitOptions {
    * 0 = never ask, 1 = always ask, 0.2 = ask 20% of the time. Default: 1
    */
   explanationSample?: number;
+  /**
+   * Whether to enable automatic fingerprint tracking via cookie.
+   * Default: true. Set to false to disable fingerprinting.
+   * Note: Requires HTTPS for cross-site (iframe) support.
+   */
+  enableFingerprint?: boolean;
+  /**
+   * Whether to enable automatic highlight on first visit.
+   * When enabled, all feedback widgets show a pulsating highlight until
+   * the user interacts with any feedback widget for the first time.
+   * The highlight state is persisted in a cookie.
+   * Default: true. Set to false to disable auto-highlight.
+   * Note: Requires cookies to be enabled. Falls back to no auto-highlight if cookies are blocked.
+   */
+  autoHighlight?: boolean;
 }
 
 /**
@@ -69,6 +84,21 @@ export interface AttachOptions {
   onError?: (error: Error) => void;
   /** Callback fired when revised output is sent (for textarea/input elements) */
   onRevisedOutput?: (revisedOutput: string, response: FeedbackApiResponse) => void;
+  /**
+   * Auto-generated fingerprint ID from cookie (set internally by CoolhandFeedback)
+   * @internal
+   */
+  coolhandFingerprintId?: string;
+  /**
+   * Whether auto-highlight is enabled (set internally by CoolhandFeedback)
+   * @internal
+   */
+  autoHighlight?: boolean;
+  /**
+   * Callback to notify parent when first interaction occurs (set internally by CoolhandFeedback)
+   * @internal
+   */
+  onFirstInteraction?: () => void;
 }
 
 /**
@@ -80,6 +110,7 @@ export interface FeedbackApiPayload {
     original_output: string;
     collector: string;
     client_unique_id?: string;
+    coolhand_fingerprint_id?: string;
     workload_hashid?: string;
     revised_output?: string;
     explanation?: string;

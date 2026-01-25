@@ -15,6 +15,7 @@ A lightweight, standalone JavaScript library for adding user feedback collection
 - 🔄 **Smart Updates**: Automatically tracks and updates feedback when users change their response
 - ✏️ **Revised Output Tracking**: Automatically captures edits to textarea/input content
 - 💬 **Explanation Prompts**: Optionally ask users to explain their feedback with configurable sampling
+- 🍪 **User Fingerprinting** *(Experimental)*: Automatic cookie-based session tracking for cross-session feedback correlation
 
 ## Accessibility
 
@@ -110,6 +111,8 @@ Initialize the library with your Coolhand API key. Automatically attaches to all
   - `clientUniqueId` (string): Optional client identifier sent with all feedback (e.g., user ID, session ID)
   - `widgetStyle` (string): Default widget style for all widgets - `"overlay"` (default), `"pixel"`, or `"hidden"`
   - `explanationSample` (number): Probability (0-1) of showing explanation prompt after feedback. `0` = never ask, `1` = always ask (default), `0.2` = ask 20% of the time
+  - `enableFingerprint` (boolean): *(Experimental)* Enable automatic cookie-based user fingerprinting (default: true). Set to `false` to disable.
+  - `autoHighlight` (boolean): *(Experimental)* Enable automatic highlight on first visit (default: true). When enabled, all feedback widgets show a pulsating highlight until the user interacts with any widget. State is persisted in a cookie.
 
 **Returns:**
 - `boolean`: True if initialization succeeded, false otherwise
@@ -133,6 +136,12 @@ CoolhandJS.init('ch_api_abc123...', { explanationSample: 0 });
 
 // Disable auto-attachment
 CoolhandJS.init('ch_api_abc123...', { autoAttach: false });
+
+// Disable fingerprint cookie (experimental feature)
+CoolhandJS.init('ch_api_abc123...', { enableFingerprint: false });
+
+// Disable auto-highlight on first visit (experimental feature)
+CoolhandJS.init('ch_api_abc123...', { autoHighlight: false });
 ```
 
 ### `CoolhandJS.attach(element, options)` (Manual Method)
@@ -289,6 +298,52 @@ You can override the global setting for specific elements using the `data-coolha
 ```
 
 The attribute takes priority over the global `explanationSample` setting, allowing fine-grained control over which outputs get detailed feedback.
+
+## User Fingerprinting *(Experimental)*
+
+CoolhandJS can automatically generate and persist a unique user fingerprint ID via a first-party cookie. This enables cross-session feedback correlation without requiring you to implement user tracking yourself.
+
+### How It Works
+
+1. On `init()`, a UUID v4 fingerprint is generated (or retrieved if already exists)
+2. The fingerprint is stored in a secure, first-party cookie (`coolhand_fingerprint`)
+3. The `coolhand_fingerprint_id` is automatically included in all API requests
+4. The cookie is refreshed on each visit to extend its lifetime
+
+### Cookie Configuration
+
+The fingerprint cookie uses these security settings:
+- `SameSite=None` - Supports third-party iframe embedding
+- `Secure` - **Requires HTTPS** (fingerprinting is disabled on HTTP sites)
+- `Path=/` - Available site-wide
+- `Max-Age=365 days` - Persists for one year (refreshed on each visit)
+
+### Relationship with `clientUniqueId`
+
+Both identifiers serve different purposes and are sent together:
+- `clientUniqueId`: Developer-provided identifier (e.g., your user ID or session ID)
+- `coolhand_fingerprint_id`: Automatic browser-level identifier
+
+This allows you to correlate feedback both with your own user system and across anonymous sessions.
+
+### Disabling Fingerprinting
+
+Fingerprinting is enabled by default. To disable it:
+
+```javascript
+CoolhandJS.init('your-api-key', { enableFingerprint: false });
+```
+
+### Browser Compatibility
+
+- Requires HTTPS (fingerprinting silently disabled on HTTP)
+- Works in Chrome, Firefox, Safari, Edge (modern versions)
+- Gracefully degrades if cookies are blocked by the browser or extensions
+- Safari ITP: Cookie is refreshed on each visit to work around the 7-day limit for client-set cookies
+
+### Privacy Considerations
+
+The fingerprint is a randomly generated UUID with no personal information. It cannot be used to identify individuals, only to correlate feedback from the same browser. Consider disclosing this cookie in your privacy policy if required by your jurisdiction.
 
 ## Requirements
 

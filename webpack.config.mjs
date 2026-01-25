@@ -1,4 +1,5 @@
 import path from 'path';
+import fs from 'fs';
 import webpack from 'webpack';
 import TerserPlugin from 'terser-webpack-plugin';
 import { fileURLToPath } from 'url';
@@ -116,7 +117,17 @@ const devServerConfig = {
       "Access-Control-Allow-Origin": "*",
       "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, PATCH, OPTIONS",
       "Access-Control-Allow-Headers": "X-Requested-With, content-type, Authorization"
-    }
+    },
+    // Enable HTTPS if mkcert certificates exist (for testing fingerprint cookies)
+    ...(fs.existsSync(path.join(__dirname, 'localhost.pem')) && fs.existsSync(path.join(__dirname, 'localhost-key.pem')) ? {
+      server: {
+        type: 'https',
+        options: {
+          key: fs.readFileSync(path.join(__dirname, 'localhost-key.pem')),
+          cert: fs.readFileSync(path.join(__dirname, 'localhost.pem')),
+        },
+      },
+    } : {}),
   },
 };
 
