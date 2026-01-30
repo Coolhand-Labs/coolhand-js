@@ -400,8 +400,8 @@ export class PartialFeedbackManager {
         selectionRect: rect,
       },
       options: this.options,
-      onFeedbackSubmitted: (entry, response) => this.handleFeedbackSubmitted(entry, response, selection),
-      onClose: () => this.handleWidgetClose(),
+      onFeedbackSubmitted: (entry, response): void => this.handleFeedbackSubmitted(entry, response, selection),
+      onClose: (): void => this.handleWidgetClose(),
       existingEntry: null,
     });
   }
@@ -439,9 +439,9 @@ export class PartialFeedbackManager {
         selectionRect: rect,
       },
       options: this.options,
-      onFeedbackSubmitted: (updatedEntry, response) =>
+      onFeedbackSubmitted: (updatedEntry, response): void =>
         this.handleFeedbackUpdated(updatedEntry, response, highlight),
-      onClose: () => this.handleWidgetClose(),
+      onClose: (): void => this.handleWidgetClose(),
       existingEntry: entry,
     });
   }
