@@ -767,5 +767,65 @@ export const widgetStyles = `
       transition: none;
     }
   }
+
+  /* Partial feedback highlight styles */
+  .coolhand-partial-highlight {
+    position: relative;
+    cursor: pointer;
+    border-radius: 2px;
+    padding: 0 2px;
+    margin: 0 -2px;
+    transition: background-color 0.15s ease;
+  }
+
+  .coolhand-partial-highlight[data-feedback-type="up"] {
+    background-color: rgba(16, 185, 129, 0.2);
+  }
+
+  .coolhand-partial-highlight[data-feedback-type="down"] {
+    background-color: rgba(239, 68, 68, 0.2);
+  }
+
+  .coolhand-partial-highlight[data-feedback-type="neutral"] {
+    background-color: rgba(59, 130, 246, 0.2);
+  }
+
+  /* Hover states - slightly darker */
+  .coolhand-partial-highlight[data-feedback-type="up"]:hover,
+  .coolhand-partial-highlight[data-feedback-type="up"]:focus {
+    background-color: rgba(16, 185, 129, 0.35);
+  }
+
+  .coolhand-partial-highlight[data-feedback-type="down"]:hover,
+  .coolhand-partial-highlight[data-feedback-type="down"]:focus {
+    background-color: rgba(239, 68, 68, 0.35);
+  }
+
+  .coolhand-partial-highlight[data-feedback-type="neutral"]:hover,
+  .coolhand-partial-highlight[data-feedback-type="neutral"]:focus {
+    background-color: rgba(59, 130, 246, 0.35);
+  }
+
+  /* Focus indicator for keyboard navigation */
+  .coolhand-partial-highlight:focus {
+    outline: 2px solid #2563eb;
+    outline-offset: 2px;
+  }
+
+  .coolhand-partial-highlight:focus:not(:focus-visible) {
+    outline: none;
+  }
+
+  .coolhand-partial-highlight:focus-visible {
+    outline: 2px solid #2563eb;
+    outline-offset: 2px;
+  }
+
+  /* Reduced motion for highlights */
+  @media (prefers-reduced-motion: reduce) {
+    .coolhand-partial-highlight {
+      transition: none;
+    }
+  }
 </style>
 `;

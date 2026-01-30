@@ -83,6 +83,10 @@ export interface InitOptions {
    * Default: 'right'
    */
   placementHorizontal?: WidgetPlacementHorizontal;
+  /**
+   * Options for partial feedback feature on elements with data-coolhand-allow-partial-feedback
+   */
+  partialFeedbackOptions?: PartialFeedbackOptions;
 }
 
 /**
@@ -133,6 +137,10 @@ export interface AttachOptions {
    * Default: 'right'
    */
   placementHorizontal?: WidgetPlacementHorizontal;
+  /**
+   * Options for partial feedback feature
+   */
+  partialFeedbackOptions?: PartialFeedbackOptions;
 }
 
 /**
@@ -179,3 +187,73 @@ export const FEEDBACK_TYPE_TO_VALUE: Record<FeedbackType, FeedbackValue> = {
   neutral: null,
   up: true,
 };
+
+/**
+ * Text range for selection position
+ */
+export interface TextRange {
+  startOffset: number;
+  endOffset: number;
+  text: string;
+}
+
+/**
+ * Individual partial feedback entry
+ */
+export interface PartialFeedbackEntry {
+  /** API feedback ID (null until successfully submitted) */
+  id: number | null;
+  /** Text range of the selection */
+  range: TextRange;
+  /** Feedback type (up/neutral/down) */
+  feedbackType: FeedbackType;
+  /** Optional explanation text */
+  explanation?: string;
+  /** Timestamp when feedback was created */
+  createdAt: string;
+}
+
+/**
+ * Storage format for partial feedbacks in data attribute
+ */
+export interface PartialFeedbackStorage {
+  version: number;
+  entries: PartialFeedbackEntry[];
+}
+
+/**
+ * Extended API payload with focus_section for partial feedback
+ */
+export interface PartialFeedbackApiPayload {
+  llm_request_log_feedback: {
+    like: FeedbackValue;
+    original_output: string;
+    focus_section?: string;
+    focus_range?: { start: number; end: number };
+    collector: string;
+    client_unique_id?: string;
+    coolhand_fingerprint_id?: string;
+    workload_hashid?: string;
+    explanation?: string;
+  };
+}
+
+/**
+ * Options for partial feedback
+ */
+export interface PartialFeedbackOptions {
+  /** Probability (0-1) of showing explanation prompt. Default: 1 */
+  explanationSample?: number;
+  /** Callback fired on successful partial feedback submission */
+  onPartialFeedbackSuccess?: (entry: PartialFeedbackEntry, response: FeedbackApiResponse) => void;
+  /** Callback fired on partial feedback submission error */
+  onPartialFeedbackError?: (error: Error, entry: PartialFeedbackEntry) => void;
+  /** Client unique ID for tracking */
+  clientUniqueId?: string;
+  /** Coolhand fingerprint ID */
+  coolhandFingerprintId?: string;
+  /** Workload hash ID */
+  workloadId?: string;
+  /** Color scheme for the widget */
+  colorScheme?: ColorScheme;
+}

@@ -1,6 +1,8 @@
 import { FeedbackWidget } from './feedback-widget';
+import { PartialFeedbackManager } from './partial-feedback-manager';
 import { getOrCreateFingerprintId, hasFeedbackBeenViewed, markFeedbackAsViewed } from './cookie';
-import type { InitOptions, AttachOptions, WidgetStyle, ColorScheme, WidgetPlacementVertical, WidgetPlacementHorizontal } from './types';
+import { PARTIAL_FEEDBACK_ATTRIBUTE } from './constants';
+import type { InitOptions, AttachOptions, WidgetStyle, ColorScheme, WidgetPlacementVertical, WidgetPlacementHorizontal, PartialFeedbackOptions } from './types';
 
 /**
  * CoolhandFeedback manages the overall feedback system
@@ -16,8 +18,11 @@ export class CoolhandFeedback {
   private autoHighlight: boolean = false;
   private placementVertical: WidgetPlacementVertical | null = null;
   private placementHorizontal: WidgetPlacementHorizontal | null = null;
+  private partialFeedbackOptions: PartialFeedbackOptions | null = null;
   private instances: WeakMap<HTMLElement, FeedbackWidget> = new WeakMap();
+  private partialManagers: WeakMap<HTMLElement, PartialFeedbackManager> = new WeakMap();
   private attachedElements: Set<HTMLElement> = new Set();
+  private partialFeedbackElements: Set<HTMLElement> = new Set();
   private observer: MutationObserver | null = null;
   private isAutoAttaching: boolean = false;
 
@@ -64,6 +69,9 @@ export class CoolhandFeedback {
     // Store global placement settings if provided
     this.placementVertical = options.placementVertical || null;
     this.placementHorizontal = options.placementHorizontal || null;
+
+    // Store global partial feedback options if provided
+    this.partialFeedbackOptions = options.partialFeedbackOptions || null;
 
     // Initialize fingerprint ID from cookie (unless explicitly disabled)
     if (options.enableFingerprint !== false) {
@@ -210,6 +218,11 @@ export class CoolhandFeedback {
     }
 
     this.attach(element, options);
+
+    // Check if element also supports partial feedback
+    if (element.hasAttribute(PARTIAL_FEEDBACK_ATTRIBUTE)) {
+      this.attachPartialFeedbackToElement(element);
+    }
   }
 
   /**
@@ -315,6 +328,136 @@ export class CoolhandFeedback {
   }
 
   /**
+   * Attach partial feedback to an element internally
+   */
+  private attachPartialFeedbackToElement(element: HTMLElement): void {
+    // Skip if already attached
+    if (this.partialManagers.has(element)) return;
+
+    // Skip input and textarea elements
+    if (
+      element instanceof HTMLInputElement ||
+      element instanceof HTMLTextAreaElement
+    ) {
+      console.warn(
+        '[CoolhandJS] Partial feedback is not supported on input/textarea elements'
+      );
+      return;
+    }
+
+    // Build options
+    const partialOptions: PartialFeedbackOptions = {
+      ...this.partialFeedbackOptions,
+    };
+
+    // Apply global settings
+    if (this.clientUniqueId && !partialOptions.clientUniqueId) {
+      partialOptions.clientUniqueId = this.clientUniqueId;
+    }
+    if (this.fingerprintId && !partialOptions.coolhandFingerprintId) {
+      partialOptions.coolhandFingerprintId = this.fingerprintId;
+    }
+    if (!partialOptions.colorScheme) {
+      partialOptions.colorScheme = this.colorScheme;
+    }
+
+    // Get workload ID from element if present
+    if (element.dataset.coolhandWorkloadId && !partialOptions.workloadId) {
+      partialOptions.workloadId = element.dataset.coolhandWorkloadId;
+    }
+
+    const manager = new PartialFeedbackManager(
+      element,
+      this.apiKey!,
+      partialOptions
+    );
+    this.partialManagers.set(element, manager);
+    this.partialFeedbackElements.add(element);
+  }
+
+  /**
+   * Manually attach partial feedback to an element
+   * @param element - The element to attach partial feedback to
+   * @param options - Configuration options for partial feedback
+   * @returns The PartialFeedbackManager instance, or null on error
+   */
+  public attachPartialFeedback(
+    element: HTMLElement,
+    options: PartialFeedbackOptions = {}
+  ): PartialFeedbackManager | null {
+    if (!this.apiKey) {
+      console.error(
+        '[CoolhandJS] Error: API key not initialized. Call CoolhandJS.init("your-api-key") first.'
+      );
+      return null;
+    }
+
+    if (!(element instanceof HTMLElement)) {
+      console.error(
+        '[CoolhandJS] Error: Invalid element provided. Must be an HTMLElement.'
+      );
+      return null;
+    }
+
+    // Skip input and textarea elements
+    if (
+      element instanceof HTMLInputElement ||
+      element instanceof HTMLTextAreaElement
+    ) {
+      console.error(
+        '[CoolhandJS] Error: Partial feedback is not supported on input/textarea elements.'
+      );
+      return null;
+    }
+
+    if (this.partialManagers.has(element)) {
+      console.warn(
+        '[CoolhandJS] Warning: Partial feedback already attached to this element.'
+      );
+      return this.partialManagers.get(element) || null;
+    }
+
+    // Merge with global options
+    const mergedOptions: PartialFeedbackOptions = {
+      ...this.partialFeedbackOptions,
+      ...options,
+    };
+
+    // Apply global settings if not provided
+    if (!mergedOptions.clientUniqueId && this.clientUniqueId) {
+      mergedOptions.clientUniqueId = this.clientUniqueId;
+    }
+    if (!mergedOptions.coolhandFingerprintId && this.fingerprintId) {
+      mergedOptions.coolhandFingerprintId = this.fingerprintId;
+    }
+    if (!mergedOptions.colorScheme) {
+      mergedOptions.colorScheme = this.colorScheme;
+    }
+
+    const manager = new PartialFeedbackManager(
+      element,
+      this.apiKey,
+      mergedOptions
+    );
+    this.partialManagers.set(element, manager);
+    this.partialFeedbackElements.add(element);
+    return manager;
+  }
+
+  /**
+   * Detach partial feedback from an element
+   * @param element - The element to detach partial feedback from
+   */
+  public detachPartialFeedback(element: HTMLElement): void {
+    const manager = this.partialManagers.get(element);
+    if (manager) {
+      manager.destroy();
+      this.partialManagers.delete(element);
+      this.partialFeedbackElements.delete(element);
+    }
+  }
+
+  /**
    * Detach a feedback widget from an element
    * @param element - The element to detach from
    */
@@ -325,6 +468,9 @@ export class CoolhandFeedback {
       this.instances.delete(element);
       this.attachedElements.delete(element);
     }
+
+    // Also detach partial feedback if attached
+    this.detachPartialFeedback(element);
   }
 
   /**
@@ -335,6 +481,16 @@ export class CoolhandFeedback {
       this.observer.disconnect();
       this.observer = null;
     }
+
+    // Destroy all partial feedback managers
+    this.partialFeedbackElements.forEach((element) => {
+      const manager = this.partialManagers.get(element);
+      if (manager) {
+        manager.destroy();
+      }
+    });
+    this.partialFeedbackElements.clear();
+
     this.attachedElements.clear();
     this.isAutoAttaching = false;
   }
