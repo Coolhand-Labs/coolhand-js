@@ -113,6 +113,17 @@ Open `examples/index.html` after running `npm run dev` to test the widget with v
 
 Unit tests use Jest with jsdom. Run `npm test` to execute the test suite.
 
+#### HTTPS for Local Development (macOS)
+
+If you need to test secure cookies (fingerprinting) locally, you can enable HTTPS:
+
+1. Install mkcert: `brew install mkcert`
+2. Run the setup script: `./setup-https.sh`
+3. Start the dev server: `npm run dev`
+4. Access via: `https://localhost:3333`
+
+The dev server automatically detects the presence of `localhost.pem` and `localhost-key.pem` certificates and enables HTTPS.
+
 ## API Payload
 
 The widget sends the following payload to the Coolhand API:
