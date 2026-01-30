@@ -875,6 +875,1262 @@ describe('Partial Feedback', () => {
     });
   });
 
+  describe('Hover/Mouse Interactions', () => {
+    it('should show widget on hover over existing highlight', async () => {
+      const element = document.createElement('div');
+      element.textContent = 'Test text for hover';
+      document.body.appendChild(element);
+
+      const manager = new PartialFeedbackManager(element, 'test-api-key');
+
+      // Create initial feedback
+      createSelection(element, 0, 4);
+      simulateMouseUp(element);
+      await wait(50);
+
+      // Find the widget and select an option
+      let widget = document.querySelector('.coolhand-partial-widget-container');
+      let shadowRoot = widget?.shadowRoot || widget;
+      const thumbsUp = shadowRoot?.querySelector('[data-feedback="up"]') as HTMLElement;
+      expect(thumbsUp).not.toBeNull();
+      thumbsUp.click();
+      await wait(150);
+
+      // Close the widget
+      const escapeEvent = new KeyboardEvent('keydown', { key: 'Escape', bubbles: true });
+      document.dispatchEvent(escapeEvent);
+      await wait(50);
+
+      // Now hover over the highlight
+      const highlight = element.querySelector(`.${PARTIAL_HIGHLIGHT_CLASS}`) as HTMLElement;
+      expect(highlight).not.toBeNull();
+
+      const mouseEnterEvent = new MouseEvent('mouseenter', {
+        bubbles: true,
+        cancelable: true,
+        clientX: 150,
+        clientY: 110,
+      });
+      highlight.dispatchEvent(mouseEnterEvent);
+
+      // Wait for the hover delay (200ms)
+      await wait(250);
+
+      // Widget should appear
+      widget = document.querySelector('.coolhand-partial-widget-container');
+      expect(widget).not.toBeNull();
+
+      manager.destroy();
+    });
+
+    it('should not show widget if mouse leaves before delay completes', async () => {
+      const element = document.createElement('div');
+      element.textContent = 'Test text for hover';
+      document.body.appendChild(element);
+
+      const manager = new PartialFeedbackManager(element, 'test-api-key');
+
+      // Create initial feedback
+      createSelection(element, 0, 4);
+      simulateMouseUp(element);
+      await wait(50);
+
+      let widget = document.querySelector('.coolhand-partial-widget-container');
+      let shadowRoot = widget?.shadowRoot || widget;
+      const thumbsUp = shadowRoot?.querySelector('[data-feedback="up"]') as HTMLElement;
+      thumbsUp?.click();
+      await wait(150);
+
+      const escapeEvent = new KeyboardEvent('keydown', { key: 'Escape', bubbles: true });
+      document.dispatchEvent(escapeEvent);
+      await wait(50);
+
+      const highlight = element.querySelector(`.${PARTIAL_HIGHLIGHT_CLASS}`) as HTMLElement;
+
+      // Mouse enter
+      const mouseEnterEvent = new MouseEvent('mouseenter', {
+        bubbles: true,
+        cancelable: true,
+        clientX: 150,
+        clientY: 110,
+      });
+      highlight.dispatchEvent(mouseEnterEvent);
+
+      // Mouse leave before 200ms delay
+      await wait(100);
+      const mouseLeaveEvent = new MouseEvent('mouseleave', {
+        bubbles: true,
+        cancelable: true,
+        relatedTarget: document.body,
+      });
+      highlight.dispatchEvent(mouseLeaveEvent);
+
+      // Wait past the original delay
+      await wait(200);
+
+      // Widget should not appear
+      widget = document.querySelector('.coolhand-partial-widget-container');
+      expect(widget).toBeNull();
+
+      manager.destroy();
+    });
+
+    it('should keep widget open when moving from highlight to widget', async () => {
+      const element = document.createElement('div');
+      element.textContent = 'Test text for hover';
+      document.body.appendChild(element);
+
+      const manager = new PartialFeedbackManager(element, 'test-api-key');
+
+      // Create initial feedback
+      createSelection(element, 0, 4);
+      simulateMouseUp(element);
+      await wait(50);
+
+      let widget = document.querySelector('.coolhand-partial-widget-container');
+      let shadowRoot = widget?.shadowRoot || widget;
+      const thumbsUp = shadowRoot?.querySelector('[data-feedback="up"]') as HTMLElement;
+      thumbsUp?.click();
+      await wait(150);
+
+      const escapeEvent = new KeyboardEvent('keydown', { key: 'Escape', bubbles: true });
+      document.dispatchEvent(escapeEvent);
+      await wait(50);
+
+      const highlight = element.querySelector(`.${PARTIAL_HIGHLIGHT_CLASS}`) as HTMLElement;
+
+      // Hover to show widget
+      const mouseEnterEvent = new MouseEvent('mouseenter', {
+        bubbles: true,
+        cancelable: true,
+        clientX: 150,
+        clientY: 110,
+      });
+      highlight.dispatchEvent(mouseEnterEvent);
+      await wait(250);
+
+      widget = document.querySelector('.coolhand-partial-widget-container') as HTMLElement;
+      expect(widget).not.toBeNull();
+
+      // Simulate mouse leaving highlight but entering widget
+      const mouseLeaveEvent = new MouseEvent('mouseleave', {
+        bubbles: true,
+        cancelable: true,
+        relatedTarget: widget,
+      });
+      highlight.dispatchEvent(mouseLeaveEvent);
+
+      await wait(350);
+
+      // Widget should still be visible
+      const widgetAfter = document.querySelector('.coolhand-partial-widget-container');
+      expect(widgetAfter).not.toBeNull();
+
+      manager.destroy();
+    });
+
+    it('should close widget after delay when mouse leaves both highlight and widget', async () => {
+      const element = document.createElement('div');
+      element.textContent = 'Test text for hover';
+      document.body.appendChild(element);
+
+      const manager = new PartialFeedbackManager(element, 'test-api-key');
+
+      // Create initial feedback
+      createSelection(element, 0, 4);
+      simulateMouseUp(element);
+      await wait(50);
+
+      let widget = document.querySelector('.coolhand-partial-widget-container');
+      let shadowRoot = widget?.shadowRoot || widget;
+      const thumbsUp = shadowRoot?.querySelector('[data-feedback="up"]') as HTMLElement;
+      thumbsUp?.click();
+      await wait(150);
+
+      const escapeEvent = new KeyboardEvent('keydown', { key: 'Escape', bubbles: true });
+      document.dispatchEvent(escapeEvent);
+      await wait(50);
+
+      const highlight = element.querySelector(`.${PARTIAL_HIGHLIGHT_CLASS}`) as HTMLElement;
+
+      // Hover to show widget
+      const mouseEnterEvent = new MouseEvent('mouseenter', {
+        bubbles: true,
+        cancelable: true,
+        clientX: 150,
+        clientY: 110,
+      });
+      highlight.dispatchEvent(mouseEnterEvent);
+      await wait(250);
+
+      widget = document.querySelector('.coolhand-partial-widget-container');
+      expect(widget).not.toBeNull();
+
+      // Mouse leaves highlight to somewhere else (not widget)
+      const mouseLeaveEvent = new MouseEvent('mouseleave', {
+        bubbles: true,
+        cancelable: true,
+        relatedTarget: document.body,
+      });
+      highlight.dispatchEvent(mouseLeaveEvent);
+
+      // Wait for close delay (300ms)
+      await wait(350);
+
+      // Widget should be closed
+      const widgetAfter = document.querySelector('.coolhand-partial-widget-container');
+      expect(widgetAfter).toBeNull();
+
+      manager.destroy();
+    });
+
+    it('should position widget at cursor location on hover', async () => {
+      const element = document.createElement('div');
+      element.textContent = 'Test text for hover';
+      document.body.appendChild(element);
+
+      const manager = new PartialFeedbackManager(element, 'test-api-key');
+
+      // Create initial feedback
+      createSelection(element, 0, 4);
+      simulateMouseUp(element);
+      await wait(50);
+
+      let widget = document.querySelector('.coolhand-partial-widget-container');
+      let shadowRoot = widget?.shadowRoot || widget;
+      const thumbsUp = shadowRoot?.querySelector('[data-feedback="up"]') as HTMLElement;
+      thumbsUp?.click();
+      await wait(150);
+
+      const escapeEvent = new KeyboardEvent('keydown', { key: 'Escape', bubbles: true });
+      document.dispatchEvent(escapeEvent);
+      await wait(50);
+
+      const highlight = element.querySelector(`.${PARTIAL_HIGHLIGHT_CLASS}`) as HTMLElement;
+
+      // Hover with specific cursor position
+      const cursorX = 250;
+      const cursorY = 150;
+      const mouseEnterEvent = new MouseEvent('mouseenter', {
+        bubbles: true,
+        cancelable: true,
+        clientX: cursorX,
+        clientY: cursorY,
+      });
+      highlight.dispatchEvent(mouseEnterEvent);
+      await wait(250);
+
+      widget = document.querySelector('.coolhand-partial-widget-container') as HTMLElement;
+      expect(widget).not.toBeNull();
+
+      // Widget should be positioned relative to cursor (10px below)
+      const widgetStyle = (widget as HTMLElement).style;
+      expect(widgetStyle.position).toBe('absolute');
+
+      manager.destroy();
+    });
+  });
+
+  describe('Explanation/Comment Feature', () => {
+    it('should show explanation textarea after selecting feedback option', async () => {
+      const element = document.createElement('div');
+      element.textContent = 'Test text with explanation';
+      document.body.appendChild(element);
+
+      createSelection(element, 0, 4);
+      simulateMouseUp(element);
+      await wait(50);
+
+      const widget = document.querySelector('.coolhand-partial-widget-container');
+      const shadowRoot = widget?.shadowRoot || widget;
+      const thumbsUp = shadowRoot?.querySelector('[data-feedback="up"]') as HTMLElement;
+      expect(thumbsUp).not.toBeNull();
+      thumbsUp?.click();
+      await wait(150);
+
+      // Explanation section should be visible
+      const explanationSection = shadowRoot?.querySelector('.coolhand-partial-explanation');
+      expect(explanationSection).not.toBeNull();
+
+      const textarea = shadowRoot?.querySelector('.coolhand-partial-textarea') as HTMLTextAreaElement;
+      expect(textarea).not.toBeNull();
+      expect(textarea.placeholder).toContain('explain');
+    });
+
+    it('should debounce explanation input and send PATCH request', async () => {
+      const element = document.createElement('div');
+      element.textContent = 'Test text with explanation';
+      document.body.appendChild(element);
+
+      createSelection(element, 0, 4);
+      simulateMouseUp(element);
+      await wait(50);
+
+      let widget = document.querySelector('.coolhand-partial-widget-container');
+      let shadowRoot = widget?.shadowRoot || widget;
+      const thumbsUp = shadowRoot?.querySelector('[data-feedback="up"]') as HTMLElement;
+      thumbsUp?.click();
+      await wait(150);
+
+      widget = document.querySelector('.coolhand-partial-widget-container');
+      shadowRoot = widget?.shadowRoot || widget;
+      const textarea = shadowRoot?.querySelector('.coolhand-partial-textarea') as HTMLTextAreaElement;
+
+      // Type explanation
+      textarea.value = 'This is my explanation';
+      const inputEvent = new Event('input', { bubbles: true });
+      textarea.dispatchEvent(inputEvent);
+
+      // Should not send immediately
+      expect(mockFetch).toHaveBeenCalledTimes(1); // Only the initial POST
+
+      // Wait for debounce (1000ms)
+      await wait(1100);
+
+      // Should have sent PATCH request
+      expect(mockFetch).toHaveBeenCalledTimes(2);
+      const patchCall = (mockFetch as jest.Mock).mock.calls[1];
+      expect(patchCall[0]).toContain('/123'); // PATCH to existing feedback ID
+      expect((patchCall[1] as { method: string }).method).toBe('PATCH');
+
+      const patchBody = JSON.parse((patchCall[1] as { body: string }).body);
+      expect(patchBody.llm_request_log_feedback.explanation).toBe('This is my explanation');
+    });
+
+    it('should send explanation immediately on blur', async () => {
+      const element = document.createElement('div');
+      element.textContent = 'Test text with explanation';
+      document.body.appendChild(element);
+
+      createSelection(element, 0, 4);
+      simulateMouseUp(element);
+      await wait(50);
+
+      let widget = document.querySelector('.coolhand-partial-widget-container');
+      let shadowRoot = widget?.shadowRoot || widget;
+      const thumbsUp = shadowRoot?.querySelector('[data-feedback="up"]') as HTMLElement;
+      thumbsUp?.click();
+      await wait(150);
+
+      widget = document.querySelector('.coolhand-partial-widget-container');
+      shadowRoot = widget?.shadowRoot || widget;
+      const textarea = shadowRoot?.querySelector('.coolhand-partial-textarea') as HTMLTextAreaElement;
+
+      textarea.value = 'Quick explanation';
+      const inputEvent = new Event('input', { bubbles: true });
+      textarea.dispatchEvent(inputEvent);
+
+      // Blur immediately (before debounce)
+      await wait(100);
+      const blurEvent = new Event('blur', { bubbles: true });
+      textarea.dispatchEvent(blurEvent);
+      await wait(50);
+
+      // Should have sent PATCH request immediately on blur
+      expect(mockFetch).toHaveBeenCalledTimes(2);
+      const patchCall = (mockFetch as jest.Mock).mock.calls[1];
+      expect((patchCall[1] as { method: string }).method).toBe('PATCH');
+
+      const patchBody = JSON.parse((patchCall[1] as { body: string }).body);
+      expect(patchBody.llm_request_log_feedback.explanation).toBe('Quick explanation');
+    });
+
+    it('should send explanation and close widget on submit button click', async () => {
+      const element = document.createElement('div');
+      element.textContent = 'Test text with explanation';
+      document.body.appendChild(element);
+
+      createSelection(element, 0, 4);
+      simulateMouseUp(element);
+      await wait(50);
+
+      let widget = document.querySelector('.coolhand-partial-widget-container');
+      let shadowRoot = widget?.shadowRoot || widget;
+      const thumbsUp = shadowRoot?.querySelector('[data-feedback="up"]') as HTMLElement;
+      thumbsUp?.click();
+      await wait(150);
+
+      widget = document.querySelector('.coolhand-partial-widget-container');
+      shadowRoot = widget?.shadowRoot || widget;
+      const textarea = shadowRoot?.querySelector('.coolhand-partial-textarea') as HTMLTextAreaElement;
+      textarea.value = 'Final explanation';
+      const inputEvent = new Event('input', { bubbles: true });
+      textarea.dispatchEvent(inputEvent);
+
+      await wait(50);
+
+      // Click submit button
+      const submitButton = shadowRoot?.querySelector('.coolhand-partial-submit') as HTMLElement;
+      expect(submitButton).not.toBeNull();
+      submitButton?.click();
+      await wait(150);
+
+      // Should have sent PATCH request
+      expect(mockFetch).toHaveBeenCalledTimes(2);
+
+      // Widget should be closed
+      widget = document.querySelector('.coolhand-partial-widget-container');
+      expect(widget).toBeNull();
+    });
+
+    it('should not send explanation if textarea is empty', async () => {
+      const element = document.createElement('div');
+      element.textContent = 'Test text with explanation';
+      document.body.appendChild(element);
+
+      createSelection(element, 0, 4);
+      simulateMouseUp(element);
+      await wait(50);
+
+      let widget = document.querySelector('.coolhand-partial-widget-container');
+      let shadowRoot = widget?.shadowRoot || widget;
+      const thumbsUp = shadowRoot?.querySelector('[data-feedback="up"]') as HTMLElement;
+      thumbsUp?.click();
+      await wait(150);
+
+      widget = document.querySelector('.coolhand-partial-widget-container');
+      shadowRoot = widget?.shadowRoot || widget;
+      const textarea = shadowRoot?.querySelector('.coolhand-partial-textarea') as HTMLTextAreaElement;
+
+      // Type and then clear
+      textarea.value = '   '; // Only whitespace
+      const inputEvent = new Event('input', { bubbles: true });
+      textarea.dispatchEvent(inputEvent);
+
+      await wait(1100);
+
+      // Should not send PATCH for empty explanation
+      expect(mockFetch).toHaveBeenCalledTimes(1); // Only initial POST
+    });
+
+    it('should call onPartialFeedbackError callback on explanation submission failure', async () => {
+      const onError = jest.fn();
+      const element = document.createElement('div');
+      element.textContent = 'Test text with explanation';
+      document.body.appendChild(element);
+
+      const manager = new PartialFeedbackManager(element, 'test-api-key', {
+        onPartialFeedbackError: onError,
+      });
+
+      createSelection(element, 0, 4);
+      simulateMouseUp(element);
+      await wait(50);
+
+      let widget = document.querySelector('.coolhand-partial-widget-container');
+      let shadowRoot = widget?.shadowRoot || widget;
+      const thumbsUp = shadowRoot?.querySelector('[data-feedback="up"]') as HTMLElement;
+      thumbsUp?.click();
+      await wait(150);
+
+      // Mock fetch to fail on PATCH
+      mockFetch.mockImplementationOnce(() =>
+        Promise.resolve({
+          ok: false,
+          status: 500,
+          json: () => Promise.resolve({}),
+        })
+      );
+
+      widget = document.querySelector('.coolhand-partial-widget-container');
+      shadowRoot = widget?.shadowRoot || widget;
+      const textarea = shadowRoot?.querySelector('.coolhand-partial-textarea') as HTMLTextAreaElement;
+      textarea.value = 'This will fail';
+      const inputEvent = new Event('input', { bubbles: true });
+      textarea.dispatchEvent(inputEvent);
+
+      await wait(1100);
+
+      expect(onError).toHaveBeenCalled();
+      const errorArg = onError.mock.calls[0][0];
+      expect(errorArg).toBeInstanceOf(Error);
+
+      manager.destroy();
+    });
+
+    it('should include explanation in PATCH request payload', async () => {
+      const element = document.createElement('div');
+      element.textContent = 'Test text with explanation';
+      document.body.appendChild(element);
+
+      createSelection(element, 0, 4);
+      simulateMouseUp(element);
+      await wait(50);
+
+      let widget = document.querySelector('.coolhand-partial-widget-container');
+      let shadowRoot = widget?.shadowRoot || widget;
+      const thumbsDown = shadowRoot?.querySelector('[data-feedback="down"]') as HTMLElement;
+      thumbsDown?.click();
+      await wait(150);
+
+      widget = document.querySelector('.coolhand-partial-widget-container');
+      shadowRoot = widget?.shadowRoot || widget;
+      const textarea = shadowRoot?.querySelector('.coolhand-partial-textarea') as HTMLTextAreaElement;
+      textarea.value = 'Detailed explanation here';
+      const inputEvent = new Event('input', { bubbles: true });
+      textarea.dispatchEvent(inputEvent);
+
+      await wait(1100);
+
+      const patchCall = (mockFetch as jest.Mock).mock.calls[1];
+      const patchBody = JSON.parse((patchCall[1] as { body: string }).body);
+
+      expect(patchBody.llm_request_log_feedback).toBeDefined();
+      expect(patchBody.llm_request_log_feedback.explanation).toBe('Detailed explanation here');
+      expect(patchBody.llm_request_log_feedback.like).toBe(false);
+      expect(patchBody.llm_request_log_feedback.focus_section).toBe('Test');
+    });
+  });
+
+  describe('Editing Existing Feedback', () => {
+    it('should reopen widget when clicking on existing highlight', async () => {
+      const element = document.createElement('div');
+      element.textContent = 'Test text for editing';
+      document.body.appendChild(element);
+
+      const manager = new PartialFeedbackManager(element, 'test-api-key');
+
+      // Create initial feedback
+      createSelection(element, 0, 4);
+      simulateMouseUp(element);
+      await wait(50);
+
+      let widget = document.querySelector('.coolhand-partial-widget-container');
+      const shadowRoot = widget?.shadowRoot || widget;
+      const thumbsUp = shadowRoot?.querySelector('[data-feedback="up"]') as HTMLElement;
+      thumbsUp?.click();
+      await wait(150);
+
+      // Close widget
+      const escapeEvent = new KeyboardEvent('keydown', { key: 'Escape', bubbles: true });
+      document.dispatchEvent(escapeEvent);
+      await wait(50);
+
+      expect(document.querySelector('.coolhand-partial-widget-container')).toBeNull();
+
+      // Now hover and wait to reopen
+      const highlight = element.querySelector(`.${PARTIAL_HIGHLIGHT_CLASS}`) as HTMLElement;
+      const mouseEnterEvent = new MouseEvent('mouseenter', {
+        bubbles: true,
+        cancelable: true,
+        clientX: 150,
+        clientY: 110,
+      });
+      highlight.dispatchEvent(mouseEnterEvent);
+      await wait(250);
+
+      // Widget should be visible again
+      widget = document.querySelector('.coolhand-partial-widget-container');
+      expect(widget).not.toBeNull();
+
+      manager.destroy();
+    });
+
+    it('should show current feedback state when reopening widget', async () => {
+      const element = document.createElement('div');
+      element.textContent = 'Test text for editing';
+      document.body.appendChild(element);
+
+      const manager = new PartialFeedbackManager(element, 'test-api-key');
+
+      // Create initial feedback with thumbs down
+      createSelection(element, 0, 4);
+      simulateMouseUp(element);
+      await wait(50);
+
+      const widget = document.querySelector('.coolhand-partial-widget-container');
+      const shadowRoot = widget?.shadowRoot || widget;
+      const thumbsDown = shadowRoot?.querySelector('[data-feedback="down"]') as HTMLElement;
+      thumbsDown?.click();
+      await wait(150);
+
+      // Close widget
+      const escapeEvent = new KeyboardEvent('keydown', { key: 'Escape', bubbles: true });
+      document.dispatchEvent(escapeEvent);
+      await wait(50);
+
+      // Reopen
+      const highlight = element.querySelector(`.${PARTIAL_HIGHLIGHT_CLASS}`) as HTMLElement;
+      const mouseEnterEvent = new MouseEvent('mouseenter', {
+        bubbles: true,
+        cancelable: true,
+        clientX: 150,
+        clientY: 110,
+      });
+      highlight.dispatchEvent(mouseEnterEvent);
+      await wait(250);
+
+      // Thumbs down should be selected
+      const widgetAfter = document.querySelector('.coolhand-partial-widget-container');
+      const shadowRootAfter = widgetAfter?.shadowRoot || widgetAfter;
+      const thumbsDownAfter = shadowRootAfter?.querySelector('[data-feedback="down"]') as HTMLElement;
+      expect(thumbsDownAfter?.classList.contains('coolhand-selected')).toBe(true);
+
+      manager.destroy();
+    });
+
+    it('should send PATCH request when updating existing feedback', async () => {
+      const element = document.createElement('div');
+      element.textContent = 'Test text for editing';
+      document.body.appendChild(element);
+
+      const manager = new PartialFeedbackManager(element, 'test-api-key');
+
+      // Create initial feedback
+      createSelection(element, 0, 4);
+      simulateMouseUp(element);
+      await wait(50);
+
+      let widget = document.querySelector('.coolhand-partial-widget-container');
+      let shadowRoot = widget?.shadowRoot || widget;
+      const thumbsUp = shadowRoot?.querySelector('[data-feedback="up"]') as HTMLElement;
+      thumbsUp?.click();
+      await wait(150);
+
+      mockFetch.mockClear();
+
+      // Close and reopen
+      const escapeEvent = new KeyboardEvent('keydown', { key: 'Escape', bubbles: true });
+      document.dispatchEvent(escapeEvent);
+      await wait(50);
+
+      const highlight = element.querySelector(`.${PARTIAL_HIGHLIGHT_CLASS}`) as HTMLElement;
+      const mouseEnterEvent = new MouseEvent('mouseenter', {
+        bubbles: true,
+        cancelable: true,
+        clientX: 150,
+        clientY: 110,
+      });
+      highlight.dispatchEvent(mouseEnterEvent);
+      await wait(250);
+
+      // Change to thumbs down
+      widget = document.querySelector('.coolhand-partial-widget-container');
+      shadowRoot = widget?.shadowRoot || widget;
+      const thumbsDown = shadowRoot?.querySelector('[data-feedback="down"]') as HTMLElement;
+      thumbsDown?.click();
+      await wait(150);
+
+      // Should use PATCH method
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+      const patchCall = (mockFetch as jest.Mock).mock.calls[0];
+      expect((patchCall[1] as { method: string }).method).toBe('PATCH');
+      expect(patchCall[0]).toContain('/123');
+
+      manager.destroy();
+    });
+
+    it('should find entry by feedback ID attribute', async () => {
+      const element = document.createElement('div');
+      element.textContent = 'Test text for editing';
+      document.body.appendChild(element);
+
+      const manager = new PartialFeedbackManager(element, 'test-api-key');
+
+      // Create feedback
+      createSelection(element, 0, 4);
+      simulateMouseUp(element);
+      await wait(50);
+
+      const widget = document.querySelector('.coolhand-partial-widget-container');
+      const shadowRoot = widget?.shadowRoot || widget;
+      const thumbsUp = shadowRoot?.querySelector('[data-feedback="up"]') as HTMLElement;
+      thumbsUp?.click();
+      await wait(150);
+
+      // Check highlight has data-feedback-id
+      const highlight = element.querySelector(`.${PARTIAL_HIGHLIGHT_CLASS}`) as HTMLElement;
+      expect(highlight.getAttribute('data-feedback-id')).toBe('123');
+
+      manager.destroy();
+    });
+
+    it('should fallback to finding entry by text content if ID not found', async () => {
+      const element = document.createElement('div');
+      element.textContent = 'Test text for editing';
+      document.body.appendChild(element);
+
+      const manager = new PartialFeedbackManager(element, 'test-api-key');
+
+      // Create feedback
+      createSelection(element, 0, 4);
+      simulateMouseUp(element);
+      await wait(50);
+
+      let widget = document.querySelector('.coolhand-partial-widget-container');
+      const shadowRoot = widget?.shadowRoot || widget;
+      const thumbsUp = shadowRoot?.querySelector('[data-feedback="up"]') as HTMLElement;
+      thumbsUp?.click();
+      await wait(150);
+
+      const escapeEvent = new KeyboardEvent('keydown', { key: 'Escape', bubbles: true });
+      document.dispatchEvent(escapeEvent);
+      await wait(50);
+
+      // Remove the ID attribute to test fallback
+      const highlight = element.querySelector(`.${PARTIAL_HIGHLIGHT_CLASS}`) as HTMLElement;
+      highlight.removeAttribute('data-feedback-id');
+
+      // Hover should still find the entry by text
+      const mouseEnterEvent = new MouseEvent('mouseenter', {
+        bubbles: true,
+        cancelable: true,
+        clientX: 150,
+        clientY: 110,
+      });
+      highlight.dispatchEvent(mouseEnterEvent);
+      await wait(250);
+
+      widget = document.querySelector('.coolhand-partial-widget-container');
+      expect(widget).not.toBeNull();
+
+      manager.destroy();
+    });
+  });
+
+  describe('Keyboard Interactions on Highlights', () => {
+    it('should open widget when Enter key pressed on focused highlight', async () => {
+      const element = document.createElement('div');
+      element.textContent = 'Test text for keyboard';
+      document.body.appendChild(element);
+
+      const manager = new PartialFeedbackManager(element, 'test-api-key');
+
+      // Create feedback
+      createSelection(element, 0, 4);
+      simulateMouseUp(element);
+      await wait(50);
+
+      let widget = document.querySelector('.coolhand-partial-widget-container');
+      let shadowRoot = widget?.shadowRoot || widget;
+      const thumbsUp = shadowRoot?.querySelector('[data-feedback="up"]') as HTMLElement;
+      thumbsUp?.click();
+      await wait(150);
+
+      const escapeEvent = new KeyboardEvent('keydown', { key: 'Escape', bubbles: true });
+      document.dispatchEvent(escapeEvent);
+      await wait(50);
+
+      const highlight = element.querySelector(`.${PARTIAL_HIGHLIGHT_CLASS}`) as HTMLElement;
+
+      // Focus the highlight
+      const focusEvent = new FocusEvent('focus', { bubbles: true });
+      highlight.dispatchEvent(focusEvent);
+      await wait(50);
+
+      // Widget should appear on focus
+      widget = document.querySelector('.coolhand-partial-widget-container');
+      expect(widget).not.toBeNull();
+
+      // Close it
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+      await wait(50);
+
+      // Press Enter
+      const enterEvent = new KeyboardEvent('keydown', { key: 'Enter', bubbles: true });
+      highlight.dispatchEvent(enterEvent);
+      await wait(50);
+
+      widget = document.querySelector('.coolhand-partial-widget-container');
+      expect(widget).not.toBeNull();
+
+      manager.destroy();
+    });
+
+    it('should open widget when Space key pressed on focused highlight', async () => {
+      const element = document.createElement('div');
+      element.textContent = 'Test text for keyboard';
+      document.body.appendChild(element);
+
+      const manager = new PartialFeedbackManager(element, 'test-api-key');
+
+      // Create feedback
+      createSelection(element, 0, 4);
+      simulateMouseUp(element);
+      await wait(50);
+
+      let widget = document.querySelector('.coolhand-partial-widget-container');
+      let shadowRoot = widget?.shadowRoot || widget;
+      const thumbsUp = shadowRoot?.querySelector('[data-feedback="up"]') as HTMLElement;
+      thumbsUp?.click();
+      await wait(150);
+
+      const escapeEvent = new KeyboardEvent('keydown', { key: 'Escape', bubbles: true });
+      document.dispatchEvent(escapeEvent);
+      await wait(50);
+
+      const highlight = element.querySelector(`.${PARTIAL_HIGHLIGHT_CLASS}`) as HTMLElement;
+
+      // Press Space
+      const spaceEvent = new KeyboardEvent('keydown', { key: ' ', bubbles: true });
+      highlight.dispatchEvent(spaceEvent);
+      await wait(50);
+
+      widget = document.querySelector('.coolhand-partial-widget-container');
+      expect(widget).not.toBeNull();
+
+      manager.destroy();
+    });
+
+    it('should prevent default behavior on Enter/Space to avoid scrolling', async () => {
+      const element = document.createElement('div');
+      element.textContent = 'Test text for keyboard';
+      document.body.appendChild(element);
+
+      const manager = new PartialFeedbackManager(element, 'test-api-key');
+
+      // Create feedback
+      createSelection(element, 0, 4);
+      simulateMouseUp(element);
+      await wait(50);
+
+      let widget = document.querySelector('.coolhand-partial-widget-container');
+      let shadowRoot = widget?.shadowRoot || widget;
+      const thumbsUp = shadowRoot?.querySelector('[data-feedback="up"]') as HTMLElement;
+      thumbsUp?.click();
+      await wait(150);
+
+      const escapeEvent = new KeyboardEvent('keydown', { key: 'Escape', bubbles: true });
+      document.dispatchEvent(escapeEvent);
+      await wait(50);
+
+      const highlight = element.querySelector(`.${PARTIAL_HIGHLIGHT_CLASS}`) as HTMLElement;
+
+      // Create event with preventDefault spy
+      const enterEvent = new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true });
+      const preventDefaultSpy = jest.spyOn(enterEvent, 'preventDefault');
+
+      highlight.dispatchEvent(enterEvent);
+
+      expect(preventDefaultSpy).toHaveBeenCalled();
+
+      manager.destroy();
+    });
+
+    it('should position widget below highlight (not cursor) on keyboard focus', async () => {
+      const element = document.createElement('div');
+      element.textContent = 'Test text for keyboard';
+      document.body.appendChild(element);
+
+      const manager = new PartialFeedbackManager(element, 'test-api-key');
+
+      // Create feedback
+      createSelection(element, 0, 4);
+      simulateMouseUp(element);
+      await wait(50);
+
+      let widget = document.querySelector('.coolhand-partial-widget-container');
+      let shadowRoot = widget?.shadowRoot || widget;
+      const thumbsUp = shadowRoot?.querySelector('[data-feedback="up"]') as HTMLElement;
+      thumbsUp?.click();
+      await wait(150);
+
+      const escapeEvent = new KeyboardEvent('keydown', { key: 'Escape', bubbles: true });
+      document.dispatchEvent(escapeEvent);
+      await wait(50);
+
+      const highlight = element.querySelector(`.${PARTIAL_HIGHLIGHT_CLASS}`) as HTMLElement;
+
+      // Focus should show widget positioned relative to highlight, not cursor
+      const focusEvent = new FocusEvent('focus', { bubbles: true });
+      highlight.dispatchEvent(focusEvent);
+      await wait(50);
+
+      widget = document.querySelector('.coolhand-partial-widget-container') as HTMLElement;
+      expect(widget).not.toBeNull();
+      expect((widget as HTMLElement).style.position).toBe('absolute');
+
+      manager.destroy();
+    });
+  });
+
+  describe('Optional API Fields', () => {
+    it('should include clientUniqueId in PATCH request when provided', async () => {
+      const element = document.createElement('div');
+      element.textContent = 'Test text';
+      document.body.appendChild(element);
+
+      const manager = new PartialFeedbackManager(element, 'test-api-key', {
+        clientUniqueId: 'test-client-123',
+      });
+
+      createSelection(element, 0, 4);
+      simulateMouseUp(element);
+      await wait(50);
+
+      let widget = document.querySelector('.coolhand-partial-widget-container');
+      let shadowRoot = widget?.shadowRoot || widget;
+      const thumbsUp = shadowRoot?.querySelector('[data-feedback="up"]') as HTMLElement;
+      thumbsUp?.click();
+      await wait(150);
+
+      mockFetch.mockClear();
+
+      // Add explanation to trigger PATCH
+      widget = document.querySelector('.coolhand-partial-widget-container');
+      shadowRoot = widget?.shadowRoot || widget;
+      const textarea = shadowRoot?.querySelector('.coolhand-partial-textarea') as HTMLTextAreaElement;
+      textarea.value = 'Test explanation';
+      textarea.dispatchEvent(new Event('input', { bubbles: true }));
+      await wait(1100);
+
+      const patchCall = (mockFetch as jest.Mock).mock.calls[0];
+      const patchBody = JSON.parse((patchCall[1] as { body: string }).body);
+      expect(patchBody.llm_request_log_feedback.client_unique_id).toBe('test-client-123');
+
+      manager.destroy();
+    });
+
+    it('should include coolhandFingerprintId in PATCH request when provided', async () => {
+      const element = document.createElement('div');
+      element.textContent = 'Test text';
+      document.body.appendChild(element);
+
+      const manager = new PartialFeedbackManager(element, 'test-api-key', {
+        coolhandFingerprintId: 'fingerprint-456',
+      });
+
+      createSelection(element, 0, 4);
+      simulateMouseUp(element);
+      await wait(50);
+
+      let widget = document.querySelector('.coolhand-partial-widget-container');
+      let shadowRoot = widget?.shadowRoot || widget;
+      const thumbsUp = shadowRoot?.querySelector('[data-feedback="up"]') as HTMLElement;
+      thumbsUp?.click();
+      await wait(150);
+
+      mockFetch.mockClear();
+
+      widget = document.querySelector('.coolhand-partial-widget-container');
+      shadowRoot = widget?.shadowRoot || widget;
+      const textarea = shadowRoot?.querySelector('.coolhand-partial-textarea') as HTMLTextAreaElement;
+      textarea.value = 'Test explanation';
+      textarea.dispatchEvent(new Event('input', { bubbles: true }));
+      await wait(1100);
+
+      const patchCall = (mockFetch as jest.Mock).mock.calls[0];
+      const patchBody = JSON.parse((patchCall[1] as { body: string }).body);
+      expect(patchBody.llm_request_log_feedback.coolhand_fingerprint_id).toBe('fingerprint-456');
+
+      manager.destroy();
+    });
+
+    it('should include workloadId in PATCH request when provided', async () => {
+      const element = document.createElement('div');
+      element.textContent = 'Test text';
+      document.body.appendChild(element);
+
+      const manager = new PartialFeedbackManager(element, 'test-api-key', {
+        workloadId: 'workload-789',
+      });
+
+      createSelection(element, 0, 4);
+      simulateMouseUp(element);
+      await wait(50);
+
+      let widget = document.querySelector('.coolhand-partial-widget-container');
+      let shadowRoot = widget?.shadowRoot || widget;
+      const thumbsUp = shadowRoot?.querySelector('[data-feedback="up"]') as HTMLElement;
+      thumbsUp?.click();
+      await wait(150);
+
+      mockFetch.mockClear();
+
+      widget = document.querySelector('.coolhand-partial-widget-container');
+      shadowRoot = widget?.shadowRoot || widget;
+      const textarea = shadowRoot?.querySelector('.coolhand-partial-textarea') as HTMLTextAreaElement;
+      textarea.value = 'Test explanation';
+      textarea.dispatchEvent(new Event('input', { bubbles: true }));
+      await wait(1100);
+
+      const patchCall = (mockFetch as jest.Mock).mock.calls[0];
+      const patchBody = JSON.parse((patchCall[1] as { body: string }).body);
+      expect(patchBody.llm_request_log_feedback.workload_hashid).toBe('workload-789');
+
+      manager.destroy();
+    });
+
+    it('should include all optional fields when all are provided', async () => {
+      const element = document.createElement('div');
+      element.textContent = 'Test text';
+      document.body.appendChild(element);
+
+      const manager = new PartialFeedbackManager(element, 'test-api-key', {
+        clientUniqueId: 'client-123',
+        coolhandFingerprintId: 'fingerprint-456',
+        workloadId: 'workload-789',
+      });
+
+      createSelection(element, 0, 4);
+      simulateMouseUp(element);
+      await wait(50);
+
+      let widget = document.querySelector('.coolhand-partial-widget-container');
+      let shadowRoot = widget?.shadowRoot || widget;
+      const thumbsUp = shadowRoot?.querySelector('[data-feedback="up"]') as HTMLElement;
+      thumbsUp?.click();
+      await wait(150);
+
+      mockFetch.mockClear();
+
+      widget = document.querySelector('.coolhand-partial-widget-container');
+      shadowRoot = widget?.shadowRoot || widget;
+      const textarea = shadowRoot?.querySelector('.coolhand-partial-textarea') as HTMLTextAreaElement;
+      textarea.value = 'Test explanation';
+      textarea.dispatchEvent(new Event('input', { bubbles: true }));
+      await wait(1100);
+
+      const patchCall = (mockFetch as jest.Mock).mock.calls[0];
+      const patchBody = JSON.parse((patchCall[1] as { body: string }).body);
+
+      expect(patchBody.llm_request_log_feedback.client_unique_id).toBe('client-123');
+      expect(patchBody.llm_request_log_feedback.coolhand_fingerprint_id).toBe('fingerprint-456');
+      expect(patchBody.llm_request_log_feedback.workload_hashid).toBe('workload-789');
+
+      manager.destroy();
+    });
+  });
+
+  describe('Selection Edge Cases', () => {
+    it('should handle invalid storage format and reset entries', () => {
+      const element = document.createElement('div');
+      element.textContent = 'Test text';
+      element.setAttribute(PARTIAL_FEEDBACKS_ATTRIBUTE, '{"invalid": "format"}');
+      document.body.appendChild(element);
+
+      // Should not throw and should reset to empty
+      const manager = new PartialFeedbackManager(element, 'test-api-key');
+
+      const storage = element.getAttribute(PARTIAL_FEEDBACKS_ATTRIBUTE);
+      expect(storage).toBe('{"version":1,"entries":[]}');
+
+      manager.destroy();
+    });
+
+    it('should warn and reset on corrupted JSON in data attribute', () => {
+      const consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+
+      const element = document.createElement('div');
+      element.textContent = 'Test text';
+      element.setAttribute(PARTIAL_FEEDBACKS_ATTRIBUTE, 'not valid json{{{');
+      document.body.appendChild(element);
+
+      const manager = new PartialFeedbackManager(element, 'test-api-key');
+
+      expect(consoleWarnSpy).toHaveBeenCalledWith(
+        '[CoolhandJS] Failed to parse partial feedbacks, resetting'
+      );
+
+      consoleWarnSpy.mockRestore();
+      manager.destroy();
+    });
+
+    it('should not create feedback if clicking directly on existing highlight', async () => {
+      const element = document.createElement('div');
+      element.textContent = 'Test text for clicking';
+      document.body.appendChild(element);
+
+      const manager = new PartialFeedbackManager(element, 'test-api-key');
+
+      // Create initial feedback
+      createSelection(element, 0, 4);
+      simulateMouseUp(element);
+      await wait(50);
+
+      const widget = document.querySelector('.coolhand-partial-widget-container');
+      const shadowRoot = widget?.shadowRoot || widget;
+      const thumbsUp = shadowRoot?.querySelector('[data-feedback="up"]') as HTMLElement;
+      thumbsUp?.click();
+      await wait(150);
+
+      const escapeEvent = new KeyboardEvent('keydown', { key: 'Escape', bubbles: true });
+      document.dispatchEvent(escapeEvent);
+      await wait(50);
+
+      mockFetch.mockClear();
+
+      // Click on the highlight itself
+      const highlight = element.querySelector(`.${PARTIAL_HIGHLIGHT_CLASS}`) as HTMLElement;
+      simulateMouseUp(highlight);
+      await wait(50);
+
+      // Should not create new feedback (no new widget)
+      const widgets = document.querySelectorAll('.coolhand-partial-widget-container');
+      expect(widgets.length).toBe(0);
+
+      manager.destroy();
+    });
+
+    it('should sort entries by startOffset in reverse before restoring highlights', () => {
+      const element = document.createElement('div');
+      element.textContent = 'First second third fourth';
+      document.body.appendChild(element);
+
+      // Manually create storage with multiple entries
+      const storage = {
+        version: 1,
+        entries: [
+          { id: 1, range: { text: 'First', startOffset: 0, endOffset: 5 }, like: true },
+          { id: 2, range: { text: 'third', startOffset: 13, endOffset: 18 }, like: false },
+          { id: 3, range: { text: 'second', startOffset: 6, endOffset: 12 }, like: true },
+        ],
+      };
+      element.setAttribute(PARTIAL_FEEDBACKS_ATTRIBUTE, JSON.stringify(storage));
+
+      const manager = new PartialFeedbackManager(element, 'test-api-key');
+
+      // All three should be highlighted
+      const highlights = element.querySelectorAll(`.${PARTIAL_HIGHLIGHT_CLASS}`);
+      expect(highlights.length).toBe(3);
+
+      manager.destroy();
+    });
+  });
+
+  describe('Widget Positioning and Updates', () => {
+    it('should position widget as absolute', async () => {
+      const element = document.createElement('div');
+      element.textContent = 'Test positioning';
+      document.body.appendChild(element);
+
+      const manager = new PartialFeedbackManager(element, 'test-api-key');
+
+      createSelection(element, 0, 4);
+      simulateMouseUp(element);
+      await wait(50);
+
+      const widget = document.querySelector('.coolhand-partial-widget-container') as HTMLElement;
+      expect(widget).not.toBeNull();
+      expect(widget.style.position).toBe('absolute');
+
+      manager.destroy();
+    });
+
+    it('should calculate top position below selection', async () => {
+      const element = document.createElement('div');
+      element.textContent = 'Test positioning';
+      document.body.appendChild(element);
+
+      const manager = new PartialFeedbackManager(element, 'test-api-key');
+
+      createSelection(element, 0, 4);
+      simulateMouseUp(element);
+      await wait(50);
+
+      const widget = document.querySelector('.coolhand-partial-widget-container') as HTMLElement;
+      const topValue = parseInt(widget.style.top);
+
+      // Should be positioned below the selection (120px bottom from mock + scrollY)
+      expect(topValue).toBeGreaterThan(100);
+
+      manager.destroy();
+    });
+
+    it('should announce feedback submission to screen readers', async () => {
+      const element = document.createElement('div');
+      element.textContent = 'Test announcement';
+      document.body.appendChild(element);
+
+      const manager = new PartialFeedbackManager(element, 'test-api-key');
+
+      createSelection(element, 0, 4);
+      simulateMouseUp(element);
+      await wait(50);
+
+      const widget = document.querySelector('.coolhand-partial-widget-container');
+      const shadowRoot = widget?.shadowRoot || widget;
+      const thumbsUp = shadowRoot?.querySelector('[data-feedback="up"]') as HTMLElement;
+      thumbsUp?.click();
+      await wait(150);
+
+      // Check for aria-live region
+      const liveRegion = document.querySelector('[aria-live="polite"]');
+      expect(liveRegion).not.toBeNull();
+
+      manager.destroy();
+    });
+  });
+
+  describe('Selection Overlap Detection', () => {
+    it('should detect when new selection overlaps existing highlight', async () => {
+      const element = document.createElement('div');
+      element.textContent = 'First second third';
+      document.body.appendChild(element);
+
+      const manager = new PartialFeedbackManager(element, 'test-api-key');
+
+      // Create first feedback
+      createSelection(element, 0, 5); // "First"
+      simulateMouseUp(element);
+      await wait(50);
+
+      const widget = document.querySelector('.coolhand-partial-widget-container');
+      const shadowRoot = widget?.shadowRoot || widget;
+      const thumbsUp = shadowRoot?.querySelector('[data-feedback="up"]') as HTMLElement;
+      thumbsUp?.click();
+      await wait(150);
+
+      const escapeEvent = new KeyboardEvent('keydown', { key: 'Escape', bubbles: true });
+      document.dispatchEvent(escapeEvent);
+      await wait(50);
+
+      // Try to create overlapping selection
+      createSelection(element, 3, 8); // "st se" - overlaps with "First"
+      simulateMouseUp(element);
+      await wait(50);
+
+      // Widget should not appear for overlapping selection
+      const widgets = document.querySelectorAll('.coolhand-partial-widget-container');
+      expect(widgets.length).toBe(0);
+
+      manager.destroy();
+    });
+
+    it('should allow non-overlapping selections', async () => {
+      const element = document.createElement('div');
+      element.textContent = 'First second third';
+      document.body.appendChild(element);
+
+      const manager = new PartialFeedbackManager(element, 'test-api-key');
+
+      // Create first feedback
+      createSelection(element, 0, 5); // "First"
+      simulateMouseUp(element);
+      await wait(50);
+
+      let widget = document.querySelector('.coolhand-partial-widget-container');
+      let shadowRoot = widget?.shadowRoot || widget;
+      const thumbsUp1 = shadowRoot?.querySelector('[data-feedback="up"]') as HTMLElement;
+      thumbsUp1?.click();
+      await wait(150);
+
+      const escapeEvent1 = new KeyboardEvent('keydown', { key: 'Escape', bubbles: true });
+      document.dispatchEvent(escapeEvent1);
+      await wait(50);
+
+      // Create non-overlapping selection
+      createSelection(element, 6, 12); // "second"
+      simulateMouseUp(element);
+      await wait(50);
+
+      // Widget should appear
+      widget = document.querySelector('.coolhand-partial-widget-container');
+      expect(widget).not.toBeNull();
+
+      shadowRoot = widget?.shadowRoot || widget;
+      const thumbsUp2 = shadowRoot?.querySelector('[data-feedback="up"]') as HTMLElement;
+      thumbsUp2?.click();
+      await wait(150);
+
+      // Should have two highlights
+      const highlights = element.querySelectorAll(`.${PARTIAL_HIGHLIGHT_CLASS}`);
+      expect(highlights.length).toBe(2);
+
+      manager.destroy();
+    });
+  });
+
   describe('Constants', () => {
     it('should have correct MIN_SELECTION_LENGTH value', () => {
       expect(MIN_SELECTION_LENGTH).toBe(3);
