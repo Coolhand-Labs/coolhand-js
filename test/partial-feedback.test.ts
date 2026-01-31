@@ -1132,11 +1132,14 @@ describe('Partial Feedback', () => {
   });
 
   describe('Explanation/Comment Feature', () => {
-    it.skip('should show explanation textarea after selecting feedback option', async () => {
-      // Skipped: Explanation feature may not be rendered in partial feedback widget
+    it('should show explanation textarea after selecting feedback option', async () => {
       const element = document.createElement('div');
       element.textContent = 'Test text with explanation';
       document.body.appendChild(element);
+
+      const manager = new PartialFeedbackManager(element, 'test-api-key', {
+        explanationSample: 1, // Always show explanation
+      });
 
       createSelection(element, 0, 4);
       simulateMouseUp(element);
@@ -1147,29 +1150,33 @@ describe('Partial Feedback', () => {
       const thumbsUp = shadowRoot?.querySelector('[data-feedback="up"]') as HTMLElement;
       expect(thumbsUp).not.toBeNull();
       thumbsUp?.click();
-      await wait(300);
 
-      // Re-query widget and shadow root after feedback selection
+      // Wait for API response and explanation to appear
+      await wait(200);
+
+      // Re-query widget and shadow root after feedback submission
       const updatedWidget = document.querySelector('.coolhand-partial-widget-container');
       const updatedShadowRoot = updatedWidget?.shadowRoot || updatedWidget;
 
-      // Check if explanation section exists (may not be rendered immediately)
+      // Explanation section should be visible after feedback submission
       const explanationSection = updatedShadowRoot?.querySelector('.coolhand-partial-explanation');
-      const textarea = updatedShadowRoot?.querySelector('.coolhand-partial-textarea') as HTMLTextAreaElement;
+      expect(explanationSection).not.toBeNull();
 
-      // If explanation section exists, verify textarea
-      if (explanationSection && textarea) {
-        expect(textarea.placeholder).toContain('explain');
-      } else {
-        // Skip assertion if explanation not rendered (implementation detail)
-        expect(true).toBe(true);
-      }
+      const textarea = updatedShadowRoot?.querySelector('.coolhand-partial-textarea') as HTMLTextAreaElement;
+      expect(textarea).not.toBeNull();
+      expect(textarea.placeholder).toContain('note');
+
+      manager.destroy();
     });
 
-    it.skip('should debounce explanation input and send PATCH request', async () => {
+    it('should debounce explanation input and send PATCH request', async () => {
       const element = document.createElement('div');
       element.textContent = 'Test text with explanation';
       document.body.appendChild(element);
+
+      const manager = new PartialFeedbackManager(element, 'test-api-key', {
+        explanationSample: 1, // Always show explanation
+      });
 
       createSelection(element, 0, 4);
       simulateMouseUp(element);
@@ -1179,11 +1186,13 @@ describe('Partial Feedback', () => {
       let shadowRoot = widget?.shadowRoot || widget;
       const thumbsUp = shadowRoot?.querySelector('[data-feedback="up"]') as HTMLElement;
       thumbsUp?.click();
-      await wait(150);
+      await wait(200);
 
+      // Explanation should appear after feedback submission
       widget = document.querySelector('.coolhand-partial-widget-container');
       shadowRoot = widget?.shadowRoot || widget;
       const textarea = shadowRoot?.querySelector('.coolhand-partial-textarea') as HTMLTextAreaElement;
+      expect(textarea).not.toBeNull();
 
       // Type explanation
       textarea.value = 'This is my explanation';
@@ -1204,12 +1213,18 @@ describe('Partial Feedback', () => {
 
       const patchBody = JSON.parse((patchCall[1] as { body: string }).body);
       expect(patchBody.llm_request_log_feedback.explanation).toBe('This is my explanation');
+
+      manager.destroy();
     });
 
-    it.skip('should send explanation immediately on blur', async () => {
+    it('should send explanation immediately on blur', async () => {
       const element = document.createElement('div');
       element.textContent = 'Test text with explanation';
       document.body.appendChild(element);
+
+      const manager = new PartialFeedbackManager(element, 'test-api-key', {
+        explanationSample: 1,
+      });
 
       createSelection(element, 0, 4);
       simulateMouseUp(element);
@@ -1219,11 +1234,12 @@ describe('Partial Feedback', () => {
       let shadowRoot = widget?.shadowRoot || widget;
       const thumbsUp = shadowRoot?.querySelector('[data-feedback="up"]') as HTMLElement;
       thumbsUp?.click();
-      await wait(150);
+      await wait(200); // Wait for explanation to appear
 
       widget = document.querySelector('.coolhand-partial-widget-container');
       shadowRoot = widget?.shadowRoot || widget;
       const textarea = shadowRoot?.querySelector('.coolhand-partial-textarea') as HTMLTextAreaElement;
+      expect(textarea).not.toBeNull();
 
       textarea.value = 'Quick explanation';
       const inputEvent = new Event('input', { bubbles: true });
@@ -1242,12 +1258,18 @@ describe('Partial Feedback', () => {
 
       const patchBody = JSON.parse((patchCall[1] as { body: string }).body);
       expect(patchBody.llm_request_log_feedback.explanation).toBe('Quick explanation');
+
+      manager.destroy();
     });
 
-    it.skip('should send explanation and close widget on submit button click', async () => {
+    it('should send explanation and close widget on submit button click', async () => {
       const element = document.createElement('div');
       element.textContent = 'Test text with explanation';
       document.body.appendChild(element);
+
+      const manager = new PartialFeedbackManager(element, 'test-api-key', {
+        explanationSample: 1,
+      });
 
       createSelection(element, 0, 4);
       simulateMouseUp(element);
@@ -1257,11 +1279,13 @@ describe('Partial Feedback', () => {
       let shadowRoot = widget?.shadowRoot || widget;
       const thumbsUp = shadowRoot?.querySelector('[data-feedback="up"]') as HTMLElement;
       thumbsUp?.click();
-      await wait(150);
+      await wait(200); // Wait for explanation to appear
 
       widget = document.querySelector('.coolhand-partial-widget-container');
       shadowRoot = widget?.shadowRoot || widget;
       const textarea = shadowRoot?.querySelector('.coolhand-partial-textarea') as HTMLTextAreaElement;
+      expect(textarea).not.toBeNull();
+
       textarea.value = 'Final explanation';
       const inputEvent = new Event('input', { bubbles: true });
       textarea.dispatchEvent(inputEvent);
@@ -1280,46 +1304,17 @@ describe('Partial Feedback', () => {
       // Widget should be closed
       widget = document.querySelector('.coolhand-partial-widget-container');
       expect(widget).toBeNull();
+
+      manager.destroy();
     });
 
-    it.skip('should not send explanation if textarea is empty', async () => {
-      const element = document.createElement('div');
-      element.textContent = 'Test text with explanation';
-      document.body.appendChild(element);
-
-      createSelection(element, 0, 4);
-      simulateMouseUp(element);
-      await wait(50);
-
-      let widget = document.querySelector('.coolhand-partial-widget-container');
-      let shadowRoot = widget?.shadowRoot || widget;
-      const thumbsUp = shadowRoot?.querySelector('[data-feedback="up"]') as HTMLElement;
-      thumbsUp?.click();
-      await wait(150);
-
-      widget = document.querySelector('.coolhand-partial-widget-container');
-      shadowRoot = widget?.shadowRoot || widget;
-      const textarea = shadowRoot?.querySelector('.coolhand-partial-textarea') as HTMLTextAreaElement;
-
-      // Type and then clear
-      textarea.value = '   '; // Only whitespace
-      const inputEvent = new Event('input', { bubbles: true });
-      textarea.dispatchEvent(inputEvent);
-
-      await wait(1100);
-
-      // Should not send PATCH for empty explanation
-      expect(mockFetch).toHaveBeenCalledTimes(1); // Only initial POST
-    });
-
-    it.skip('should call onPartialFeedbackError callback on explanation submission failure', async () => {
-      const onError = jest.fn();
+    it('should not send explanation if textarea is empty', async () => {
       const element = document.createElement('div');
       element.textContent = 'Test text with explanation';
       document.body.appendChild(element);
 
       const manager = new PartialFeedbackManager(element, 'test-api-key', {
-        onPartialFeedbackError: onError,
+        explanationSample: 1,
       });
 
       createSelection(element, 0, 4);
@@ -1330,7 +1325,46 @@ describe('Partial Feedback', () => {
       let shadowRoot = widget?.shadowRoot || widget;
       const thumbsUp = shadowRoot?.querySelector('[data-feedback="up"]') as HTMLElement;
       thumbsUp?.click();
-      await wait(150);
+      await wait(200); // Wait for explanation to appear
+
+      widget = document.querySelector('.coolhand-partial-widget-container');
+      shadowRoot = widget?.shadowRoot || widget;
+      const textarea = shadowRoot?.querySelector('.coolhand-partial-textarea') as HTMLTextAreaElement;
+      expect(textarea).not.toBeNull();
+
+      // Type and then clear
+      textarea.value = '   '; // Only whitespace
+      const inputEvent = new Event('input', { bubbles: true });
+      textarea.dispatchEvent(inputEvent);
+
+      await wait(1100);
+
+      // Should not send PATCH for empty explanation
+      expect(mockFetch).toHaveBeenCalledTimes(1); // Only initial POST
+
+      manager.destroy();
+    });
+
+    it('should call onPartialFeedbackError callback on explanation submission failure', async () => {
+      const onError = jest.fn();
+      const element = document.createElement('div');
+      element.textContent = 'Test text with explanation';
+      document.body.appendChild(element);
+
+      const manager = new PartialFeedbackManager(element, 'test-api-key', {
+        onPartialFeedbackError: onError,
+        explanationSample: 1, // Always show explanation
+      });
+
+      createSelection(element, 0, 4);
+      simulateMouseUp(element);
+      await wait(50);
+
+      let widget = document.querySelector('.coolhand-partial-widget-container');
+      let shadowRoot = widget?.shadowRoot || widget;
+      const thumbsUp = shadowRoot?.querySelector('[data-feedback="up"]') as HTMLElement;
+      thumbsUp?.click();
+      await wait(200);
 
       // Mock fetch to fail on PATCH
       mockFetch.mockImplementationOnce(() =>
@@ -1344,6 +1378,7 @@ describe('Partial Feedback', () => {
       widget = document.querySelector('.coolhand-partial-widget-container');
       shadowRoot = widget?.shadowRoot || widget;
       const textarea = shadowRoot?.querySelector('.coolhand-partial-textarea') as HTMLTextAreaElement;
+      expect(textarea).not.toBeNull();
       textarea.value = 'This will fail';
       const inputEvent = new Event('input', { bubbles: true });
       textarea.dispatchEvent(inputEvent);
@@ -1357,10 +1392,14 @@ describe('Partial Feedback', () => {
       manager.destroy();
     });
 
-    it.skip('should include explanation in PATCH request payload', async () => {
+    it('should include explanation in PATCH request payload', async () => {
       const element = document.createElement('div');
       element.textContent = 'Test text with explanation';
       document.body.appendChild(element);
+
+      const manager = new PartialFeedbackManager(element, 'test-api-key', {
+        explanationSample: 1, // Always show explanation
+      });
 
       createSelection(element, 0, 4);
       simulateMouseUp(element);
@@ -1370,11 +1409,12 @@ describe('Partial Feedback', () => {
       let shadowRoot = widget?.shadowRoot || widget;
       const thumbsDown = shadowRoot?.querySelector('[data-feedback="down"]') as HTMLElement;
       thumbsDown?.click();
-      await wait(150);
+      await wait(200);
 
       widget = document.querySelector('.coolhand-partial-widget-container');
       shadowRoot = widget?.shadowRoot || widget;
       const textarea = shadowRoot?.querySelector('.coolhand-partial-textarea') as HTMLTextAreaElement;
+      expect(textarea).not.toBeNull();
       textarea.value = 'Detailed explanation here';
       const inputEvent = new Event('input', { bubbles: true });
       textarea.dispatchEvent(inputEvent);
@@ -1388,6 +1428,8 @@ describe('Partial Feedback', () => {
       expect(patchBody.llm_request_log_feedback.explanation).toBe('Detailed explanation here');
       expect(patchBody.llm_request_log_feedback.like).toBe(false);
       expect(patchBody.llm_request_log_feedback.focus_section).toBe('Test');
+
+      manager.destroy();
     });
   });
 
