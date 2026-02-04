@@ -168,11 +168,15 @@ export interface FeedbackApiPayload {
  * API response structure from feedback submission
  */
 export interface FeedbackApiResponse {
-  id: number;
+  id: string;
+  created_partial_id?: string;
+  updated_partial_id?: string;
   llm_request_log_id?: number;
   like: FeedbackValue;
   created_at: string;
   updated_at: string;
+  feedback_partials?: any[];
+  warnings?: Array<{ message: string; timestamp: string }>;
 }
 
 /**
@@ -207,7 +211,9 @@ export interface TextRange {
  */
 export interface PartialFeedbackEntry {
   /** API feedback ID (null until successfully submitted) */
-  id: number | null;
+  id: string | null;
+  /** Partial feedback ID for targeting updates (optional) */
+  partialId?: string | null;
   /** Text range of the selection */
   range: TextRange;
   /** Feedback type (up/neutral/down) */
@@ -241,6 +247,7 @@ export interface PartialFeedbackApiPayload {
     coolhand_fingerprint_id?: string;
     workload_hashid?: string;
     explanation?: string;
+    partial_id?: string;
   };
 }
 

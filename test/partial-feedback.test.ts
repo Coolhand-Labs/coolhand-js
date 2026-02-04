@@ -75,7 +75,8 @@ describe('Partial Feedback', () => {
         ok: true,
         json: () =>
           Promise.resolve({
-            id: 123,
+            id: 'parent_abc',
+            created_partial_id: 'partial_xyz',
             like: true,
             created_at: '2024-01-01T00:00:00Z',
             updated_at: '2024-01-01T00:00:00Z',
@@ -1208,7 +1209,7 @@ describe('Partial Feedback', () => {
       // Should have sent PATCH request
       expect(mockFetch).toHaveBeenCalledTimes(2);
       const patchCall = (mockFetch as jest.Mock).mock.calls[1];
-      expect(patchCall[0]).toContain('/123'); // PATCH to existing feedback ID
+      expect(patchCall[0]).toContain('/parent_abc'); // PATCH to existing feedback ID
       expect((patchCall[1] as { method: string }).method).toBe('PATCH');
 
       const patchBody = JSON.parse((patchCall[1] as { body: string }).body);
@@ -1567,7 +1568,7 @@ describe('Partial Feedback', () => {
       expect(mockFetch).toHaveBeenCalledTimes(1);
       const patchCall = (mockFetch as jest.Mock).mock.calls[0];
       expect((patchCall[1] as { method: string }).method).toBe('PATCH');
-      expect(patchCall[0]).toContain('/123');
+      expect(patchCall[0]).toContain('/parent_abc');
 
       manager.destroy();
     });
@@ -1592,7 +1593,7 @@ describe('Partial Feedback', () => {
 
       // Check highlight has data-feedback-id
       const highlight = element.querySelector(`.${PARTIAL_HIGHLIGHT_CLASS}`) as HTMLElement;
-      expect(highlight.getAttribute('data-feedback-id')).toBe('123');
+      expect(highlight.getAttribute('data-feedback-id')).toBe('parent_abc');
 
       manager.destroy();
     });
@@ -1866,6 +1867,70 @@ describe('Partial Feedback', () => {
       const patchCall = (mockFetch as jest.Mock).mock.calls[0];
       const patchBody = JSON.parse((patchCall[1] as { body: string }).body);
       expect(patchBody.llm_request_log_feedback.creator_unique_id).toBe('creator-789');
+
+      manager.destroy();
+    });
+
+    it('should include partial_id in PATCH request when updating existing partial', async () => {
+      const element = document.createElement('div');
+      element.textContent = 'Test text';
+      document.body.appendChild(element);
+
+      const manager = new PartialFeedbackManager(element, 'test-api-key', {
+        explanationSample: 1,
+      });
+
+      createSelection(element, 0, 4);
+      simulateMouseUp(element);
+      await wait(50);
+
+      let widget = document.querySelector('.coolhand-partial-widget-container');
+      let shadowRoot = widget?.shadowRoot || widget;
+      const thumbsUp = shadowRoot?.querySelector('[data-feedback="up"]') as HTMLElement;
+      thumbsUp?.click();
+      await wait(200);
+
+      mockFetch.mockClear();
+
+      // Add explanation to trigger PATCH
+      widget = document.querySelector('.coolhand-partial-widget-container');
+      shadowRoot = widget?.shadowRoot || widget;
+      const textarea = shadowRoot?.querySelector('.coolhand-partial-textarea') as HTMLTextAreaElement;
+      textarea.value = 'Test explanation';
+      textarea.dispatchEvent(new Event('input', { bubbles: true }));
+      await wait(1100);
+
+      const patchCall = (mockFetch as jest.Mock).mock.calls[0];
+      const patchBody = JSON.parse((patchCall[1] as { body: string }).body);
+      expect(patchBody.llm_request_log_feedback.partial_id).toBe('partial_xyz');
+
+      manager.destroy();
+    });
+
+    it('should store partialId from API response', async () => {
+      const element = document.createElement('div');
+      element.textContent = 'Test text';
+      document.body.appendChild(element);
+
+      const manager = new PartialFeedbackManager(element, 'test-api-key');
+
+      createSelection(element, 0, 4);
+      simulateMouseUp(element);
+      await wait(50);
+
+      const widget = document.querySelector('.coolhand-partial-widget-container');
+      const shadowRoot = widget?.shadowRoot || widget;
+      const thumbsUp = shadowRoot?.querySelector('[data-feedback="up"]') as HTMLElement;
+      thumbsUp?.click();
+      await wait(200);
+
+      // Check that the entry was stored with partialId in the data attribute
+      const storedData = element.getAttribute('data-coolhand-partial-feedbacks');
+      expect(storedData).not.toBeNull();
+      const parsed = JSON.parse(storedData!);
+      expect(parsed.entries).toHaveLength(1);
+      expect(parsed.entries[0].id).toBe('parent_abc');
+      expect(parsed.entries[0].partialId).toBe('partial_xyz');
 
       manager.destroy();
     });

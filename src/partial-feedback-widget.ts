@@ -318,6 +318,7 @@ export class PartialFeedbackWidget {
     // Create entry
     const entry: PartialFeedbackEntry = this.currentEntry || {
       id: this.existingEntry?.id || null,
+      partialId: this.existingEntry?.partialId || null,
       range: this.textRange,
       feedbackType: this.selectedType,
       explanation: this.explanationText || undefined,
@@ -365,6 +366,11 @@ export class PartialFeedbackWidget {
       payload.llm_request_log_feedback.explanation = this.explanationText;
     }
 
+    // Include partial_id when updating an existing partial
+    if (isUpdate && this.existingEntry?.partialId) {
+      payload.llm_request_log_feedback.partial_id = this.existingEntry.partialId;
+    }
+
     // Determine URL and method
     const url = isUpdate
       ? `${COOLHAND_API_URL}/${this.existingEntry!.id}`
@@ -395,6 +401,14 @@ export class PartialFeedbackWidget {
 
       // Update entry with API ID
       entry.id = data.id;
+
+      // Store partial ID for future updates
+      if (data.created_partial_id) {
+        entry.partialId = data.created_partial_id;
+      } else if (data.updated_partial_id) {
+        entry.partialId = data.updated_partial_id;
+      }
+
       this.currentEntry = entry;
 
       // Notify parent
@@ -577,6 +591,11 @@ export class PartialFeedbackWidget {
 
     if (this.options.workloadId) {
       payload.llm_request_log_feedback.workload_hashid = this.options.workloadId;
+    }
+
+    // Include partial_id to target the specific partial for updates
+    if (this.currentEntry.partialId) {
+      payload.llm_request_log_feedback.partial_id = this.currentEntry.partialId;
     }
 
     try {

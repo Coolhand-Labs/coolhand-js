@@ -543,6 +543,9 @@ export class PartialFeedbackManager {
     mark.className = PARTIAL_HIGHLIGHT_CLASS;
     mark.setAttribute('data-feedback-type', entry.feedbackType);
     mark.setAttribute('data-feedback-id', String(entry.id || ''));
+    if (entry.partialId) {
+      mark.setAttribute('data-partial-id', String(entry.partialId));
+    }
     mark.setAttribute('tabindex', '0');
     mark.setAttribute('role', 'button');
     mark.setAttribute('aria-label', this.getHighlightAriaLabel(entry));
