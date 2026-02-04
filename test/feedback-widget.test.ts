@@ -196,6 +196,31 @@ describe('FeedbackWidget', () => {
       );
     });
 
+    it('should include creatorUniqueId when provided', async () => {
+      widget = new FeedbackWidget(element, 'Test content', 'test-api-key', {
+        creatorUniqueId: 'creator-456',
+      });
+
+      const container = element.querySelector('[data-coolhand-widget]');
+      const shadowRoot = container?.shadowRoot;
+      const trigger = shadowRoot?.querySelector('.coolhand-trigger') as HTMLElement;
+      const thumbsUp = shadowRoot?.querySelector(
+        '[data-feedback="up"]'
+      ) as HTMLElement;
+
+      trigger?.click();
+      thumbsUp?.click();
+
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        COOLHAND_API_URL,
+        expect.objectContaining({
+          body: expect.stringContaining('"creator_unique_id":"creator-456"'),
+        })
+      );
+    });
+
     it('should include workload_hashid when workloadId is provided', async () => {
       widget = new FeedbackWidget(element, 'Test content', 'test-api-key', {
         workloadId: 'abc123def456',

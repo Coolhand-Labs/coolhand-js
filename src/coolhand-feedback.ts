@@ -11,6 +11,7 @@ import type { InitOptions, AttachOptions, WidgetStyle, ColorScheme, WidgetPlacem
 export class CoolhandFeedback {
   private apiKey: string | null = null;
   private clientUniqueId: string | null = null;
+  private creatorUniqueId: string | null = null;
   private widgetStyle: WidgetStyle | null = null;
   private colorScheme: ColorScheme = 'light';
   private explanationSample: number | null = null;
@@ -53,6 +54,11 @@ export class CoolhandFeedback {
     // Store global client unique ID if provided
     if (options.clientUniqueId) {
       this.clientUniqueId = options.clientUniqueId;
+    }
+
+    // Store global creator unique ID if provided
+    if (options.creatorUniqueId) {
+      this.creatorUniqueId = options.creatorUniqueId;
     }
 
     // Store global widget style if provided
@@ -181,6 +187,11 @@ export class CoolhandFeedback {
       options.clientUniqueId = this.clientUniqueId;
     }
 
+    // Apply global creatorUniqueId
+    if (this.creatorUniqueId) {
+      options.creatorUniqueId = this.creatorUniqueId;
+    }
+
     // Apply global widgetStyle
     if (this.widgetStyle) {
       options.widgetStyle = this.widgetStyle;
@@ -270,6 +281,9 @@ export class CoolhandFeedback {
     if (!mergedOptions.clientUniqueId && this.clientUniqueId) {
       mergedOptions.clientUniqueId = this.clientUniqueId;
     }
+    if (!mergedOptions.creatorUniqueId && this.creatorUniqueId) {
+      mergedOptions.creatorUniqueId = this.creatorUniqueId;
+    }
     if (!mergedOptions.widgetStyle && this.widgetStyle) {
       mergedOptions.widgetStyle = this.widgetStyle;
     }
@@ -354,6 +368,9 @@ export class CoolhandFeedback {
     if (this.clientUniqueId && !partialOptions.clientUniqueId) {
       partialOptions.clientUniqueId = this.clientUniqueId;
     }
+    if (this.creatorUniqueId && !partialOptions.creatorUniqueId) {
+      partialOptions.creatorUniqueId = this.creatorUniqueId;
+    }
     if (this.fingerprintId && !partialOptions.coolhandFingerprintId) {
       partialOptions.coolhandFingerprintId = this.fingerprintId;
     }
@@ -426,6 +443,9 @@ export class CoolhandFeedback {
     // Apply global settings if not provided
     if (!mergedOptions.clientUniqueId && this.clientUniqueId) {
       mergedOptions.clientUniqueId = this.clientUniqueId;
+    }
+    if (!mergedOptions.creatorUniqueId && this.creatorUniqueId) {
+      mergedOptions.creatorUniqueId = this.creatorUniqueId;
     }
     if (!mergedOptions.coolhandFingerprintId && this.fingerprintId) {
       mergedOptions.coolhandFingerprintId = this.fingerprintId;

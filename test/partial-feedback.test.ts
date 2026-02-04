@@ -1833,6 +1833,43 @@ describe('Partial Feedback', () => {
       manager.destroy();
     });
 
+    it('should include creatorUniqueId in PATCH request when provided', async () => {
+      const element = document.createElement('div');
+      element.textContent = 'Test text';
+      document.body.appendChild(element);
+
+      const manager = new PartialFeedbackManager(element, 'test-api-key', {
+        creatorUniqueId: 'creator-789',
+        explanationSample: 1,
+      });
+
+      createSelection(element, 0, 4);
+      simulateMouseUp(element);
+      await wait(50);
+
+      let widget = document.querySelector('.coolhand-partial-widget-container');
+      let shadowRoot = widget?.shadowRoot || widget;
+      const thumbsUp = shadowRoot?.querySelector('[data-feedback="up"]') as HTMLElement;
+      thumbsUp?.click();
+      await wait(200);
+
+      mockFetch.mockClear();
+
+      // Add explanation to trigger PATCH
+      widget = document.querySelector('.coolhand-partial-widget-container');
+      shadowRoot = widget?.shadowRoot || widget;
+      const textarea = shadowRoot?.querySelector('.coolhand-partial-textarea') as HTMLTextAreaElement;
+      textarea.value = 'Test explanation';
+      textarea.dispatchEvent(new Event('input', { bubbles: true }));
+      await wait(1100);
+
+      const patchCall = (mockFetch as jest.Mock).mock.calls[0];
+      const patchBody = JSON.parse((patchCall[1] as { body: string }).body);
+      expect(patchBody.llm_request_log_feedback.creator_unique_id).toBe('creator-789');
+
+      manager.destroy();
+    });
+
     it('should include coolhandFingerprintId in PATCH request when provided', async () => {
       const element = document.createElement('div');
       element.textContent = 'Test text';
@@ -1910,8 +1947,10 @@ describe('Partial Feedback', () => {
 
       const manager = new PartialFeedbackManager(element, 'test-api-key', {
         clientUniqueId: 'client-123',
+        creatorUniqueId: 'creator-xyz',
         coolhandFingerprintId: 'fingerprint-456',
         workloadId: 'workload-789',
+        explanationSample: 1,
       });
 
       createSelection(element, 0, 4);
@@ -1922,7 +1961,7 @@ describe('Partial Feedback', () => {
       let shadowRoot = widget?.shadowRoot || widget;
       const thumbsUp = shadowRoot?.querySelector('[data-feedback="up"]') as HTMLElement;
       thumbsUp?.click();
-      await wait(150);
+      await wait(200);
 
       mockFetch.mockClear();
 
@@ -1937,6 +1976,7 @@ describe('Partial Feedback', () => {
       const patchBody = JSON.parse((patchCall[1] as { body: string }).body);
 
       expect(patchBody.llm_request_log_feedback.client_unique_id).toBe('client-123');
+      expect(patchBody.llm_request_log_feedback.creator_unique_id).toBe('creator-xyz');
       expect(patchBody.llm_request_log_feedback.coolhand_fingerprint_id).toBe('fingerprint-456');
       expect(patchBody.llm_request_log_feedback.workload_hashid).toBe('workload-789');
 

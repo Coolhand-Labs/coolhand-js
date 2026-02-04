@@ -49,6 +49,8 @@ export interface InitOptions {
   autoAttach?: boolean;
   /** Global client unique ID applied to all feedback on the page */
   clientUniqueId?: string;
+  /** Global creator unique ID applied to all feedback on the page */
+  creatorUniqueId?: string;
   /** Default widget style for all widgets. Default: 'overlay' */
   widgetStyle?: WidgetStyle;
   /** Color scheme for all widgets. Default: 'light' */
@@ -95,6 +97,8 @@ export interface InitOptions {
 export interface AttachOptions {
   /** Unique client identifier for tracking (e.g., user ID, session ID) */
   clientUniqueId?: string;
+  /** Unique creator identifier for tracking (e.g., creator ID, author ID) */
+  creatorUniqueId?: string;
   /** Workload hash ID for associating feedback with a specific workload */
   workloadId?: string;
   /** Widget display style (overrides global setting) */
@@ -152,6 +156,7 @@ export interface FeedbackApiPayload {
     original_output: string;
     collector: string;
     client_unique_id?: string;
+    creator_unique_id?: string;
     coolhand_fingerprint_id?: string;
     workload_hashid?: string;
     revised_output?: string;
@@ -232,6 +237,7 @@ export interface PartialFeedbackApiPayload {
     focus_range?: { start: number; end: number };
     collector: string;
     client_unique_id?: string;
+    creator_unique_id?: string;
     coolhand_fingerprint_id?: string;
     workload_hashid?: string;
     explanation?: string;
@@ -250,6 +256,8 @@ export interface PartialFeedbackOptions {
   onPartialFeedbackError?: (error: Error, entry: PartialFeedbackEntry) => void;
   /** Client unique ID for tracking */
   clientUniqueId?: string;
+  /** Creator unique ID for tracking */
+  creatorUniqueId?: string;
   /** Coolhand fingerprint ID */
   coolhandFingerprintId?: string;
   /** Workload hash ID */
