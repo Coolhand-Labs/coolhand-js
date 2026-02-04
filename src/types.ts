@@ -175,7 +175,7 @@ export interface FeedbackApiResponse {
   like: FeedbackValue;
   created_at: string;
   updated_at: string;
-  feedback_partials?: any[];
+  feedback_partials?: unknown[];
   warnings?: Array<{ message: string; timestamp: string }>;
 }
 
