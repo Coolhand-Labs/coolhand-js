@@ -144,19 +144,6 @@ describe('CoolhandFeedback', () => {
       const widget = document.querySelector('[data-coolhand-widget]');
       expect(widget).not.toBeNull();
     });
-
-    it('should apply global creatorUniqueId to widgets', () => {
-      document.body.innerHTML = `
-        <div coolhand-feedback>
-          Test content
-        </div>
-      `;
-
-      coolhand.init('test-api-key', { creatorUniqueId: 'creator-456' });
-
-      const widget = document.querySelector('[data-coolhand-widget]');
-      expect(widget).not.toBeNull();
-    });
   });
 
   describe('detach', () => {

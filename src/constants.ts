@@ -69,23 +69,3 @@ export const PLACEMENT_VERTICAL_ATTRIBUTE = 'data-coolhand-placement-vertical';
  * Data attribute for widget horizontal placement ("left" or "right")
  */
 export const PLACEMENT_HORIZONTAL_ATTRIBUTE = 'data-coolhand-placement-horizontal';
-
-/**
- * Data attribute to enable partial feedback on an element
- */
-export const PARTIAL_FEEDBACK_ATTRIBUTE = 'data-coolhand-allow-partial-feedback';
-
-/**
- * Data attribute for storing partial feedbacks JSON
- */
-export const PARTIAL_FEEDBACKS_ATTRIBUTE = 'data-coolhand-partial-feedbacks';
-
-/**
- * CSS class for partial feedback highlights
- */
-export const PARTIAL_HIGHLIGHT_CLASS = 'coolhand-partial-highlight';
-
-/**
- * Minimum selection length for partial feedback (in characters)
- */
-export const MIN_SELECTION_LENGTH = 3;
