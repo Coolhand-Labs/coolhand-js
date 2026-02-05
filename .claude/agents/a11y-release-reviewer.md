@@ -159,3 +159,13 @@ This project follows specific patterns documented in CLAUDE.md:
 - Consider the user experience for keyboard-only and screen reader users
 - Test fixes before committing them
 - Never remove accessibility features without explicit user approval
+
+## Known Issues - Do NOT Suggest These
+
+The following have been reviewed and intentionally deferred or rejected. Do not flag these as issues:
+
+1. **Color scheme change announcements** - Suggesting that `setColorScheme()` should announce changes to screen readers. This is the responsibility of the end client implementing dark/light mode, not this library.
+
+2. **`role="complementary"` vs `role="region"`** - The widget uses `role="region"` which is valid. Using `role="complementary"` has been documented as a potential enhancement in `docs/a11y-enhancements.md` for future consideration.
+
+3. **Highlight animation duration** - The pulsating highlight animation duration (2-2.5s cycle) has been reviewed. It already respects `prefers-reduced-motion` and stops on interaction. Any refinements are documented in `docs/a11y-enhancements.md`.

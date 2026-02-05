@@ -157,7 +157,51 @@
 
         <hr class="border-gray-200 dark:border-gray-700" />
 
-        <!-- 2. Textarea with Revised Output Tracking -->
+        <!-- 2. Partial Feedback (Genius-style text highlighting) -->
+        <div class="space-y-2">
+            <h2 class="text-xl font-semibold text-gray-800 dark:text-gray-200">Partial Feedback (Text Highlighting)</h2>
+            <p class="text-xs text-gray-500 dark:text-gray-400">
+                Enable partial feedback via <code class="bg-gray-100 dark:bg-gray-700 px-1 rounded">data-coolhand-allow-partial-feedback</code>.
+                <strong>Highlight any text</strong> below to provide feedback on specific sections. After submitting feedback, the text will remain highlighted with a color indicating the feedback type.
+            </p>
+            <div
+                id="partial-feedback-content"
+                coolhand-feedback
+                data-coolhand-allow-partial-feedback
+                data-coolhand-workload-id="workload-partial-001"
+                class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 transition-colors duration-200"
+            >
+                <div class="prose prose-gray dark:prose-invert max-w-none space-y-4">
+                    <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-200 mt-0">Understanding Neural Networks</h3>
+                    <p class="text-gray-600 dark:text-gray-300 leading-relaxed">
+                        Neural networks are computational models inspired by the human brain's structure and function. They consist of interconnected nodes (neurons) organized in layers that process and transform input data to produce meaningful outputs.
+                    </p>
+                    <p class="text-gray-600 dark:text-gray-300 leading-relaxed">
+                        <strong>Key components include:</strong> The input layer receives raw data, hidden layers perform intermediate computations, and the output layer produces the final result. Each connection between neurons has an associated weight that determines its importance.
+                    </p>
+                    <p class="text-gray-600 dark:text-gray-300 leading-relaxed">
+                        During training, the network adjusts these weights through a process called backpropagation, gradually improving its ability to make accurate predictions. This is what enables neural networks to learn patterns from data and generalize to new, unseen examples.
+                    </p>
+                    <p class="text-sm text-blue-600 dark:text-blue-400 mt-4">
+                        💡 <em>Try highlighting any sentence above to provide targeted feedback on specific parts of this AI-generated explanation.</em>
+                    </p>
+                </div>
+            </div>
+            <div class="text-xs text-gray-500 dark:text-gray-400 mt-2 space-y-1">
+                <p><strong>How it works:</strong></p>
+                <ul class="list-disc list-inside ml-2 space-y-1">
+                    <li>Select/highlight any text (minimum 3 characters)</li>
+                    <li>A compact feedback widget will appear near your selection</li>
+                    <li>Choose thumbs up (👍), neutral (➖), or thumbs down (👎)</li>
+                    <li>The highlighted text will persist with a color matching your feedback</li>
+                    <li>Hover over existing highlights to edit your feedback</li>
+                </ul>
+            </div>
+        </div>
+
+        <hr class="border-gray-200 dark:border-gray-700" />
+
+        <!-- 3. Textarea with Revised Output Tracking -->
         <div class="space-y-2">
             <div class="flex justify-between items-center">
                 <h2 class="text-xl font-semibold text-gray-800 dark:text-gray-200">Editable AI Response (Textarea)</h2>
@@ -193,7 +237,7 @@ In conclusion, the results indicate strong performance across all metrics, with 
 
         <hr class="border-gray-200 dark:border-gray-700" />
 
-        <!-- 3. Input field with Revised Output Tracking -->
+        <!-- 4. Input field with Revised Output Tracking -->
         <div class="space-y-2">
             <div class="flex justify-between items-center">
                 <h2 class="text-xl font-semibold text-gray-800 dark:text-gray-200">Editable AI Response (Input)</h2>
@@ -224,7 +268,7 @@ In conclusion, the results indicate strong performance across all metrics, with 
 
         <hr class="border-gray-200 dark:border-gray-700" />
 
-        <!-- 4. Static div with Workload ID -->
+        <!-- 5. Static div with Workload ID -->
         <div class="space-y-2">
             <div class="flex justify-between items-center">
                 <h2 class="text-xl font-semibold text-gray-800 dark:text-gray-200">Static Content with Workload ID</h2>
@@ -265,7 +309,7 @@ In conclusion, the results indicate strong performance across all metrics, with 
 
         <hr class="border-gray-200 dark:border-gray-700" />
 
-        <!-- 5. Chatbot UI with hardcoded messages -->
+        <!-- 6. Chatbot UI with hardcoded messages -->
         <div class="space-y-2">
             <h2 class="text-xl font-semibold text-gray-800 dark:text-gray-200">Chat Interface</h2>
             <p class="text-xs text-gray-500 dark:text-gray-400">
