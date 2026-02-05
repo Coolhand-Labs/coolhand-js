@@ -60,6 +60,7 @@ export class PartialFeedbackWidget {
   private isShowingExplanation: boolean = false;
   private explanationText: string = '';
   private explanationDebounceTimer: ReturnType<typeof setTimeout> | null = null;
+  private isExplanationPending: boolean = false;
   private currentEntry: PartialFeedbackEntry | null = null;
 
   private boundDocumentClickHandler: (e: MouseEvent) => void;
@@ -560,6 +561,12 @@ export class PartialFeedbackWidget {
     const explanation = this.explanationText.trim();
     if (!explanation) return;
 
+    // Prevent concurrent requests
+    if (this.isExplanationPending) {
+      return;
+    }
+    this.isExplanationPending = true;
+
     // Update entry
     this.currentEntry.explanation = explanation;
 
@@ -616,6 +623,9 @@ export class PartialFeedbackWidget {
       const data: FeedbackApiResponse = await response.json();
       console.log('[CoolhandJS] Partial feedback explanation submitted:', data);
 
+      // Clear explanation text to prevent duplicate sends
+      this.explanationText = '';
+
       // Announce success
       this.announce('Explanation saved');
 
@@ -628,6 +638,8 @@ export class PartialFeedbackWidget {
       if (this.options.onPartialFeedbackError && this.currentEntry) {
         this.options.onPartialFeedbackError(err, this.currentEntry);
       }
+    } finally {
+      this.isExplanationPending = false;
     }
   }
 
@@ -729,7 +741,15 @@ export class PartialFeedbackWidget {
    * Close the widget
    */
   private close(): void {
-    // Send any pending explanation
+    // Send any unsaved explanation before closing
+    if (this.explanationText.trim() && this.currentEntry && !this.isExplanationPending) {
+      // Don't await - let it send in background
+      this.sendExplanation().catch((err) => {
+        console.error('[CoolhandJS] Failed to save explanation on close:', err);
+      });
+    }
+
+    // Clear debounce timer
     if (this.explanationDebounceTimer) {
       clearTimeout(this.explanationDebounceTimer);
       this.explanationDebounceTimer = null;
