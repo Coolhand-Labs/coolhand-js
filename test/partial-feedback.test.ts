@@ -16,6 +16,7 @@ import {
   PARTIAL_FEEDBACKS_ATTRIBUTE,
   PARTIAL_HIGHLIGHT_CLASS,
   MIN_SELECTION_LENGTH,
+  SUMMARY_PIXEL_ATTRIBUTE,
 } from '../src/constants';
 
 // Mock fetch globally
@@ -2305,6 +2306,185 @@ describe('Partial Feedback', () => {
 
     it('should have correct PARTIAL_HIGHLIGHT_CLASS value', () => {
       expect(PARTIAL_HIGHLIGHT_CLASS).toBe('coolhand-partial-highlight');
+    });
+  });
+
+  describe('Summary Pixel', () => {
+    let element: HTMLElement;
+    let manager: PartialFeedbackManager;
+
+    beforeEach(() => {
+      document.body.innerHTML = '<div id="target">Hello world text for testing</div>';
+      element = document.getElementById('target') as HTMLElement;
+    });
+
+    afterEach(() => {
+      if (manager) {
+        manager.destroy();
+      }
+    });
+
+    async function submitFeedback(el: HTMLElement, type: 'up' | 'neutral' | 'down'): Promise<void> {
+      createSelection(el, 0, 5);
+      simulateMouseUp(el);
+      await wait(50);
+
+      const widget = document.querySelector('.coolhand-partial-widget-container');
+      const shadowRoot = widget?.shadowRoot || widget;
+      const btn = shadowRoot?.querySelector(`[data-feedback="${type}"]`) as HTMLElement;
+      btn?.click();
+      await wait(150);
+    }
+
+    it('should not show pixel when no feedback entries exist', () => {
+      manager = new PartialFeedbackManager(element, 'test-api-key');
+      const pixel = element.querySelector('.coolhand-summary-pixel');
+      expect(pixel).toBeNull();
+    });
+
+    it('should show pixel after feedback is submitted', async () => {
+      manager = new PartialFeedbackManager(element, 'test-api-key');
+      await submitFeedback(element, 'up');
+
+      const pixel = element.querySelector('.coolhand-summary-pixel');
+      expect(pixel).not.toBeNull();
+    });
+
+    it('should show green pixel for all-up feedback', async () => {
+      manager = new PartialFeedbackManager(element, 'test-api-key');
+      await submitFeedback(element, 'up');
+
+      const pixel = element.querySelector('.coolhand-summary-pixel') as HTMLElement;
+      expect(pixel).not.toBeNull();
+      // Green: rgb(16, 185, 129)
+      expect(pixel.style.backgroundColor).toBe('rgb(16, 185, 129)');
+    });
+
+    it('should show red pixel for all-down feedback', async () => {
+      manager = new PartialFeedbackManager(element, 'test-api-key');
+      await submitFeedback(element, 'down');
+
+      const pixel = element.querySelector('.coolhand-summary-pixel') as HTMLElement;
+      expect(pixel).not.toBeNull();
+      // Red: rgb(239, 68, 68)
+      expect(pixel.style.backgroundColor).toBe('rgb(239, 68, 68)');
+    });
+
+    it('should show blue pixel for all-neutral feedback', async () => {
+      manager = new PartialFeedbackManager(element, 'test-api-key');
+      await submitFeedback(element, 'neutral');
+
+      const pixel = element.querySelector('.coolhand-summary-pixel') as HTMLElement;
+      expect(pixel).not.toBeNull();
+      // Blue: rgb(59, 130, 246)
+      expect(pixel.style.backgroundColor).toBe('rgb(59, 130, 246)');
+    });
+
+    it('should have correct tooltip text', async () => {
+      manager = new PartialFeedbackManager(element, 'test-api-key');
+      await submitFeedback(element, 'up');
+
+      const pixel = element.querySelector('.coolhand-summary-pixel') as HTMLElement;
+      expect(pixel.getAttribute('title')).toContain("highlight anything in this section");
+    });
+
+    it('should be keyboard-accessible', async () => {
+      manager = new PartialFeedbackManager(element, 'test-api-key');
+      await submitFeedback(element, 'up');
+
+      const pixel = element.querySelector('.coolhand-summary-pixel') as HTMLElement;
+      expect(pixel.getAttribute('tabindex')).toBe('0');
+      expect(pixel.getAttribute('role')).toBe('img');
+    });
+
+    it('should not show pixel when disabled via data attribute', async () => {
+      element.setAttribute(SUMMARY_PIXEL_ATTRIBUTE, 'false');
+      manager = new PartialFeedbackManager(element, 'test-api-key');
+      await submitFeedback(element, 'up');
+
+      const pixel = element.querySelector('.coolhand-summary-pixel');
+      expect(pixel).toBeNull();
+    });
+
+    it('should not show pixel when disabled via options', async () => {
+      manager = new PartialFeedbackManager(element, 'test-api-key', { showSummaryPixel: false });
+      await submitFeedback(element, 'up');
+
+      const pixel = element.querySelector('.coolhand-summary-pixel');
+      expect(pixel).toBeNull();
+    });
+
+    it('should remove pixel on destroy()', async () => {
+      manager = new PartialFeedbackManager(element, 'test-api-key');
+      await submitFeedback(element, 'up');
+
+      expect(element.querySelector('.coolhand-summary-pixel')).not.toBeNull();
+      manager.destroy();
+      expect(element.querySelector('.coolhand-summary-pixel')).toBeNull();
+    });
+
+    it('should render pixel when restoring highlights from stored data', () => {
+      const storedData = {
+        version: 1,
+        entries: [
+          {
+            id: 'parent_abc',
+            range: { startOffset: 0, endOffset: 5, text: 'Hello' },
+            feedbackType: 'up',
+            createdAt: '2024-01-01T00:00:00Z',
+          },
+        ],
+      };
+      element.setAttribute(PARTIAL_FEEDBACKS_ATTRIBUTE, JSON.stringify(storedData));
+
+      manager = new PartialFeedbackManager(element, 'test-api-key');
+
+      const pixel = element.querySelector('.coolhand-summary-pixel');
+      expect(pixel).not.toBeNull();
+    });
+
+    it('should update pixel color when new feedback is added', async () => {
+      manager = new PartialFeedbackManager(element, 'test-api-key');
+      await submitFeedback(element, 'down');
+
+      const pixelAfterDown = element.querySelector('.coolhand-summary-pixel') as HTMLElement;
+      const colorAfterDown = pixelAfterDown.style.backgroundColor;
+      expect(colorAfterDown).toBe('rgb(239, 68, 68)');
+
+      // After first feedback, the DOM structure changes (text is wrapped in <mark>).
+      // We need to select text from the remaining text nodes after the first highlight.
+      // Original text: "Hello world text for testing"
+      // After first highlight on "Hello": " world text for testing" remains as text nodes
+      // Select " wor" from positions 1-4 of the remaining text (which is " world...")
+      const firstMark = element.querySelector(`.${PARTIAL_HIGHLIGHT_CLASS}`);
+      let remainingTextNode = firstMark?.nextSibling;
+
+      // Get the actual text node containing " world text for testing"
+      if (remainingTextNode && remainingTextNode.nodeType === Node.TEXT_NODE) {
+        const range = document.createRange();
+        range.setStart(remainingTextNode, 1); // Skip the space
+        range.setEnd(remainingTextNode, 6); // Select "world"
+
+        const selection = window.getSelection();
+        if (selection) {
+          selection.removeAllRanges();
+          selection.addRange(range);
+        }
+      }
+
+      simulateMouseUp(element);
+      await wait(50);
+
+      const widget = document.querySelector('.coolhand-partial-widget-container');
+      const shadowRoot = widget?.shadowRoot || widget;
+      const upBtn = shadowRoot?.querySelector('[data-feedback="up"]') as HTMLElement;
+      upBtn?.click();
+      await wait(150);
+
+      const pixelAfterUp = element.querySelector('.coolhand-summary-pixel') as HTMLElement;
+      // Mixed feedback (1 down + 1 up = 0 score) → blue
+      expect(pixelAfterUp).not.toBeNull();
+      expect(pixelAfterUp.style.backgroundColor).toBe('rgb(59, 130, 246)');
     });
   });
 });

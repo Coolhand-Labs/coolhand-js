@@ -3,6 +3,7 @@ import {
   PARTIAL_FEEDBACKS_ATTRIBUTE,
   PARTIAL_HIGHLIGHT_CLASS,
   MIN_SELECTION_LENGTH,
+  SUMMARY_PIXEL_ATTRIBUTE,
 } from './constants';
 import type {
   TextRange,
@@ -70,6 +71,35 @@ const HIGHLIGHT_STYLES = `
       transition: none;
     }
   }
+
+  .coolhand-summary-pixel {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 8px;
+    height: 8px;
+    border-radius: 2px;
+    pointer-events: auto;
+    cursor: help;
+    z-index: 1;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+
+  .coolhand-summary-pixel:hover {
+    transform: scale(1.25);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  }
+
+  .coolhand-summary-pixel:focus-visible {
+    outline: 2px solid #2563eb;
+    outline-offset: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .coolhand-summary-pixel {
+      transition: none;
+    }
+  }
 `;
 
 /** Track whether styles have been injected */
@@ -106,6 +136,7 @@ export class PartialFeedbackManager {
   private boundHighlightKeyDown: (e: KeyboardEvent) => void;
   private hoverTimeout: ReturnType<typeof setTimeout> | null = null;
   private hoveredHighlight: HTMLElement | null = null;
+  private summaryPixel: HTMLElement | null = null;
 
   constructor(
     targetElement: HTMLElement,
@@ -181,6 +212,7 @@ export class PartialFeedbackManager {
       PARTIAL_FEEDBACKS_ATTRIBUTE,
       JSON.stringify(storage)
     );
+    this.renderSummaryPixel();
   }
 
   /**
@@ -195,6 +227,7 @@ export class PartialFeedbackManager {
     for (const entry of sortedEntries) {
       this.applyHighlight(entry);
     }
+    this.renderSummaryPixel();
   }
 
   /**
@@ -726,10 +759,91 @@ export class PartialFeedbackManager {
     return this.entries.find((e) => e.range.text === text) || null;
   }
 
+  private calculateAggregateScore(): number {
+    if (this.entries.length === 0) return 0;
+    const weights: Record<string, number> = { up: 1, neutral: 0, down: -1 };
+    const sum = this.entries.reduce((total, entry) => total + (weights[entry.feedbackType] ?? 0), 0);
+    return sum / this.entries.length;
+  }
+
+  private getColorForScore(score: number): string {
+    const RED = { r: 239, g: 68, b: 68 };
+    const BLUE = { r: 59, g: 130, b: 246 };
+    const GREEN = { r: 16, g: 185, b: 129 };
+
+    let color: { r: number; g: number; b: number };
+
+    if (score <= -0.3) {
+      color = RED;
+    } else if (score < 0) {
+      const t = (score + 0.3) / 0.3;
+      color = {
+        r: Math.round(RED.r + (BLUE.r - RED.r) * t),
+        g: Math.round(RED.g + (BLUE.g - RED.g) * t),
+        b: Math.round(RED.b + (BLUE.b - RED.b) * t),
+      };
+    } else if (score < 0.3) {
+      const t = score / 0.3;
+      color = {
+        r: Math.round(BLUE.r + (GREEN.r - BLUE.r) * t),
+        g: Math.round(BLUE.g + (GREEN.g - BLUE.g) * t),
+        b: Math.round(BLUE.b + (GREEN.b - BLUE.b) * t),
+      };
+    } else {
+      color = GREEN;
+    }
+
+    return `rgb(${color.r}, ${color.g}, ${color.b})`;
+  }
+
+  private renderSummaryPixel(): void {
+    if (
+      this.targetElement.getAttribute(SUMMARY_PIXEL_ATTRIBUTE) === 'false' ||
+      this.options.showSummaryPixel === false ||
+      this.entries.length === 0
+    ) {
+      this.removeSummaryPixel();
+      return;
+    }
+
+    if (!this.summaryPixel) {
+      this.summaryPixel = document.createElement('span');
+      this.summaryPixel.className = 'coolhand-summary-pixel';
+      this.summaryPixel.setAttribute('role', 'img');
+      this.summaryPixel.setAttribute('tabindex', '0');
+      this.summaryPixel.setAttribute(
+        'aria-label',
+        'Summary indicator for partial feedback. Hover to learn more.'
+      );
+      this.summaryPixel.setAttribute(
+        'title',
+        "You can highlight anything in this section and leave feedback on what's right/wrong/could be improved"
+      );
+
+      const currentPosition = window.getComputedStyle(this.targetElement).position;
+      if (currentPosition === 'static') {
+        this.targetElement.style.position = 'relative';
+      }
+
+      this.targetElement.appendChild(this.summaryPixel);
+    }
+
+    this.summaryPixel.style.backgroundColor = this.getColorForScore(this.calculateAggregateScore());
+  }
+
+  private removeSummaryPixel(): void {
+    if (this.summaryPixel) {
+      this.summaryPixel.remove();
+      this.summaryPixel = null;
+    }
+  }
+
   /**
    * Clean up and destroy the manager
    */
   public destroy(): void {
+    this.removeSummaryPixel();
+
     // Close active widget
     this.closeActiveWidget();
 

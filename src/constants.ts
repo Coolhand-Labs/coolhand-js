@@ -89,3 +89,8 @@ export const PARTIAL_HIGHLIGHT_CLASS = 'coolhand-partial-highlight';
  * Minimum selection length for partial feedback (in characters)
  */
 export const MIN_SELECTION_LENGTH = 3;
+
+/**
+ * Data attribute to disable the summary pixel on a partial feedback element
+ */
+export const SUMMARY_PIXEL_ATTRIBUTE = 'data-coolhand-summary-pixel';
