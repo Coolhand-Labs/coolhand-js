@@ -271,4 +271,6 @@ export interface PartialFeedbackOptions {
   workloadId?: string;
   /** Color scheme for the widget */
   colorScheme?: ColorScheme;
+  /** Whether to show the summary pixel indicator. Default: true */
+  showSummaryPixel?: boolean;
 }
