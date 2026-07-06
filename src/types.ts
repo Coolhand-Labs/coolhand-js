@@ -51,6 +51,12 @@ export interface InitOptions {
   clientUniqueId?: string;
   /** Global creator unique ID applied to all feedback on the page */
   creatorUniqueId?: string;
+  /**
+   * Override the API endpoint feedback is submitted to.
+   * Defaults to the production Coolhand endpoint (COOLHAND_API_URL).
+   * Useful for staging environments, proxies, or self-hosted collectors.
+   */
+  apiUrl?: string;
   /** Default widget style for all widgets. Default: 'overlay' */
   widgetStyle?: WidgetStyle;
   /** Color scheme for all widgets. Default: 'light' */
@@ -101,6 +107,11 @@ export interface AttachOptions {
   creatorUniqueId?: string;
   /** Workload hash ID for associating feedback with a specific workload */
   workloadId?: string;
+  /**
+   * Override the API endpoint feedback is submitted to (overrides global setting).
+   * Defaults to the production Coolhand endpoint (COOLHAND_API_URL).
+   */
+  apiUrl?: string;
   /** Widget display style (overrides global setting) */
   widgetStyle?: WidgetStyle;
   /** Color scheme (overrides global setting) */
@@ -269,6 +280,11 @@ export interface PartialFeedbackOptions {
   coolhandFingerprintId?: string;
   /** Workload hash ID */
   workloadId?: string;
+  /**
+   * Override the API endpoint feedback is submitted to (overrides global setting).
+   * Defaults to the production Coolhand endpoint (COOLHAND_API_URL).
+   */
+  apiUrl?: string;
   /** Color scheme for the widget */
   colorScheme?: ColorScheme;
   /** Whether to show the summary pixel indicator. Default: true */

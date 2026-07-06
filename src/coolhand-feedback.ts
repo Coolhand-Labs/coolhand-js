@@ -13,6 +13,7 @@ export class CoolhandFeedback {
   public readonly version: string = VERSION;
 
   private apiKey: string | null = null;
+  private apiUrl: string | null = null;
   private clientUniqueId: string | null = null;
   private creatorUniqueId: string | null = null;
   private widgetStyle: WidgetStyle | null = null;
@@ -53,6 +54,9 @@ export class CoolhandFeedback {
     }
 
     this.apiKey = apiKey;
+
+    // Store global API URL override if provided
+    this.apiUrl = options.apiUrl || null;
 
     // Store global client unique ID if provided
     if (options.clientUniqueId) {
@@ -185,6 +189,11 @@ export class CoolhandFeedback {
 
     const options: AttachOptions = {};
 
+    // Apply global API URL override
+    if (this.apiUrl) {
+      options.apiUrl = this.apiUrl;
+    }
+
     // Apply global clientUniqueId
     if (this.clientUniqueId) {
       options.clientUniqueId = this.clientUniqueId;
@@ -281,6 +290,9 @@ export class CoolhandFeedback {
 
     // Apply global defaults if not provided in options
     const mergedOptions = { ...options };
+    if (!mergedOptions.apiUrl && this.apiUrl) {
+      mergedOptions.apiUrl = this.apiUrl;
+    }
     if (!mergedOptions.clientUniqueId && this.clientUniqueId) {
       mergedOptions.clientUniqueId = this.clientUniqueId;
     }
@@ -368,6 +380,9 @@ export class CoolhandFeedback {
     };
 
     // Apply global settings
+    if (this.apiUrl && !partialOptions.apiUrl) {
+      partialOptions.apiUrl = this.apiUrl;
+    }
     if (this.clientUniqueId && !partialOptions.clientUniqueId) {
       partialOptions.clientUniqueId = this.clientUniqueId;
     }
@@ -444,6 +459,9 @@ export class CoolhandFeedback {
     };
 
     // Apply global settings if not provided
+    if (!mergedOptions.apiUrl && this.apiUrl) {
+      mergedOptions.apiUrl = this.apiUrl;
+    }
     if (!mergedOptions.clientUniqueId && this.clientUniqueId) {
       mergedOptions.clientUniqueId = this.clientUniqueId;
     }

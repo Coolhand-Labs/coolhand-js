@@ -110,6 +110,7 @@ Initialize the library with your Coolhand API key. Automatically attaches to all
 - `options` (object, optional): Configuration options
   - `autoAttach` (boolean): Enable auto-attachment (default: true)
   - `clientUniqueId` (string): Optional client identifier sent with all feedback (e.g., user ID, session ID)
+  - `apiUrl` (string): Override the API endpoint feedback is submitted to (default: the production Coolhand endpoint). Useful for staging environments, proxies, or self-hosted collectors.
   - `widgetStyle` (string): Default widget style for all widgets - `"overlay"` (default), `"pixel"`, or `"hidden"`
   - `explanationSample` (number): Probability (0-1) of showing explanation prompt after feedback. `0` = never ask, `1` = always ask (default), `0.2` = ask 20% of the time
   - `enableFingerprint` (boolean): *(Experimental)* Enable automatic cookie-based user fingerprinting (default: true). Set to `false` to disable.
@@ -127,6 +128,9 @@ CoolhandJS.init('ch_api_abc123...');
 
 // With client tracking
 CoolhandJS.init('ch_api_abc123...', { clientUniqueId: 'user-123' });
+
+// Send feedback to a staging/proxy endpoint instead of production
+CoolhandJS.init('ch_api_abc123...', { apiUrl: 'https://staging.example.com/api/v2/llm_request_log_feedbacks' });
 
 // Use minimal pixel style for all widgets
 CoolhandJS.init('ch_api_abc123...', { widgetStyle: 'pixel' });
@@ -161,6 +165,7 @@ Manually attach a feedback widget to an HTML element. Usually not needed since a
 **Options:**
 - `clientUniqueId` (string): Optional client identifier (overrides global setting from init)
 - `workloadId` (string): Optional workload hash ID to associate feedback with a specific workload. Improves fuzzy matching accuracy.
+- `apiUrl` (string): Override the API endpoint feedback is submitted to (overrides global setting from init)
 - `widgetStyle` (string): Widget display style (overrides global setting) - `"overlay"`, `"pixel"`, or `"hidden"`
 - `explanationSample` (number): Probability (0-1) of showing explanation prompt (overrides global setting). Default: `1` (always ask)
 - `onSuccess` (function): Callback when feedback is successfully submitted
