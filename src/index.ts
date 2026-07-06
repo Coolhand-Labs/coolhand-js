@@ -1,6 +1,7 @@
 import { CoolhandFeedback } from './coolhand-feedback';
 
-// Export types for library consumers
+// Export types for library consumers.
+// Type-only exports are erased at compile time, so they are always safe.
 export type {
   FeedbackValue,
   FeedbackType,
@@ -15,20 +16,20 @@ export type {
   PartialFeedbackApiPayload,
 } from './types';
 
-// Export classes for advanced usage
-export { CoolhandFeedback } from './coolhand-feedback';
-export { FeedbackWidget } from './feedback-widget';
-export { PartialFeedbackManager } from './partial-feedback-manager';
-export { PartialFeedbackWidget } from './partial-feedback-widget';
-
-// Export constants
-export { COOLHAND_API_URL, VERSION } from './constants';
-export {
-  PARTIAL_FEEDBACK_ATTRIBUTE,
-  PARTIAL_FEEDBACKS_ATTRIBUTE,
-  PARTIAL_HIGHLIGHT_CLASS,
-  MIN_SELECTION_LENGTH,
-} from './constants';
+// NOTE: This module intentionally has NO named value exports.
+//
+// The UMD bundle is built with webpack `library.export: 'default'`
+// (see webpack.config.mjs), which exposes ONLY the default export as the
+// `CoolhandJS` global / module value. Any named value export declared here
+// would appear in the generated index.d.ts but be `undefined` at runtime —
+// TypeScript consumers importing it would compile fine and break in the
+// browser. Keep the runtime surface (default export) and the declared
+// surface (this file) in sync.
+//
+// Advanced consumers can reach everything through the singleton: it is a
+// CoolhandFeedback instance, widgets/managers are returned by
+// attach()/attachPartialFeedback(), and the SDK version is available as
+// `CoolhandJS.version`.
 
 // Create and export singleton instance for UMD usage
 const coolhand = new CoolhandFeedback();
