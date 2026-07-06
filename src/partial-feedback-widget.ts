@@ -41,6 +41,7 @@ interface PartialFeedbackWidgetOptions {
  */
 export class PartialFeedbackWidget {
   private apiKey: string;
+  private apiUrl: string;
   private targetElement: HTMLElement;
   private textRange: TextRange;
   private originalOutput: string;
@@ -69,6 +70,7 @@ export class PartialFeedbackWidget {
 
   constructor(config: PartialFeedbackWidgetOptions) {
     this.apiKey = config.apiKey;
+    this.apiUrl = config.options.apiUrl || COOLHAND_API_URL;
     this.targetElement = config.targetElement;
     this.textRange = config.textRange;
     this.originalOutput = config.originalOutput;
@@ -374,8 +376,8 @@ export class PartialFeedbackWidget {
 
     // Determine URL and method
     const url = isUpdate
-      ? `${COOLHAND_API_URL}/${this.existingEntry!.id}`
-      : COOLHAND_API_URL;
+      ? `${this.apiUrl}/${this.existingEntry!.id}`
+      : this.apiUrl;
     const method = isUpdate ? 'PATCH' : 'POST';
 
     try {
@@ -606,7 +608,7 @@ export class PartialFeedbackWidget {
     }
 
     try {
-      const response = await fetch(`${COOLHAND_API_URL}/${this.currentEntry.id}`, {
+      const response = await fetch(`${this.apiUrl}/${this.currentEntry.id}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',

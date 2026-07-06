@@ -47,6 +47,7 @@ export class FeedbackWidget {
   private targetElement: HTMLElement;
   private originalText: string;
   private apiKey: string;
+  private apiUrl: string;
   private options: AttachOptions;
   private isExpanded: boolean = false;
   private selectedFeedback: FeedbackValue = null;
@@ -102,6 +103,7 @@ export class FeedbackWidget {
     this.targetElement = targetElement;
     this.originalText = originalText;
     this.apiKey = apiKey;
+    this.apiUrl = options.apiUrl || COOLHAND_API_URL;
     this.options = options;
     this.useShadowDOM = this.supportsShadowDOM();
 
@@ -964,7 +966,7 @@ export class FeedbackWidget {
     }
 
     try {
-      const response = await fetch(`${COOLHAND_API_URL}/${existingFeedbackId}`, {
+      const response = await fetch(`${this.apiUrl}/${existingFeedbackId}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -1071,8 +1073,8 @@ export class FeedbackWidget {
 
     // Determine URL and method based on whether we're updating or creating
     const url = isUpdate
-      ? `${COOLHAND_API_URL}/${existingFeedbackId}`
-      : COOLHAND_API_URL;
+      ? `${this.apiUrl}/${existingFeedbackId}`
+      : this.apiUrl;
     const method = isUpdate ? 'PATCH' : 'POST';
 
     // Set aria-busy during API call
@@ -1232,8 +1234,8 @@ export class FeedbackWidget {
 
     // Use PATCH if we have an existing ID, POST otherwise
     const url = existingFeedbackId
-      ? `${COOLHAND_API_URL}/${existingFeedbackId}`
-      : COOLHAND_API_URL;
+      ? `${this.apiUrl}/${existingFeedbackId}`
+      : this.apiUrl;
     const method = existingFeedbackId ? 'PATCH' : 'POST';
 
     // Set aria-busy during API call
