@@ -179,6 +179,10 @@ This allows users to change their mind without creating duplicate feedback entri
 | Create | POST | `/api/v2/llm_request_log_feedbacks` |
 | Update | PATCH | `/api/v2/llm_request_log_feedbacks/{id}` |
 
+By default these resolve against the production base URL in `COOLHAND_API_URL` (`src/constants.ts`). The base endpoint can be overridden with the `apiUrl` option, set globally on `init()` or per-widget on `attach()`/`attachPartialFeedback()` (the per-widget value takes precedence). The override is threaded through to each widget and used in place of `COOLHAND_API_URL` for all POST and PATCH requests, which is useful for staging environments, proxies, or self-hosted collectors.
+
+Note that `apiUrl` must be the full feedback resource path (e.g. `https://staging.example.com/api/v2/llm_request_log_feedbacks`), not just an origin — for updates the widget appends `/{id}` directly to this value to build the PATCH URL.
+
 ## Revised Output Tracking
 
 For `<textarea>` and `<input>` elements, the widget monitors for content changes after feedback is submitted:
