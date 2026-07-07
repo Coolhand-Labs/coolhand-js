@@ -52,6 +52,13 @@ describe('Bundle tests', () => {
       expect(typeof CoolhandJS.detach).toBe('function');
     });
 
+    it('should expose the SDK version on the global', () => {
+      const pkg = JSON.parse(
+        fs.readFileSync(path.resolve(__dirname, '../package.json'), 'utf-8')
+      ) as { version: string };
+      expect(CoolhandJS.version).toBe(pkg.version);
+    });
+
     it('should initialize with API key', () => {
       const result = CoolhandJS.init('test-api-key', { autoAttach: false });
       expect(result).toBe(true);
@@ -102,6 +109,24 @@ describe('Bundle tests', () => {
     it('should have types.d.ts', () => {
       const dtsPath = path.resolve(__dirname, '../dist/types.d.ts');
       expect(fs.existsSync(dtsPath)).toBe(true);
+    });
+
+    it('index.d.ts must not declare named value exports (UMD exposes only the default export)', () => {
+      // The UMD bundle is built with webpack `library.export: 'default'`, so
+      // only the default export exists at runtime. A named value export in
+      // the d.ts would typecheck for consumers and then be `undefined` in the
+      // browser. Type-only exports (`export type`) are fine — they're erased.
+      const dtsPath = path.resolve(__dirname, '../dist/index.d.ts');
+      const dts = fs.readFileSync(dtsPath, 'utf-8');
+
+      const valueExportPatterns = [
+        /^export \{/m, // export { Foo } from '...'
+        /^export declare (const|let|var|class|function|enum)/m,
+      ];
+      for (const pattern of valueExportPatterns) {
+        expect(dts).not.toMatch(pattern);
+      }
+      expect(dts).toMatch(/^export default /m);
     });
   });
 });

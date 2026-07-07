@@ -56,6 +56,8 @@ const widget = CoolhandJS.attach(element, {
 });
 ```
 
+> **Note:** `src/index.ts` intentionally declares no named *value* exports — only the default export and the type-only exports shown above. The UMD bundle is built with webpack `library.export: 'default'`, so a named value export would type-check but be `undefined` at runtime. Don't re-add named value exports to `src/index.ts`; expose new functionality through the `CoolhandJS` default export instance instead.
+
 ### Available Types
 
 | Type | Description |

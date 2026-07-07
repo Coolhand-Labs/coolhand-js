@@ -1,7 +1,7 @@
 import { FeedbackWidget } from './feedback-widget';
 import { PartialFeedbackManager } from './partial-feedback-manager';
 import { getOrCreateFingerprintId, hasFeedbackBeenViewed, markFeedbackAsViewed } from './cookie';
-import { PARTIAL_FEEDBACK_ATTRIBUTE } from './constants';
+import { PARTIAL_FEEDBACK_ATTRIBUTE, VERSION } from './constants';
 import type { InitOptions, AttachOptions, WidgetStyle, ColorScheme, WidgetPlacementVertical, WidgetPlacementHorizontal, PartialFeedbackOptions } from './types';
 
 /**
@@ -9,6 +9,9 @@ import type { InitOptions, AttachOptions, WidgetStyle, ColorScheme, WidgetPlacem
  * Handles initialization, auto-attachment, and widget lifecycle
  */
 export class CoolhandFeedback {
+  /** SDK version (e.g. via the `CoolhandJS.version` global). */
+  public readonly version: string = VERSION;
+
   private apiKey: string | null = null;
   private apiUrl: string | null = null;
   private clientUniqueId: string | null = null;
