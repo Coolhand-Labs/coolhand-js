@@ -203,6 +203,15 @@ Remove a feedback widget from an element.
 CoolhandJS.detach(document.getElementById('content'));
 ```
 
+### `CoolhandJS.version`
+
+The SDK version string (e.g. `"0.5.0"`).
+
+**Example:**
+```javascript
+console.log(CoolhandJS.version); // "0.5.0"
+```
+
 ## HTML Attribute API (Recommended)
 
 CoolhandJS makes it incredibly easy to capture human feedback on AI outputs. Just add the coolhand-feedback attribute on HTML div containing the feedback:
