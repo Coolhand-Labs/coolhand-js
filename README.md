@@ -244,6 +244,11 @@ CoolhandJS makes it incredibly easy to capture human feedback on AI outputs. Jus
      data-coolhand-placement-horizontal="left">
   AI response with widget in bottom-left corner
 </div>
+
+<!-- Manual attach only - excluded from auto-attach scanning, but still carries the
+     declarative marker. Useful when an element starts out empty and is only populated
+     (and attached via CoolhandJS.attach()) later, e.g. on an "Edit" click. -->
+<textarea coolhand-feedback data-coolhand-manual-attach hidden></textarea>
 ```
 
 ### Textarea/Input Support
@@ -262,6 +267,7 @@ The AI generated this response which the user can edit.
 
 ### Supported Attributes
 - `coolhand-feedback`: Enables automatic widget attachment
+- `data-coolhand-manual-attach`: Opts the element out of auto-attach scanning; attach it explicitly with `CoolhandJS.attach(element)` instead. See [Auto-Attach: How It Works and Its Limits](docs/attaching.md).
 - `data-coolhand-widget-style`: Widget display style - `"overlay"` (default), `"pixel"` (minimal 8px dot that expands on hover), or `"hidden"` (no UI, still tracks input changes)
 - `data-coolhand-workload-id`: Optional workload hash ID to associate feedback with a specific workload. When provided, improves fuzzy matching accuracy for connecting feedback to the original LLM request.
 - `data-coolhand-explanation-sample-rate`: Override explanation sample rate for this element (float `"0"` to `"1"`). `"1"` = always show, `"0"` = never show, `"0.5"` = 50% chance. Takes priority over the global `explanationSample` setting.

@@ -1,7 +1,7 @@
 import { FeedbackWidget } from './feedback-widget';
 import { PartialFeedbackManager } from './partial-feedback-manager';
 import { getOrCreateFingerprintId, hasFeedbackBeenViewed, markFeedbackAsViewed } from './cookie';
-import { PARTIAL_FEEDBACK_ATTRIBUTE, VERSION } from './constants';
+import { MANUAL_ATTACH_ATTRIBUTE, PARTIAL_FEEDBACK_ATTRIBUTE, VERSION } from './constants';
 import type { InitOptions, AttachOptions, WidgetStyle, ColorScheme, WidgetPlacementVertical, WidgetPlacementHorizontal, PartialFeedbackOptions } from './types';
 
 /**
@@ -118,8 +118,17 @@ export class CoolhandFeedback {
       '[coolhand-feedback="true"], [coolhand-feedback=""], [coolhand-feedback]'
     );
     elements.forEach((element) => {
+      if (this.isManualAttachOnly(element)) return;
       this.detach(element);
     });
+  }
+
+  /**
+   * Whether an element opts out of auto-attach scanning via the manual-attach attribute.
+   * Such elements are only ever attached via a direct CoolhandJS.attach() call.
+   */
+  private isManualAttachOnly(element: HTMLElement): boolean {
+    return element.hasAttribute(MANUAL_ATTACH_ATTRIBUTE);
   }
 
   /**
@@ -160,7 +169,10 @@ export class CoolhandFeedback {
     const elements = document.querySelectorAll<HTMLElement>(
       '[coolhand-feedback="true"], [coolhand-feedback=""], [coolhand-feedback]'
     );
-    elements.forEach((element) => this.autoAttachToElement(element));
+    elements.forEach((element) => {
+      if (this.isManualAttachOnly(element)) return;
+      this.autoAttachToElement(element);
+    });
   }
 
   /**
@@ -168,7 +180,11 @@ export class CoolhandFeedback {
    */
   private attachToElementsInNode(node: HTMLElement): void {
     // Check the node itself
-    if (node.hasAttribute && node.hasAttribute('coolhand-feedback')) {
+    if (
+      node.hasAttribute &&
+      node.hasAttribute('coolhand-feedback') &&
+      !this.isManualAttachOnly(node)
+    ) {
       this.autoAttachToElement(node);
     }
 
@@ -177,7 +193,10 @@ export class CoolhandFeedback {
       const elements = node.querySelectorAll<HTMLElement>(
         '[coolhand-feedback="true"], [coolhand-feedback=""], [coolhand-feedback]'
       );
-      elements.forEach((element) => this.autoAttachToElement(element));
+      elements.forEach((element) => {
+        if (this.isManualAttachOnly(element)) return;
+        this.autoAttachToElement(element);
+      });
     }
   }
 

@@ -269,4 +269,71 @@ describe('CoolhandFeedback', () => {
       expect(widgets.length).toBe(1);
     });
   });
+
+  describe('manual-attach opt-out', () => {
+    it('should not auto-attach to elements with data-coolhand-manual-attach on initial scan', () => {
+      document.body.innerHTML =
+        '<textarea coolhand-feedback data-coolhand-manual-attach>Test content</textarea>';
+
+      coolhand.init('test-api-key');
+
+      const widget = document.querySelector('[data-coolhand-widget]');
+      expect(widget).toBeNull();
+    });
+
+    it('should not auto-attach to dynamically added elements with data-coolhand-manual-attach', async () => {
+      coolhand.init('test-api-key');
+
+      const newElement = document.createElement('div');
+      newElement.setAttribute('coolhand-feedback', '');
+      newElement.setAttribute('data-coolhand-manual-attach', '');
+      newElement.textContent = 'Dynamically added content';
+      document.body.appendChild(newElement);
+
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      const widget = newElement.querySelector('[data-coolhand-widget]');
+      expect(widget).toBeNull();
+    });
+
+    it('should still allow direct attach() on a manual-attach element', () => {
+      document.body.innerHTML =
+        '<div coolhand-feedback data-coolhand-manual-attach>Test content</div>';
+
+      coolhand.init('test-api-key');
+
+      const element = document.querySelector<HTMLElement>('[coolhand-feedback]')!;
+      expect(element.querySelector('[data-coolhand-widget]')).toBeNull();
+
+      const widget = coolhand.attach(element);
+
+      expect(widget).not.toBeNull();
+      expect(element.querySelector('[data-coolhand-widget]')).not.toBeNull();
+    });
+
+    it('should not tear down a manually-attached widget on a manual-attach element when re-initializing', () => {
+      document.body.innerHTML = `
+        <div coolhand-feedback data-coolhand-manual-attach>Manual content</div>
+        <div coolhand-feedback>Auto content</div>
+      `;
+
+      coolhand.init('test-api-key', { autoAttach: false });
+
+      const manualElement = document.querySelector<HTMLElement>('[data-coolhand-manual-attach]')!;
+      const autoElement = document.querySelector<HTMLElement>(
+        '[coolhand-feedback]:not([data-coolhand-manual-attach])'
+      )!;
+
+      coolhand.attach(manualElement);
+      expect(manualElement.querySelector('[data-coolhand-widget]')).not.toBeNull();
+
+      // Re-initialize, this time with auto-attach enabled
+      coolhand.init('test-api-key');
+
+      // The manually-attached widget should survive re-init teardown
+      expect(manualElement.querySelector('[data-coolhand-widget]')).not.toBeNull();
+      // A normal auto-attach element should still get (re-)attached
+      expect(autoElement.querySelector('[data-coolhand-widget]')).not.toBeNull();
+    });
+  });
 });
