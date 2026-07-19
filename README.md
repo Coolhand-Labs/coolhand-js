@@ -156,7 +156,7 @@ CoolhandJS.init('ch_api_abc123...', { placementVertical: 'bottom', placementHori
 
 ### `CoolhandJS.attach(element, options)` (Manual Method)
 
-Manually attach a feedback widget to an HTML element. Usually not needed since auto-attachment handles this.
+Manually attach a feedback widget to an HTML element. Usually not needed since auto-attachment handles this — except for elements that gain content *after* the initial auto-attach scan (lazy tabs, accordions, click-to-edit fields), which auto-attach never retries. See [Auto-Attach: How It Works and Its Limits](docs/attaching.md).
 
 **Parameters:**
 - `element` (HTMLElement, required): The DOM element to attach the widget to
@@ -334,47 +334,13 @@ The attribute takes priority over the global `explanationSample` setting, allowi
 
 CoolhandJS can automatically generate and persist a unique user fingerprint ID via a first-party cookie. This enables cross-session feedback correlation without requiring you to implement user tracking yourself.
 
-### How It Works
-
-1. On `init()`, a UUID v4 fingerprint is generated (or retrieved if already exists)
-2. The fingerprint is stored in a secure, first-party cookie (`coolhand_fingerprint`)
-3. The `coolhand_fingerprint_id` is automatically included in all API requests
-4. The cookie is refreshed on each visit to extend its lifetime
-
-### Cookie Configuration
-
-The fingerprint cookie uses these security settings:
-- `SameSite=None` - Supports third-party iframe embedding
-- `Secure` - **Requires HTTPS** (fingerprinting is disabled on HTTP sites)
-- `Path=/` - Available site-wide
-- `Max-Age=365 days` - Persists for one year (refreshed on each visit)
-
-### Relationship with `clientUniqueId`
-
-Both identifiers serve different purposes and are sent together:
-- `clientUniqueId`: Developer-provided identifier (e.g., your user ID or session ID)
-- `coolhand_fingerprint_id`: Automatic browser-level identifier
-
-This allows you to correlate feedback both with your own user system and across anonymous sessions.
-
-### Disabling Fingerprinting
-
 Fingerprinting is enabled by default. To disable it:
 
 ```javascript
 CoolhandJS.init('your-api-key', { enableFingerprint: false });
 ```
 
-### Browser Compatibility
-
-- Requires HTTPS (fingerprinting silently disabled on HTTP)
-- Works in Chrome, Firefox, Safari, Edge (modern versions)
-- Gracefully degrades if cookies are blocked by the browser or extensions
-- Safari ITP: Cookie is refreshed on each visit to work around the 7-day limit for client-set cookies
-
-### Privacy Considerations
-
-The fingerprint is a randomly generated UUID with no personal information. It cannot be used to identify individuals, only to correlate feedback from the same browser. Consider disclosing this cookie in your privacy policy if required by your jurisdiction.
+For cookie format/attributes, browser compatibility, and privacy considerations, see [User Fingerprinting](docs/fingerprinting.md).
 
 ## Requirements
 
@@ -386,6 +352,8 @@ A valid Coolhand API key is required. Get one from your [Coolhand Dashboard](htt
 
 ### HTML Attribute Usage
 Elements with the `coolhand-feedback` attribute will automatically get feedback widgets when `CoolhandJS.init()` is called. The library uses a MutationObserver to detect dynamically added elements.
+
+> **Limitation:** auto-attach only detects elements *added to the DOM* after `init()` — it never re-scans an element that was already present but empty/hidden at scan time, even after that element later gains content. For elements populated after the initial page load (lazy tabs, accordions, click-to-edit fields), call `CoolhandJS.attach(element)` manually once the content is ready. See [Auto-Attach: How It Works and Its Limits](docs/attaching.md) for details.
 
 ### Browser Support
 - Chrome 60+
@@ -429,40 +397,7 @@ Override these variables to match your design:
 }
 ```
 
-### Dark Mode Example
-
-```css
-/* Dark mode customization */
-[coolhand-feedback] {
-  --coolhand-bg: #1f2937;
-  --coolhand-bg-hover: #374151;
-  --coolhand-border: #4b5563;
-  --coolhand-text: #f9fafb;
-  --coolhand-text-muted: #9ca3af;
-  --coolhand-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-  --coolhand-shadow-hover: 0 6px 16px rgba(0, 0, 0, 0.4);
-}
-```
-
-### Brand Color Example
-
-```css
-/* Match your brand colors */
-[coolhand-feedback] {
-  --coolhand-accent: #7c3aed;       /* Purple accent */
-  --coolhand-success: #22c55e;      /* Green for positive */
-  --coolhand-border-radius: 12px;   /* More rounded corners */
-}
-```
-
-### Style Isolation
-
-The widget is designed to avoid conflicts with your existing styles:
-
-- **Shadow DOM**: When supported, styles are completely isolated
-- **Scoped Classes**: All classes use `coolhand-` prefix
-- **High Specificity**: Z-index of 99999 ensures visibility
-- **No Global Styles**: Widget styles don't affect your page
+For dark mode and brand color examples, and how the widget isolates itself from your page styles, see [Styling & Customization](docs/styling.md).
 
 ## Troubleshooting
 
@@ -482,6 +417,16 @@ The widget is designed to avoid conflicts with your existing styles:
 - The widget uses Shadow DOM when available
 - Try increasing parent element's z-index
 - Check for `overflow: hidden` on parent elements
+
+## Documentation
+
+- **[Auto-Attach: How It Works and Its Limits](docs/attaching.md)** - The MutationObserver mechanism, its limitation with lazily-populated elements, and the manual `attach()`/`detach()` workaround.
+- **[Feedback API Reference](docs/feedback-api.md)** - Full API payload, field reference, PATCH update flow, and revised output tracking.
+- **[User Fingerprinting](docs/fingerprinting.md)** - Cookie format, security attributes, browser compatibility, and privacy considerations.
+- **[Smart Auto-Highlight](docs/auto-highlight.md)** - First-visit highlight behavior, highlight sources, and edge cases.
+- **[Widget Placement](docs/widget-placement.md)** - Configuration priority, data attributes, and Shadow DOM CSS architecture.
+- **[Styling & Customization](docs/styling.md)** - CSS variable reference, dark mode, and brand color examples.
+- **[TypeScript Usage](docs/typescript.md)** - Typed imports, available types, and the `index.ts` named-export caveat.
 
 ## License
 
