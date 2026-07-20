@@ -5,7 +5,7 @@
 1. **Initial scan** — on `init()`, `document.querySelectorAll('[coolhand-feedback]')` runs once and attaches to every matching element found at that moment.
 2. **MutationObserver** — a `MutationObserver` is then set up on `document.body` watching `childList`/`subtree`. Whenever new nodes are added to the DOM, it checks each added node (and its descendants) for the `coolhand-feedback` attribute and attaches to any matches.
 
-Both phases funnel through the same per-element attach logic, which requires the element to have extractable text (`textContent`, or `value` for `<textarea>`/`<input>`) — an element with no readable content is skipped with a console error.
+Both phases funnel through the same per-element attach logic, which requires the element to have extractable text (`textContent`, or `value` for `<textarea>`/`<input>`) — an element with no readable content is skipped silently, logged only at `console.debug` level (hidden by default in most browser devtools). This is different from a manual `CoolhandJS.attach(element)` call, which logs a `console.error` if the element has no readable content, since that's a caller mistake rather than an expected outcome of a best-effort background scan.
 
 ## Limitation: elements are never re-checked after their first scan
 
