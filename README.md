@@ -42,7 +42,7 @@ Include via jsDelivr - these automatically mirror the npm package:
 
 ```html
 <!-- jsDelivr (recommended) -->
-<script src="https://cdn.jsdelivr.net/npm/coolhand@0.2.0/dist/coolhand.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/coolhand@0.6.0/dist/coolhand.min.js"></script>
 
 <!-- Latest version (auto-updates) -->
 <script src="https://cdn.jsdelivr.net/npm/coolhand/dist/coolhand.min.js"></script>
@@ -51,7 +51,7 @@ Include via jsDelivr - these automatically mirror the npm package:
 Or via GitHub releases:
 
 ```html
-<script src="https://github.com/Coolhand-Labs/coolhand-js/releases/download/v0.2.0/coolhand.min.js"></script>
+<script src="https://github.com/Coolhand-Labs/coolhand-js/releases/download/v0.6.0/coolhand.min.js"></script>
 ```
 
 ### npm
@@ -205,11 +205,11 @@ CoolhandJS.detach(document.getElementById('content'));
 
 ### `CoolhandJS.version`
 
-The SDK version string (e.g. `"0.5.0"`).
+The SDK version string (e.g. `"0.6.0"`).
 
 **Example:**
 ```javascript
-console.log(CoolhandJS.version); // "0.5.0"
+console.log(CoolhandJS.version); // "0.6.0"
 ```
 
 ## HTML Attribute API (Recommended)

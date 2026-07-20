@@ -10,7 +10,7 @@ The widget sends the following payload to the Coolhand API:
     "like": true,
     "original_output": "The AI-generated content...",
     "explanation": "This was helpful because it clearly explained the concept.",
-    "collector": "coolhand-js-0.5.0",
+    "collector": "coolhand-js-0.6.0",
     "client_unique_id": "optional-session-id",
     "coolhand_fingerprint_id": "550e8400-e29b-41d4-a716-446655440000",
     "workload_hashid": "optional-workload-id",
