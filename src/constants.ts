@@ -94,3 +94,8 @@ export const MIN_SELECTION_LENGTH = 3;
  * Data attribute to disable the summary pixel on a partial feedback element
  */
 export const SUMMARY_PIXEL_ATTRIBUTE = 'data-coolhand-summary-pixel';
+
+/**
+ * Data attribute to exclude an element from auto-attach scanning (still attachable via CoolhandJS.attach())
+ */
+export const MANUAL_ATTACH_ATTRIBUTE = 'data-coolhand-manual-attach';
