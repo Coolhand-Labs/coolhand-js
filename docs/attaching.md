@@ -5,7 +5,7 @@
 1. **Initial scan** — on `init()`, `document.querySelectorAll('[coolhand-feedback]')` runs once and attaches to every matching element found at that moment.
 2. **MutationObserver** — a `MutationObserver` is then set up on `document.body` watching `childList`/`subtree`. Whenever new nodes are added to the DOM, it checks each added node (and its descendants) for the `coolhand-feedback` attribute and attaches to any matches.
 
-Both phases funnel through the same per-element attach logic, which requires the element to have extractable text (`textContent`, or `value` for `<textarea>`/`<input>`) — an element with no readable content is skipped with a console error.
+Both phases funnel through the same per-element attach logic, which requires the element to have extractable text (`textContent`, or `value` for `<textarea>`/`<input>`) — an element with no readable content is skipped silently, logged only at `console.debug` level (hidden by default in most browser devtools). This is different from a manual `CoolhandJS.attach(element)` call, which logs a `console.error` if the element has no readable content, since that's a caller mistake rather than an expected outcome of a best-effort background scan.
 
 ## Limitation: elements are never re-checked after their first scan
 
@@ -36,13 +36,13 @@ See the [`CoolhandJS.attach(element, options)`](../README.md#coolhandjsattachele
 
 ## Opting an element out of scanning entirely: `data-coolhand-manual-attach`
 
-The workaround above still lets the initial scan and the `MutationObserver` find the element and attempt to attach — it just happens to have no text yet, so the attempt fails with a `No text content found` console error. For elements that are reliably empty at scan time by design — e.g. a hidden `<textarea>` only synced with content on an "Edit" click — add `data-coolhand-manual-attach` alongside `coolhand-feedback` to skip both scanning phases outright:
+The workaround above still lets the initial scan and the `MutationObserver` find the element and attempt to attach — it just happens to have no text yet, so the attempt is silently skipped (logged at `console.debug`, per the empty-element behavior described above) rather than actually attaching. For elements that are reliably empty at scan time by design — e.g. a hidden `<textarea>` only synced with content on an "Edit" click — add `data-coolhand-manual-attach` alongside `coolhand-feedback` to skip both scanning phases outright:
 
 ```html
 <textarea coolhand-feedback data-coolhand-manual-attach hidden></textarea>
 ```
 
-This keeps the declarative `coolhand-feedback` marker for documentation/lifecycle purposes without triggering "No text content found" errors or wasted attach attempts. `data-coolhand-manual-attach` elements are also skipped when `destroyAllWidgets()` runs on re-init, so a widget you attached by hand survives a later `CoolhandJS.init()` call. The element is otherwise ordinary — call `CoolhandJS.attach(element)` yourself once it has content, exactly as in the workaround above.
+This keeps the declarative `coolhand-feedback` marker for documentation/lifecycle purposes while avoiding the wasted attach attempt entirely, rather than relying on it silently failing. `data-coolhand-manual-attach` elements are also skipped when `destroyAllWidgets()` runs on re-init, so a widget you attached by hand survives a later `CoolhandJS.init()` call. The element is otherwise ordinary — call `CoolhandJS.attach(element)` yourself once it has content, exactly as in the workaround above.
 
 ## Note: attach() is a one-time operation per element
 

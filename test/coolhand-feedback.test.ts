@@ -336,4 +336,46 @@ describe('CoolhandFeedback', () => {
       expect(autoElement.querySelector('[data-coolhand-widget]')).not.toBeNull();
     });
   });
+
+  describe('auto-attach with empty elements', () => {
+    it('should not log console.error for an existing empty element on init', () => {
+      document.body.innerHTML = '<div coolhand-feedback></div>';
+
+      const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+      const debugSpy = jest.spyOn(console, 'debug').mockImplementation(() => {});
+
+      coolhand.init('test-api-key');
+
+      expect(errorSpy).not.toHaveBeenCalled();
+      expect(debugSpy).toHaveBeenCalledWith(
+        expect.stringContaining('Skipped auto-attach'),
+        expect.anything()
+      );
+
+      errorSpy.mockRestore();
+      debugSpy.mockRestore();
+    });
+
+    it('should not log console.error for a dynamically added empty element', async () => {
+      coolhand.init('test-api-key');
+
+      const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+      const debugSpy = jest.spyOn(console, 'debug').mockImplementation(() => {});
+
+      const newElement = document.createElement('div');
+      newElement.setAttribute('coolhand-feedback', '');
+      document.body.appendChild(newElement);
+
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      expect(errorSpy).not.toHaveBeenCalled();
+      expect(debugSpy).toHaveBeenCalledWith(
+        expect.stringContaining('Skipped auto-attach'),
+        expect.anything()
+      );
+
+      errorSpy.mockRestore();
+      debugSpy.mockRestore();
+    });
+  });
 });

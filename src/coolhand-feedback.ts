@@ -259,7 +259,7 @@ export class CoolhandFeedback {
       options.workloadId = element.dataset.coolhandWorkloadId;
     }
 
-    this.attach(element, options);
+    this.attachInternal(element, options, true);
 
     // Check if element also supports partial feedback
     if (element.hasAttribute(PARTIAL_FEEDBACK_ATTRIBUTE)) {
@@ -277,6 +277,20 @@ export class CoolhandFeedback {
     element: HTMLElement,
     options: AttachOptions = {}
   ): FeedbackWidget | null {
+    return this.attachInternal(element, options, false);
+  }
+
+  /**
+   * Shared implementation behind the public attach() and the internal
+   * auto-attach scan. The auto-attach path encounters empty/not-yet-populated
+   * elements as a normal, expected outcome (e.g. toggle/tab/accordion/edit-in-place
+   * UI), so it downgrades that case to console.debug instead of console.error.
+   */
+  private attachInternal(
+    element: HTMLElement,
+    options: AttachOptions,
+    isAutoAttach: boolean
+  ): FeedbackWidget | null {
     if (!this.apiKey) {
       console.error(
         '[CoolhandJS] Error: API key not initialized. Call CoolhandJS.init("your-api-key") first.'
@@ -293,10 +307,17 @@ export class CoolhandFeedback {
 
     const textContent = this.extractText(element);
     if (!textContent) {
-      console.error(
-        '[CoolhandJS] Error: No text content found in element:',
-        element
-      );
+      if (isAutoAttach) {
+        console.debug(
+          '[CoolhandJS] Skipped auto-attach: no text content found in element:',
+          element
+        );
+      } else {
+        console.error(
+          '[CoolhandJS] Error: No text content found in element:',
+          element
+        );
+      }
       return null;
     }
 
