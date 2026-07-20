@@ -1,6 +1,6 @@
 {
   "name": "coolhand",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "description": "Lightweight, UX-optimized widget for collecting human feedback on AI outputs",
   "main": "dist/coolhand.js",
   "types": "dist/index.d.ts",
