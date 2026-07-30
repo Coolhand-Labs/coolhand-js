@@ -86,3 +86,20 @@ The dev server automatically detects the presence of `localhost.pem` and `localh
 ## Feature Documentation
 
 Feature internals (API payload/field reference, fingerprinting cookie format, auto-highlight behavior, widget placement CSS architecture, TypeScript usage) live under [`docs/`](docs/) — see the [Documentation section](README.md#documentation) in the README for the full list.
+
+## Releasing
+
+Releases are published to npm automatically by [`.github/workflows/publish.yml`](.github/workflows/publish.yml) when a `vX.Y.Z` tag is pushed, using npm Trusted Publishing (OIDC) with provenance — there is no `NPM_TOKEN` and maintainers should **not** run `npm publish` locally, since that would race or double-publish against CI.
+
+To cut a release:
+
+1. Bump `"version"` in `package.json` to `X.Y.Z` and commit it to `main`.
+2. Tag that commit `vX.Y.Z` and push the tag: `git tag vX.Y.Z && git push origin vX.Y.Z`.
+3. `publish.yml` builds, tests, and verifies the tag matches `package.json`'s version before publishing — a mismatch fails the workflow instead of publishing. [`release.yml`](.github/workflows/release.yml) runs independently off the same tag to cut the GitHub Release with build artifacts attached.
+
+### One-time setup (already done for this repo)
+
+Publishing depends on registry- and repo-side configuration that isn't part of the workflow file itself:
+
+- An npm Trusted Publisher configured for the `coolhand` package, pointing at this repo and the `publish.yml` workflow.
+- A GitHub Environment named `npm-publish` (referenced by the workflow's `publish` job) protecting the publish step.
