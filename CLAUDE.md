@@ -14,6 +14,14 @@ npm run lint && npm run typecheck && npm test
 
 This mirrors what CI runs (`.github/workflows/lint.yml` and `test.yml` run lint+typecheck and tests as separate jobs). A green run of all three means a green CI run. Before a release, also run `npm run test:bundle` and `npm run test:a11y` — `release.yml` builds and tests the actual bundle, and the accessibility suite isn't part of the default `npm test` gate.
 
+For an iterative review-and-fix pass over a branch's diff, use `/loop-review`. For the release event itself (triage open PRs, merge, changelog/version, red-team, validate, open the release PR), use `/prep-release`.
+
+## Changelog and versioning
+
+Do not add `CHANGELOG.md` entries or bump `package.json`'s `version` field on feature/fix branches or in PRs. The `/prep-release` skill is the sole owner of both — it writes changelog entries for the PRs actually shipping in a release and bumps the version once, at release time.
+
+Per-PR changelog edits create merge conflicts across concurrent branches for no benefit, since the entries get rewritten from the final, user-approved set of merged PRs anyway. Leave `CHANGELOG.md` and `package.json`'s `version` alone in your PR.
+
 ## Running individual tools
 
 ```bash

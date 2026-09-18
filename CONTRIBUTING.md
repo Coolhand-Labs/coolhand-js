@@ -93,9 +93,10 @@ Releases are published to npm automatically by [`.github/workflows/publish.yml`]
 
 To cut a release:
 
-1. Bump `"version"` in `package.json` to `X.Y.Z` and commit it to `main`.
-2. Tag that commit `vX.Y.Z` and push the tag: `git tag vX.Y.Z && git push origin vX.Y.Z`.
-3. `publish.yml` builds, tests, and verifies the tag matches `package.json`'s version before publishing — a mismatch fails the workflow instead of publishing. [`release.yml`](.github/workflows/release.yml) runs independently off the same tag to cut the GitHub Release with build artifacts attached.
+1. Run the `/prep-release` Claude Code skill (`.claude/skills/prep-release/SKILL.md`). It triages open PRs and merges the ones you choose, then opens a `release/vX.Y.Z` PR containing the changelog entry, the version bump (`package.json`, `package-lock.json`, and the version strings in the README and `docs/`), and a security review, after running the full lint/typecheck/test/build/bundle/a11y gate. Feature and fix PRs never edit `CHANGELOG.md` or `package.json`'s version — this step owns both.
+2. Review and merge that release PR into `main`.
+3. Tag the merge commit `vX.Y.Z` and push only that tag: `git tag vX.Y.Z && git push origin vX.Y.Z`. (Avoid `git push --tags`, which pushes every local tag and would trigger a publish run for any stray one.) The `publish` job waits on the `npm-publish` environment, so it may need approval in the Actions UI.
+4. `publish.yml` builds, tests, and verifies the tag matches `package.json`'s version before publishing — a mismatch fails the workflow instead of publishing. [`release.yml`](.github/workflows/release.yml) runs independently off the same tag to cut the GitHub Release with build artifacts attached.
 
 ### One-time setup (already done for this repo)
 
