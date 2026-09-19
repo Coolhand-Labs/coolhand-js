@@ -378,7 +378,7 @@ export class PartialFeedbackWidget {
 
     // Determine URL and method
     const url = isUpdate
-      ? `${this.apiUrl}/${this.existingEntry!.id}`
+      ? `${this.apiUrl}/${encodeURIComponent(this.existingEntry!.id!)}`
       : this.apiUrl;
     const method = isUpdate ? 'PATCH' : 'POST';
 
@@ -610,7 +610,7 @@ export class PartialFeedbackWidget {
     }
 
     try {
-      const response = await fetch(`${this.apiUrl}/${this.currentEntry.id}`, {
+      const response = await fetch(`${this.apiUrl}/${encodeURIComponent(this.currentEntry.id!)}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',

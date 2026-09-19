@@ -968,7 +968,7 @@ export class FeedbackWidget {
     }
 
     try {
-      const response = await fetch(`${this.apiUrl}/${existingFeedbackId}`, {
+      const response = await fetch(`${this.apiUrl}/${encodeURIComponent(existingFeedbackId)}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -1075,7 +1075,7 @@ export class FeedbackWidget {
 
     // Determine URL and method based on whether we're updating or creating
     const url = isUpdate
-      ? `${this.apiUrl}/${existingFeedbackId}`
+      ? `${this.apiUrl}/${encodeURIComponent(existingFeedbackId)}`
       : this.apiUrl;
     const method = isUpdate ? 'PATCH' : 'POST';
 
@@ -1236,7 +1236,7 @@ export class FeedbackWidget {
 
     // Use PATCH if we have an existing ID, POST otherwise
     const url = existingFeedbackId
-      ? `${this.apiUrl}/${existingFeedbackId}`
+      ? `${this.apiUrl}/${encodeURIComponent(existingFeedbackId)}`
       : this.apiUrl;
     const method = existingFeedbackId ? 'PATCH' : 'POST';
 

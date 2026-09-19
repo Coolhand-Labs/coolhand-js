@@ -1126,6 +1126,26 @@ describe('FeedbackWidget', () => {
       );
     });
 
+    it('should URL-encode the feedback ID when building the PATCH URL', async () => {
+      textareaElement = document.createElement('textarea');
+      textareaElement.value = 'Original content';
+      textareaElement.setAttribute(FEEDBACK_ID_ATTRIBUTE, '../x?y=1');
+      document.body.appendChild(textareaElement);
+
+      widget = new FeedbackWidget(textareaElement, 'Original content', 'test-api-key');
+
+      textareaElement.value = 'Edited';
+      textareaElement.dispatchEvent(new Event('input', { bubbles: true }));
+      jest.advanceTimersByTime(DEBOUNCE_MS);
+      await Promise.resolve();
+      await Promise.resolve();
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        `${COOLHAND_API_URL}/${encodeURIComponent('../x?y=1')}`,
+        expect.objectContaining({ method: 'PATCH' })
+      );
+    });
+
     it('should debounce multiple rapid changes', async () => {
       textareaElement = document.createElement('textarea');
       textareaElement.value = 'Original content';
