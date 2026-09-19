@@ -14,6 +14,26 @@ import type {
   FeedbackApiResponse,
 } from './types';
 
+const FEEDBACK_TYPES: readonly string[] = ['down', 'neutral', 'up'];
+
+/**
+ * The stored attribute is host-page-writable, so check the shape of each entry
+ * before it reaches highlight restoration and widget rendering.
+ */
+function isValidEntry(entry: unknown): entry is PartialFeedbackEntry {
+  if (typeof entry !== 'object' || entry === null) return false;
+  const { range, feedbackType, explanation } = entry as Partial<PartialFeedbackEntry>;
+  return (
+    typeof range === 'object' &&
+    range !== null &&
+    Number.isFinite(range.startOffset) &&
+    Number.isFinite(range.endOffset) &&
+    typeof feedbackType === 'string' &&
+    FEEDBACK_TYPES.includes(feedbackType) &&
+    (explanation === undefined || typeof explanation === 'string')
+  );
+}
+
 /** Highlight styles to inject into document */
 const HIGHLIGHT_STYLES = `
   .coolhand-partial-highlight {
@@ -189,7 +209,10 @@ export class PartialFeedbackManager {
     try {
       const parsed: PartialFeedbackStorage = JSON.parse(stored);
       if (parsed.version === 1 && Array.isArray(parsed.entries)) {
-        this.entries = parsed.entries;
+        this.entries = parsed.entries.filter(isValidEntry);
+        if (this.entries.length !== parsed.entries.length) {
+          console.warn('[CoolhandJS] Ignored malformed partial feedback entries');
+        }
       } else {
         console.warn('[CoolhandJS] Invalid partial feedbacks format, resetting');
         this.entries = [];

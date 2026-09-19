@@ -519,7 +519,7 @@ export class FeedbackWidget {
           aria-label="Your feedback explanation"
           aria-describedby="coolhand-summary-label"
           rows="3"
-        >${existingExplanation}</textarea>
+        ></textarea>
         <button class="coolhand-submit-btn" type="button" aria-label="Submit feedback changes">Submit</button>
       </div>
     `;
@@ -546,6 +546,8 @@ export class FeedbackWidget {
 
     if (textarea) {
       this.explanationText = existingExplanation;
+      // Set via .value rather than interpolating into innerHTML so stored text can't inject markup
+      textarea.value = existingExplanation;
       textarea.addEventListener('input', this.handleExplanationInput.bind(this));
       textarea.addEventListener('blur', this.handleExplanationBlur.bind(this));
     }
@@ -966,7 +968,7 @@ export class FeedbackWidget {
     }
 
     try {
-      const response = await fetch(`${this.apiUrl}/${existingFeedbackId}`, {
+      const response = await fetch(`${this.apiUrl}/${encodeURIComponent(existingFeedbackId)}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -1073,7 +1075,7 @@ export class FeedbackWidget {
 
     // Determine URL and method based on whether we're updating or creating
     const url = isUpdate
-      ? `${this.apiUrl}/${existingFeedbackId}`
+      ? `${this.apiUrl}/${encodeURIComponent(existingFeedbackId)}`
       : this.apiUrl;
     const method = isUpdate ? 'PATCH' : 'POST';
 
@@ -1234,7 +1236,7 @@ export class FeedbackWidget {
 
     // Use PATCH if we have an existing ID, POST otherwise
     const url = existingFeedbackId
-      ? `${this.apiUrl}/${existingFeedbackId}`
+      ? `${this.apiUrl}/${encodeURIComponent(existingFeedbackId)}`
       : this.apiUrl;
     const method = existingFeedbackId ? 'PATCH' : 'POST';
 

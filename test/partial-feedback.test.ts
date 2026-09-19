@@ -2133,9 +2133,9 @@ describe('Partial Feedback', () => {
       const storage = {
         version: 1,
         entries: [
-          { id: 1, range: { text: 'First', startOffset: 0, endOffset: 5 }, like: true },
-          { id: 2, range: { text: 'third', startOffset: 13, endOffset: 18 }, like: false },
-          { id: 3, range: { text: 'second', startOffset: 6, endOffset: 12 }, like: true },
+          { id: 1, range: { text: 'First', startOffset: 0, endOffset: 5 }, feedbackType: 'up' },
+          { id: 2, range: { text: 'third', startOffset: 13, endOffset: 18 }, feedbackType: 'down' },
+          { id: 3, range: { text: 'second', startOffset: 6, endOffset: 12 }, feedbackType: 'up' },
         ],
       };
       element.setAttribute(PARTIAL_FEEDBACKS_ATTRIBUTE, JSON.stringify(storage));
@@ -2485,6 +2485,70 @@ describe('Partial Feedback', () => {
       // Mixed feedback (1 down + 1 up = 0 score) → blue
       expect(pixelAfterUp).not.toBeNull();
       expect(pixelAfterUp.style.backgroundColor).toBe('rgb(59, 130, 246)');
+    });
+  });
+
+  describe('Stored data safety', () => {
+    const validEntry = {
+      id: '1',
+      range: { startOffset: 0, endOffset: 4, text: 'Test' },
+      feedbackType: 'up',
+      createdAt: '2024-01-01T00:00:00Z',
+    };
+
+    it('should render a stored explanation as text, not markup, when editing a highlight', async () => {
+      const payload = '</textarea><img src=x onerror="window.__coolhandXss = true">';
+      const element = document.createElement('div');
+      element.textContent = 'Test text for editing';
+      element.setAttribute(
+        PARTIAL_FEEDBACKS_ATTRIBUTE,
+        JSON.stringify({ version: 1, entries: [{ ...validEntry, explanation: payload }] })
+      );
+      document.body.appendChild(element);
+
+      const manager = new PartialFeedbackManager(element, 'test-api-key');
+
+      const highlight = element.querySelector(`.${PARTIAL_HIGHLIGHT_CLASS}`) as HTMLElement;
+      highlight.dispatchEvent(new MouseEvent('mouseenter', { bubbles: true, clientX: 150, clientY: 110 }));
+      await wait(250);
+
+      const widget = document.querySelector('.coolhand-partial-widget-container');
+      const shadowRoot = widget?.shadowRoot || widget;
+      const textarea = shadowRoot?.querySelector('.coolhand-partial-textarea') as HTMLTextAreaElement;
+      expect(textarea).not.toBeNull();
+      expect(textarea.value).toBe(payload);
+      expect(shadowRoot?.querySelector('img')).toBeNull();
+
+      manager.destroy();
+    });
+
+    it('should ignore malformed stored entries instead of throwing', () => {
+      const element = document.createElement('div');
+      element.textContent = 'Test text for editing';
+      element.setAttribute(
+        PARTIAL_FEEDBACKS_ATTRIBUTE,
+        JSON.stringify({
+          version: 1,
+          entries: [
+            null,
+            {},
+            { ...validEntry, range: null },
+            { ...validEntry, feedbackType: 'sideways' },
+            { ...validEntry, explanation: 42 },
+            validEntry,
+          ],
+        })
+      );
+      document.body.appendChild(element);
+
+      let manager: PartialFeedbackManager | undefined;
+      expect(() => {
+        manager = new PartialFeedbackManager(element, 'test-api-key');
+      }).not.toThrow();
+
+      expect(element.querySelectorAll(`.${PARTIAL_HIGHLIGHT_CLASS}`).length).toBe(1);
+
+      manager?.destroy();
     });
   });
 });

@@ -205,7 +205,7 @@ export class PartialFeedbackWidget {
             placeholder="Optional: Add a note..."
             aria-label="Feedback explanation"
             rows="2"
-          >${this.explanationText}</textarea>
+          ></textarea>
         </div>
         ` : ''}
       </div>
@@ -251,6 +251,8 @@ export class PartialFeedbackWidget {
     // Set up explanation textarea if present
     const textarea = root.querySelector('.coolhand-partial-textarea') as HTMLTextAreaElement;
     if (textarea) {
+      // Set via .value rather than interpolating into innerHTML so stored text can't inject markup
+      textarea.value = this.explanationText;
       textarea.addEventListener('input', this.handleExplanationInput.bind(this));
       textarea.addEventListener('blur', this.handleExplanationBlur.bind(this));
     }
@@ -376,7 +378,7 @@ export class PartialFeedbackWidget {
 
     // Determine URL and method
     const url = isUpdate
-      ? `${this.apiUrl}/${this.existingEntry!.id}`
+      ? `${this.apiUrl}/${encodeURIComponent(this.existingEntry!.id!)}`
       : this.apiUrl;
     const method = isUpdate ? 'PATCH' : 'POST';
 
@@ -608,7 +610,7 @@ export class PartialFeedbackWidget {
     }
 
     try {
-      const response = await fetch(`${this.apiUrl}/${this.currentEntry.id}`, {
+      const response = await fetch(`${this.apiUrl}/${encodeURIComponent(this.currentEntry.id!)}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
