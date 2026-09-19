@@ -133,6 +133,25 @@ describe('Cookie Utility', () => {
       consoleSpy.mockRestore();
     });
   });
+
+  describe('blocked cookie access', () => {
+    it('should return null from getCookie when reading document.cookie throws', () => {
+      jest.spyOn(document, 'cookie', 'get').mockImplementation(() => {
+        throw new DOMException('Access denied', 'SecurityError');
+      });
+
+      expect(getCookie('coolhand_fingerprint')).toBeNull();
+    });
+
+    it('should not throw from getOrCreateFingerprintId when document.cookie throws', () => {
+      jest.spyOn(document, 'cookie', 'get').mockImplementation(() => {
+        throw new DOMException('Access denied', 'SecurityError');
+      });
+      jest.spyOn(console, 'warn').mockImplementation(() => {});
+
+      expect(() => getOrCreateFingerprintId()).not.toThrow();
+    });
+  });
 });
 
 // Note: HTTPS-specific tests are skipped because jsdom doesn't allow

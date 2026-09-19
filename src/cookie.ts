@@ -81,7 +81,15 @@ export function getCookie(name: string): string | null {
     return null;
   }
 
-  const cookies = document.cookie.split(';');
+  // Reading document.cookie throws SecurityError in sandboxed iframes / opaque origins
+  let cookieHeader: string;
+  try {
+    cookieHeader = document.cookie;
+  } catch {
+    return null;
+  }
+
+  const cookies = cookieHeader.split(';');
   for (const cookie of cookies) {
     const trimmed = cookie.trim();
     const equalsIndex = trimmed.indexOf('=');
@@ -129,7 +137,12 @@ export function setCookie(name: string, value: string, days: number): boolean {
   cookieString += '; SameSite=None'; // Required for third-party iframe support
   cookieString += '; Secure'; // Required when SameSite=None
 
-  document.cookie = cookieString;
+  try {
+    document.cookie = cookieString;
+  } catch {
+    console.warn('[CoolhandJS] Fingerprint cookie could not be written');
+    return false;
+  }
   return true;
 }
 
