@@ -1,6 +1,6 @@
 import { jest, describe, it, expect, beforeEach, afterEach } from '@jest/globals';
 import { FeedbackWidget } from '../src/feedback-widget';
-import { COOLHAND_API_URL, VERSION, FEEDBACK_ID_ATTRIBUTE, ORIGINAL_OUTPUT_ATTRIBUTE, WIDGET_STYLE_ATTRIBUTE, EXPLANATION_PROMPT_ATTRIBUTE, DEBOUNCE_MS } from '../src/constants';
+import { COOLHAND_API_URL, VERSION, FEEDBACK_ID_ATTRIBUTE, ORIGINAL_OUTPUT_ATTRIBUTE, WIDGET_STYLE_ATTRIBUTE, EXPLANATION_PROMPT_ATTRIBUTE, EXPLANATION_ATTRIBUTE, DEBOUNCE_MS } from '../src/constants';
 
 // Mock fetch globally
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -1897,6 +1897,39 @@ describe('FeedbackWidget', () => {
       // Clamped to 0, so should never show
       optionsPanel = shadowRoot?.querySelector('.coolhand-options');
       expect(optionsPanel?.classList.contains('explanation-mode')).toBe(false);
+    });
+  });
+
+  describe('stored explanation text (markup safety)', () => {
+    const payload = '</textarea><img src=x onerror="window.__coolhandXss = true">';
+
+    it('should render a stored explanation in the summary panel as text, not markup', async () => {
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({ id: 1, like: true }),
+      });
+      const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+      element.setAttribute(EXPLANATION_ATTRIBUTE, payload);
+      widget = new FeedbackWidget(element, 'Test content', 'test-api-key', {
+        explanationSample: 0,
+      });
+
+      const shadowRoot = element.querySelector('[data-coolhand-widget]')?.shadowRoot;
+      const trigger = shadowRoot?.querySelector('.coolhand-trigger') as HTMLElement;
+
+      trigger.click();
+      (shadowRoot?.querySelector('[data-feedback="up"]') as HTMLElement).click();
+      await wait(150);
+      trigger.click(); // collapse
+      await wait(50);
+      trigger.click(); // re-expand into summary mode
+      await wait(100);
+
+      const textarea = shadowRoot?.querySelector('.coolhand-explanation-textarea') as HTMLTextAreaElement;
+      expect(textarea).not.toBeNull();
+      expect(textarea.value).toBe(payload);
+      expect(shadowRoot?.querySelector('img')).toBeNull();
     });
   });
 });

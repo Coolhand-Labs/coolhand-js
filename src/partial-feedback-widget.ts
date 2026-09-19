@@ -205,7 +205,7 @@ export class PartialFeedbackWidget {
             placeholder="Optional: Add a note..."
             aria-label="Feedback explanation"
             rows="2"
-          >${this.explanationText}</textarea>
+          ></textarea>
         </div>
         ` : ''}
       </div>
@@ -251,6 +251,8 @@ export class PartialFeedbackWidget {
     // Set up explanation textarea if present
     const textarea = root.querySelector('.coolhand-partial-textarea') as HTMLTextAreaElement;
     if (textarea) {
+      // Set via .value rather than interpolating into innerHTML so stored text can't inject markup
+      textarea.value = this.explanationText;
       textarea.addEventListener('input', this.handleExplanationInput.bind(this));
       textarea.addEventListener('blur', this.handleExplanationBlur.bind(this));
     }

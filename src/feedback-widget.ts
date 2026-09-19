@@ -519,7 +519,7 @@ export class FeedbackWidget {
           aria-label="Your feedback explanation"
           aria-describedby="coolhand-summary-label"
           rows="3"
-        >${existingExplanation}</textarea>
+        ></textarea>
         <button class="coolhand-submit-btn" type="button" aria-label="Submit feedback changes">Submit</button>
       </div>
     `;
@@ -546,6 +546,8 @@ export class FeedbackWidget {
 
     if (textarea) {
       this.explanationText = existingExplanation;
+      // Set via .value rather than interpolating into innerHTML so stored text can't inject markup
+      textarea.value = existingExplanation;
       textarea.addEventListener('input', this.handleExplanationInput.bind(this));
       textarea.addEventListener('blur', this.handleExplanationBlur.bind(this));
     }
