@@ -1,5 +1,7 @@
 # CoolhandJS Feedback Widget
 
+[![npm version](https://badge.fury.io/js/coolhand.svg)](https://badge.fury.io/js/coolhand)
+
 A lightweight, standalone JavaScript library for adding user feedback collection to any AI output. The widget integrates seamlessly with a single API endpoint which you can implement yourself or set up a quick, free account on Coolhand to capture & analyze in realtime.
 
 ## Features
