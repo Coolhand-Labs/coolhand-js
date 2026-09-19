@@ -204,6 +204,21 @@ describe('CoolhandFeedback', () => {
     });
   });
 
+  describe('re-initialization', () => {
+    it('should disconnect the previous MutationObserver when re-initializing', () => {
+      const disconnectSpy = jest.spyOn(MutationObserver.prototype, 'disconnect');
+      jest.spyOn(console, 'log').mockImplementation(() => {});
+
+      coolhand.init('test-api-key');
+      expect(disconnectSpy).not.toHaveBeenCalled();
+
+      coolhand.init('test-api-key');
+      expect(disconnectSpy).toHaveBeenCalledTimes(1);
+
+      disconnectSpy.mockRestore();
+    });
+  });
+
   describe('MutationObserver', () => {
     it('should auto-attach to dynamically added elements with coolhand-feedback attribute', async () => {
       coolhand.init('test-api-key');

@@ -45,10 +45,21 @@ export class CoolhandFeedback {
       return false;
     }
 
+    // No DOM to attach to (e.g. server-side rendering)
+    if (typeof document === 'undefined') {
+      console.warn('[CoolhandJS] init() requires a browser environment; skipping.');
+      return false;
+    }
+
     // If re-initializing, destroy existing widgets first
     const isReinitializing = this.apiKey !== null;
     if (isReinitializing) {
       this.destroyAllWidgets();
+      // Stop the previous observer so re-init doesn't leave a second one running
+      if (this.observer) {
+        this.observer.disconnect();
+        this.observer = null;
+      }
       // Reset auto-attach state so enableAutoAttachment will run again
       this.isAutoAttaching = false;
     }
