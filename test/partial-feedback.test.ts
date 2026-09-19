@@ -2133,9 +2133,9 @@ describe('Partial Feedback', () => {
       const storage = {
         version: 1,
         entries: [
-          { id: 1, range: { text: 'First', startOffset: 0, endOffset: 5 }, like: true },
-          { id: 2, range: { text: 'third', startOffset: 13, endOffset: 18 }, like: false },
-          { id: 3, range: { text: 'second', startOffset: 6, endOffset: 12 }, like: true },
+          { id: 1, range: { text: 'First', startOffset: 0, endOffset: 5 }, feedbackType: 'up' },
+          { id: 2, range: { text: 'third', startOffset: 13, endOffset: 18 }, feedbackType: 'down' },
+          { id: 3, range: { text: 'second', startOffset: 6, endOffset: 12 }, feedbackType: 'up' },
         ],
       };
       element.setAttribute(PARTIAL_FEEDBACKS_ATTRIBUTE, JSON.stringify(storage));
