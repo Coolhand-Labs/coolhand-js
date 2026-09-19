@@ -7,7 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [0.6.1] - 2026-09-19
 
-No changes to the shipped widget or its public API: `src/` is identical to 0.6.0. This release covers the publish pipeline, CI hardening, and dependency updates.
+Security and robustness fixes to the widget, plus the publish pipeline, CI hardening, and dependency updates. No public API or option changes.
+
+### Security
+
+- Stored explanation text is no longer interpolated into `innerHTML` when the summary or partial-feedback edit panel reopens. Previously a value containing `</textarea><img onerror=...>` in the `data-coolhand-explanation` or `data-coolhand-partial-feedbacks` attribute (host-writable, and persisted from user-typed text) re-parsed as live markup. It is now set through `textarea.value`.
+- Feedback IDs are URL-encoded when building PATCH URLs, so an ID from an API response or attribute can no longer add path segments or a query string to a request that carries the `X-API-Key` header.
+
+### Fixed
+
+- Malformed entries in the `data-coolhand-partial-feedbacks` attribute (`null`, missing `range`, unknown `feedbackType`, non-string `explanation`) are now dropped with a warning instead of throwing out of `init()` and silently disabling auto-attach for the page. Migration note: entries that lack a valid `feedbackType` are now ignored rather than restored.
+- Reading or writing `document.cookie` in a context that blocks it (for example a sandboxed iframe) no longer throws; the fingerprint is skipped, as documented.
+- Calling `init()` again now disconnects the previous auto-attach `MutationObserver` instead of leaving it running, and `init()` returns `false` with a warning when there is no `document` (server-side rendering) instead of throwing.
 
 ### Added
 
