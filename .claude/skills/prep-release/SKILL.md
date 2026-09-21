@@ -30,7 +30,7 @@ is injected at build time from `package.json` (`__COOLHANDJS_VERSION__` in
 `webpack.config.mjs`), and a few docs hardcode it (see "Finalize the
 version").
 
-Per `CLAUDE.md`, feature/fix branches never touch `CHANGELOG.md` or
+Per `AGENTS.md`, feature/fix branches never touch `CHANGELOG.md` or
 `package.json`'s `version` field — this skill is the only place those get
 written. If a chosen PR's diff does touch either file, treat it as a normal
 part of that PR's diff (don't strip it), but don't let it change how
@@ -49,7 +49,7 @@ regardless of what an individual PR's diff already contains.
    - **Quality** (High/Medium/Low): does the diff include test coverage
      proportional to the `src/` change (tests live in `test/`; UI changes
      should extend `test/accessibility.test.ts` where relevant), is the
-     code consistent with `CLAUDE.md` and the ESLint/Prettier config, does
+     code consistent with `AGENTS.md` and the ESLint/Prettier config, does
      the PR description read as complete work rather than a stub or "WIP,
      not ready" note.
    - **Risk** (High/Medium/Low): does it touch a security-, isolation-, or
@@ -239,19 +239,19 @@ reports both.
      such claims against the published Coolhand API docs on
      coolhandlabs.com rather than assuming prose that's been sitting in
      the repo is still accurate. Follow this repo's docs philosophy from
-     `CLAUDE.md`: the README stays a scannable landing page; anything
+     `AGENTS.md`: the README stays a scannable landing page; anything
      needing more than one code block belongs in `docs/` and is linked from
      the README's `## Documentation` section; the auto-attach
      "never retries an already-scanned element" limitation must still be
      documented in `docs/attaching.md`. Also confirm the README/package
-     description keeps the keyword-rich terms from `CLAUDE.md`'s
+     description keeps the keyword-rich terms from `AGENTS.md`'s
      Discoverability section.
-   - `CLAUDE.md` and `CONTRIBUTING.md` themselves — the commands listed
+   - `AGENTS.md` and `CONTRIBUTING.md` themselves — the commands listed
      should still exist in `package.json` `scripts` (for instance, confirm
-     every `npm run` script named in `CLAUDE.md`'s "Running individual
+     every `npm run` script named in `AGENTS.md`'s "Running individual
      tools" list is actually defined) and the release instructions should
      still match `.github/workflows/publish.yml` and `release.yml`.
-2. **Cross-SDK alignment.** Per `CLAUDE.md`, the README/docs structure
+2. **Cross-SDK alignment.** Per `AGENTS.md`, the README/docs structure
    should match [coolhand-node](https://github.com/Coolhand-Labs/coolhand-node)
    and [coolhand-ruby](https://github.com/Coolhand-Labs/coolhand-ruby). Check
    whether any structural change since the last tag (a new README section,
@@ -390,9 +390,9 @@ continuing. Then:
 
 1. Run `npm run lint && npm run typecheck && npm test` on `release/vX.Y.Z`
    — this mirrors CI's `lint` and `test` workflows and is the same gate
-   `CLAUDE.md` requires before any commit. Also run `npm run format:check`.
+   `AGENTS.md` requires before any commit. Also run `npm run format:check`.
    Then run `npm run build` and confirm it succeeds (it produces both the
-   unminified and minified bundles), and run the two checks `CLAUDE.md`
+   unminified and minified bundles), and run the two checks `AGENTS.md`
    says belong before a release and aren't part of the default gate:
    `npm run test:bundle` (smoke-tests the built `dist/coolhand.min.js` in a
    `vm` context — this is what actually validates the artifact that ships,

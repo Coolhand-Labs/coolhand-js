@@ -135,7 +135,7 @@ Provide a structured summary:
 
 ## Project-Specific Context
 
-This project follows specific patterns documented in CLAUDE.md:
+This project follows specific patterns documented in AGENTS.md:
 - Shadow DOM is used for style isolation
 - CSS classes prefixed with `coolhand-`
 - Reference `src/feedback-widget.ts` for ARIA patterns

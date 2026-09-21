@@ -38,7 +38,7 @@ Repeat the following cycle up to the round cap (default 5). Bracket each
 round's wall-clock time with `date +%s` before step 1 and after step 3
 completes.
 
-1. **Deterministic checks.** Run this repo's verify gate from `CLAUDE.md`
+1. **Deterministic checks.** Run this repo's verify gate from `AGENTS.md`
    (mirrors what CI runs as separate lint/typecheck and test jobs):
 
    ```bash
@@ -158,7 +158,7 @@ host-page isolation, and the public bundle surface.
   must not throw into the host page or leave the widget stuck in a
   loading/disabled state
 - Inefficiencies or unnecessary complexity
-- Violations of the project conventions in `CLAUDE.md` and the ESLint /
+- Violations of the project conventions in `AGENTS.md` and the ESLint /
   Prettier config (`npm run lint`, `npm run format:check`)
 - TypeScript best practices: `any`/loose typing where a precise interface
   was possible, non-null assertions (`!`) or casts papering over a missing
@@ -214,7 +214,7 @@ host-page isolation, and the public bundle surface.
   `CoolhandJS` UMD global, the exported types in `src/types.ts`, and the
   `data-coolhand-*` attributes. Don't break them unless necessary.
 - If a break is necessary, it must come with documentation updates and a
-  clear call-out of the SemVer bump it implies — but per `CLAUDE.md`'s
+  clear call-out of the SemVer bump it implies — but per `AGENTS.md`'s
   "Changelog and versioning" rule, don't expect (or ask for)
   `package.json`'s version to be bumped on this branch; that happens once,
   at release time, in `/prep-release`.
@@ -242,11 +242,11 @@ host-page isolation, and the public bundle surface.
   reflect the changes on this branch, and that any documentation touched
   by the diff is still accurate (no stale examples, option names, or
   attribute names).
-- Enforce the README/docs split from `CLAUDE.md`: the README stays a
+- Enforce the README/docs split from `AGENTS.md`: the README stays a
   scannable landing page; anything needing more than one code block goes
   in `docs/`; the auto-attach limitation lives in `docs/attaching.md`.
 - Flag a `CHANGELOG.md` or `package.json`-version edit on this branch as
-  a violation, per `CLAUDE.md`'s "Changelog and versioning" rule — those
+  a violation, per `AGENTS.md`'s "Changelog and versioning" rule — those
   are `/prep-release`'s to write, not this branch's. Skip this check on a
   `release/v*` branch — that's exactly where `/prep-release` writes them
   intentionally.
@@ -254,10 +254,10 @@ host-page isolation, and the public bundle surface.
   format, or adds a new `docs/` pattern that has an equivalent in
   [coolhand-node](https://github.com/Coolhand-Labs/coolhand-node) or
   [coolhand-ruby](https://github.com/Coolhand-Labs/coolhand-ruby),
-  `CLAUDE.md` asks that the structure and tone match those SDKs — flag a
+  `AGENTS.md` asks that the structure and tone match those SDKs — flag a
   structural divergence, or a structural change with no mention of a
   companion issue/PR there.
-- Discoverability (`CLAUDE.md`): headings, the package description, and
+- Discoverability (`AGENTS.md`): headings, the package description, and
   feature bullets keep the keyword-rich terms ("AI feedback widget", "LLM
   output feedback", "human feedback collection") rather than abbreviations.
 
