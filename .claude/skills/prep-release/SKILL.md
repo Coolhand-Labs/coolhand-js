@@ -39,7 +39,7 @@ regardless of what an individual PR's diff already contains.
 
 ## Phase 1: Survey open PRs, recommend a release set
 
-1. `gh pr list --state open --json number,title,author,isDraft,mergeable,mergeStateStatus,statusCheckRollup,additions,deletions,changedFiles,body,headRefName`
+1. `gh pr list --state open --json number,title,author,authorAssociation,isCrossRepository,isDraft,mergeable,mergeStateStatus,statusCheckRollup,additions,deletions,changedFiles,body,headRefName`
    — `statusCheckRollup` already gives CI status per PR (lint, and test on
    Node 18/20/22), so there's no need for a separate `gh pr checks <n>`
    call per PR.
@@ -75,13 +75,33 @@ regardless of what an individual PR's diff already contains.
      one Dependabot PR merges, others touching `package-lock.json` will
      often conflict; the fix is a `@dependabot rebase` comment, which you
      should suggest to the user rather than post yourself.
-3. Present one table: PR number, title, quality, risk, CI status,
-   mergeable state, and a one-line recommendation (include / exclude /
-   needs work before it can be considered). Call out anything that looks
+3. **Classify each PR's author** and record it in a running contributor
+   list that Phase 3 and Phase 5 reuse:
+   - **bot**: `author.is_bot` (Dependabot and the like). Never thanked.
+   - **team**: `authorAssociation` is `MEMBER`, `OWNER` or `COLLABORATOR`.
+   - **outside contributor**: anyone else. Also flag the PR as coming from a
+     fork (`isCrossRepository`) when it does.
+   - **first-time contributor** (a subset of outside): the login has no
+     commit on `main` at or before the last tag —
+     `gh api "repos/{owner}/{repo}/commits?author=<login>&until=<last-tag-date>"`
+     returns `[]` (last tag date:
+     `git log -1 --format=%cI "$(git describe --tags --abbrev=0)"`) and
+     `gh pr list --state merged --author <login>` is empty. Decide this now,
+     before Phase 2 merges anything: once their PR is merged they stop
+     looking new. Record the GitHub `login` (for the `@mention`) and the PR
+     number(s).
+4. Present one table: PR number, title, **author** (login plus `team`, `bot`,
+   `outside contributor` or `first-time contributor`), quality, risk, CI
+   status, mergeable state, and a one-line recommendation (include / exclude /
+   needs work before it can be considered). Below the table, list every
+   outside and first-time contributor by `@login` with the PR they sent, so
+   the user sees them without scanning. An outside PR has no CI run until a
+   maintainer approves its workflows (`statusCheckRollup` comes back empty) —
+   say so instead of rating CI as passing. Call out anything that looks
    unfinished — draft, a WIP-sounding title, failing checks, an empty or
    placeholder description, visible `TODO`/`FIXME` in the diff — as
    "exclude, not ready" rather than rating it neutrally.
-4. Stop here and ask the user which PRs to include in this release — do
+5. Stop here and ask the user which PRs to include in this release — do
    not merge, write changelog entries, or touch `package.json`'s version
    until the user answers. (The red-team in Phase 3 has its own planned
    stop for findings that are a behavior/architecture decision rather than
@@ -212,7 +232,8 @@ reports both.
      in Keep a Changelog format matching this repo's existing entries:
      plain `### Added` / `### Fixed` / `### Changed` / `### Documentation`
      headings, no emoji. Add `### Security`, `### Deprecated`, or
-     `### Breaking Changes` when a change calls for it, and fold
+     `### Breaking Changes` when a change calls for it, add `### Thanks` (last,
+     per "Credit outside contributors" below), and fold
      dev-dependency and CI-action bumps into a single `### Internal`
      bullet (they don't change the shipped bundle) rather than one line per
      bump. Look at more than just the latest release's headings before
@@ -227,6 +248,25 @@ reports both.
      says not to strip it), fold it into — don't duplicate alongside — the
      one authoritative entry you write here for that change, so a change
      never ends up with two entries describing it.
+   - **Credit outside contributors** in `CHANGELOG.md`. For every change from
+     an outside contributor (the Phase 1 list; for changes not merged in this
+     run, look the author up from the PR, `gh pr view <n> --json
+     author,authorAssociation`, and classify as in Phase 1 step 3), put
+     `thanks @login` inside the PR reference on that entry, e.g.
+     `(#80, thanks @login)`. Then end the version's section with a
+     `### Thanks` heading (last, after `### Internal`) that names each
+     outside contributor and what they sent. For a first-time contributor,
+     add a shout-out saying it is their first contribution to this package
+     and welcoming them, e.g. "Welcome and thank you to @login, whose first
+     contribution to coolhand-js, #80, stops the widget throwing in a
+     sandboxed iframe." Contributors who have landed before get the thanks
+     without the first-time line. Skip bots and team members, and omit
+     `### Thanks` when there is nothing to put in it. `release.yml` publishes
+     the GitHub Release with `generate_release_notes: true`, so the release
+     body is GitHub's own PR list (which already `@mention`s each author and
+     adds a "New Contributors" section), not this changelog section;
+     `CHANGELOG.md` is where this skill writes the credit, so don't edit the
+     release workflow or hand-write release notes for it.
    - `README.md` / `docs/*.md` — any new option, public method,
      `data-coolhand-*` attribute, or behavior change needs the relevant
      section updated. Sweep every file under `docs/` (`attaching.md`,
@@ -474,6 +514,9 @@ continuing. Then:
    - Phase 2's outcome: which PRs merged, which were skipped for new
      conflicts (and need a rebase — for Dependabot PRs, a
      `@dependabot rebase` comment — before the next release).
+   - Outside and first-time contributors in this release, by `@login` and PR,
+     and where their credit landed in `CHANGELOG.md` (the `thanks @login`
+     entry and the `### Thanks` section), or that there were none.
    - The release-prep PR link, the version bump and why.
    - Coverage-quality gaps plus recommended tests.
    - Docs updated, and whether a companion issue/PR is needed and missing
